@@ -1,3 +1,15 @@
+// Application Insights must be initialized before other imports
+import * as appInsights from 'applicationinsights';
+const aiConnStr = process.env.APPLICATIONINSIGHTS_CONNECTION_STRING;
+if (aiConnStr) {
+  appInsights.setup(aiConnStr)
+    .setAutoCollectRequests(true)
+    .setAutoCollectPerformance(true, false)
+    .setAutoCollectExceptions(true)
+    .setAutoCollectDependencies(true)
+    .start();
+}
+
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
@@ -17,7 +29,7 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    origin: process.env.CORS_ORIGIN || ['http://localhost:5173', 'https://localhost:5173'],
     credentials: true,
   });
 

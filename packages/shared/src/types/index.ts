@@ -227,6 +227,132 @@ export interface InventoryTransaction {
   transactionDate: string;
 }
 
+// ─── Notifications ───
+
+export enum NotificationType {
+  TASK_ASSIGNED = 'TASK_ASSIGNED',
+  TASK_STATUS_CHANGED = 'TASK_STATUS_CHANGED',
+  PROJECT_STATUS_CHANGED = 'PROJECT_STATUS_CHANGED',
+  RAG_STATUS_CHANGED = 'RAG_STATUS_CHANGED',
+  MEMBER_ADDED = 'MEMBER_ADDED',
+  NOTE_ADDED = 'NOTE_ADDED',
+  GENERAL = 'GENERAL',
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  isRead: boolean;
+  relatedEntityType: string | null;
+  relatedEntityId: string | null;
+  createdAt: string;
+}
+
+// ─── Skills ───
+
+export enum SkillCategory {
+  TECHNICAL = 'TECHNICAL',
+  MANAGEMENT = 'MANAGEMENT',
+  DOMAIN = 'DOMAIN',
+  SOFT_SKILL = 'SOFT_SKILL',
+  CERTIFICATION = 'CERTIFICATION',
+}
+
+export enum ProficiencyLevel {
+  BEGINNER = 'BEGINNER',
+  INTERMEDIATE = 'INTERMEDIATE',
+  ADVANCED = 'ADVANCED',
+  EXPERT = 'EXPERT',
+}
+
+export interface Skill {
+  id: string;
+  name: string;
+  category: SkillCategory;
+  description: string | null;
+  createdAt: string;
+}
+
+export interface PersonSkill {
+  id: string;
+  personId: string;
+  skillId: string;
+  proficiency: ProficiencyLevel;
+  yearsOfExperience: number | null;
+  notes: string | null;
+  skill?: Skill;
+}
+
+// ─── Programs ───
+
+export enum ProgramStatus {
+  PLANNING = 'PLANNING',
+  ACTIVE = 'ACTIVE',
+  ON_HOLD = 'ON_HOLD',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+}
+
+export interface Program {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  status: ProgramStatus;
+  startDate: string;
+  endDate: string | null;
+  budget: number;
+  managerId: string;
+  createdBy: string;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+  projects?: Project[];
+}
+
+// ─── Opportunities ───
+
+export enum OpportunityStatus {
+  IDENTIFIED = 'IDENTIFIED',
+  QUALIFYING = 'QUALIFYING',
+  PROPOSAL = 'PROPOSAL',
+  NEGOTIATION = 'NEGOTIATION',
+  WON = 'WON',
+  LOST = 'LOST',
+  CONVERTED = 'CONVERTED',
+}
+
+export enum OpportunityStage {
+  SEED = 'SEED',
+  EARLY = 'EARLY',
+  GROWTH = 'GROWTH',
+  EXPANSION = 'EXPANSION',
+  MATURE = 'MATURE',
+}
+
+export interface Opportunity {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  status: OpportunityStatus;
+  stage: OpportunityStage;
+  estimatedValue: number;
+  probability: number;
+  expectedCloseDate: string | null;
+  clientName: string;
+  clientContact: string | null;
+  ownerId: string;
+  convertedProjectId: string | null;
+  convertedAt: string | null;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ─── API Response Envelope ───
 
 export interface PaginationMeta {

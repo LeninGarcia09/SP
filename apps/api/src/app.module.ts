@@ -1,6 +1,10 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { CacheModule } from '@nestjs/cache-manager';
+import KeyvRedis from '@keyv/redis';
+import Keyv from 'keyv';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { ProjectsModule } from './modules/projects/projects.module';
@@ -8,7 +12,13 @@ import { TasksModule } from './modules/tasks/tasks.module';
 import { HealthModule } from './modules/health/health.module';
 import { PersonnelModule } from './modules/personnel/personnel.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { SkillsModule } from './modules/skills/skills.module';
+import { ProgramsModule } from './modules/programs/programs.module';
+import { OpportunitiesModule } from './modules/opportunities/opportunities.module';
 import { envValidationSchema } from './config/env.validation';
+import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
+import { SystemController } from './common/system.controller';
 
 @Module({
   imports: [
@@ -28,6 +38,22 @@ import { envValidationSchema } from './config/env.validation';
         logging: config.get<string>('NODE_ENV') === 'development' ? ['query', 'error'] : ['error'],
       }),
     }),
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
+    CacheModule.registerAsync({
+      isGlobal: true,
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        const redisUrl = config.get<string>('REDIS_URL');
+        if (redisUrl) {
+          return {
+            stores: [new Keyv({ store: new KeyvRedis(redisUrl) })],
+            ttl: 300_000, // 5 min default
+          };
+        }
+        return { stores: [new Keyv()], ttl: 300_000 }; // In-memory fallback
+      },
+    }),
     AuthModule,
     UsersModule,
     ProjectsModule,
@@ -35,6 +61,15 @@ import { envValidationSchema } from './config/env.validation';
     HealthModule,
     PersonnelModule,
     InventoryModule,
+    NotificationsModule,
+    SkillsModule,
+    ProgramsModule,
+    OpportunitiesModule,
   ],
+  controllers: [SystemController],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RequestLoggerMiddleware).forRoutes('*');
+  }
+}

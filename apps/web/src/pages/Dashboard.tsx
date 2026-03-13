@@ -1,8 +1,12 @@
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useProjects } from '../hooks/use-projects';
 import { usePersonnel } from '../hooks/use-personnel';
 import { useInventoryItems } from '../hooks/use-inventory';
 
 export function DashboardPage() {
+  const navigate = useNavigate();
+  const { t } = useTranslation();
   const projects = useProjects({ limit: 100 });
   const personnel = usePersonnel({ limit: 100 });
   const inventory = useInventoryItems({ limit: 100 });
@@ -16,35 +20,47 @@ export function DashboardPage() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6">Dashboard</h2>
+      <h2 className="text-2xl font-bold mb-6">{t('dashboard.title')}</h2>
 
       {hasError && (
         <div className="rounded-lg border border-destructive bg-destructive/10 p-4 mb-6 text-sm text-destructive">
-          Failed to load dashboard data. Is the API running?
+          {t('dashboard.error')}
         </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-lg border bg-card p-6">
-          <p className="text-sm text-muted-foreground">Active Projects</p>
+        <div
+          className="rounded-lg border bg-card p-6 cursor-pointer hover:bg-accent/50 transition-colors"
+          onClick={() => navigate('/projects')}
+        >
+          <p className="text-sm text-muted-foreground">{t('dashboard.activeProjects')}</p>
           <p className="text-3xl font-bold mt-2">
             {isLoading ? '…' : activeProjects}
           </p>
         </div>
-        <div className="rounded-lg border bg-card p-6">
-          <p className="text-sm text-muted-foreground">Total Projects</p>
+        <div
+          className="rounded-lg border bg-card p-6 cursor-pointer hover:bg-accent/50 transition-colors"
+          onClick={() => navigate('/projects')}
+        >
+          <p className="text-sm text-muted-foreground">{t('dashboard.totalProjects')}</p>
           <p className="text-3xl font-bold mt-2">
             {isLoading ? '…' : (projects.data?.meta?.total ?? projects.data?.data?.length ?? '—')}
           </p>
         </div>
-        <div className="rounded-lg border bg-card p-6">
-          <p className="text-sm text-muted-foreground">Personnel</p>
+        <div
+          className="rounded-lg border bg-card p-6 cursor-pointer hover:bg-accent/50 transition-colors"
+          onClick={() => navigate('/personnel')}
+        >
+          <p className="text-sm text-muted-foreground">{t('dashboard.personnel')}</p>
           <p className="text-3xl font-bold mt-2">
             {isLoading ? '…' : totalPersonnel}
           </p>
         </div>
-        <div className="rounded-lg border bg-card p-6">
-          <p className="text-sm text-muted-foreground">Inventory Items</p>
+        <div
+          className="rounded-lg border bg-card p-6 cursor-pointer hover:bg-accent/50 transition-colors"
+          onClick={() => navigate('/inventory')}
+        >
+          <p className="text-sm text-muted-foreground">{t('dashboard.inventoryItems')}</p>
           <p className="text-3xl font-bold mt-2">
             {isLoading ? '…' : totalInventory}
           </p>
@@ -54,20 +70,24 @@ export function DashboardPage() {
       {/* Recent Projects */}
       {projects.data?.data && projects.data.data.length > 0 && (
         <div className="mt-8">
-          <h3 className="text-lg font-semibold mb-4">Recent Projects</h3>
+          <h3 className="text-lg font-semibold mb-4">{t('dashboard.recentProjects')}</h3>
           <div className="rounded-lg border">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  <th className="text-left p-3 font-medium">Code</th>
-                  <th className="text-left p-3 font-medium">Name</th>
-                  <th className="text-left p-3 font-medium">Status</th>
-                  <th className="text-left p-3 font-medium">Budget</th>
+                  <th className="text-left p-3 font-medium">{t('common.code')}</th>
+                  <th className="text-left p-3 font-medium">{t('common.name')}</th>
+                  <th className="text-left p-3 font-medium">{t('common.status')}</th>
+                  <th className="text-left p-3 font-medium">{t('common.budget')}</th>
                 </tr>
               </thead>
               <tbody>
                 {projects.data.data.slice(0, 5).map((project) => (
-                  <tr key={project.id} className="border-b last:border-0">
+                  <tr
+                    key={project.id}
+                    className="border-b last:border-0 hover:bg-muted/25 cursor-pointer"
+                    onClick={() => navigate(`/projects/${project.id}`)}
+                  >
                     <td className="p-3 font-mono text-xs">{project.code}</td>
                     <td className="p-3">{project.name}</td>
                     <td className="p-3">
@@ -77,7 +97,7 @@ export function DashboardPage() {
                         project.status === 'COMPLETED' ? 'bg-blue-100 text-blue-700' :
                         'bg-gray-100 text-gray-700'
                       }`}>
-                        {project.status}
+                        {t(`statuses.${project.status}`)}
                       </span>
                     </td>
                     <td className="p-3">${Number(project.budget).toLocaleString()}</td>

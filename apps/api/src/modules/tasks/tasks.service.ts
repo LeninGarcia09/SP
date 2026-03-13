@@ -1,7 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { TaskEntity } from './task.entity';
+import { CreateTaskDto, UpdateTaskDto } from './dto/task.dto';
+import { PaginationDto, PaginatedResult } from '../../common/dto/pagination.dto';
 
 @Injectable()
 export class TasksService {
@@ -10,11 +12,28 @@ export class TasksService {
     private readonly taskRepo: Repository<TaskEntity>,
   ) {}
 
-  async findByProject(projectId: string): Promise<TaskEntity[]> {
-    return this.taskRepo.find({
-      where: { projectId },
-      order: { createdAt: 'DESC' },
+  async findByProject(
+    projectId: string,
+    query: PaginationDto,
+  ): Promise<PaginatedResult<TaskEntity>> {
+    const { page, limit, sortBy, order, search } = query;
+    const skip = (page - 1) * limit;
+
+    const where: Record<string, unknown>[] = search
+      ? [{ projectId, title: ILike(`%${search}%`) }]
+      : [{ projectId }];
+
+    const [data, total] = await this.taskRepo.findAndCount({
+      where,
+      order: { [sortBy]: order },
+      skip,
+      take: limit,
     });
+
+    return {
+      data,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   async findById(id: string): Promise<TaskEntity> {
@@ -25,14 +44,14 @@ export class TasksService {
     return task;
   }
 
-  async create(projectId: string, data: Partial<TaskEntity>): Promise<TaskEntity> {
-    const task = this.taskRepo.create({ ...data, projectId });
+  async create(projectId: string, dto: CreateTaskDto): Promise<TaskEntity> {
+    const task = this.taskRepo.create({ ...dto, projectId });
     return this.taskRepo.save(task);
   }
 
-  async update(id: string, data: Partial<TaskEntity>): Promise<TaskEntity> {
+  async update(id: string, dto: UpdateTaskDto): Promise<TaskEntity> {
     const task = await this.findById(id);
-    Object.assign(task, data);
+    Object.assign(task, dto);
     return this.taskRepo.save(task);
   }
 

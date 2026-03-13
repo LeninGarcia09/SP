@@ -18,11 +18,13 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor — unwrap envelope
+// Response interceptor — handle 401 by clearing stale token
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // TODO: Handle 401 → redirect to login
+    if (error.response?.status === 401) {
+      localStorage.removeItem('access_token');
+    }
     return Promise.reject(error);
   },
 );

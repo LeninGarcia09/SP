@@ -1,8 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { PersonEntity } from './person.entity';
 import { ProjectAssignmentEntity } from './project-assignment.entity';
+import {
+  CreatePersonDto,
+  UpdatePersonDto,
+  CreateAssignmentDto,
+  UpdateAssignmentDto,
+} from './dto/personnel.dto';
+import { PaginationDto, PaginatedResult } from '../../common/dto/pagination.dto';
 
 @Injectable()
 export class PersonnelService {
@@ -15,8 +22,29 @@ export class PersonnelService {
 
   // --- Person CRUD ---
 
-  async findAllPersons(): Promise<PersonEntity[]> {
-    return this.personRepo.find({ order: { lastName: 'ASC', firstName: 'ASC' } });
+  async findAllPersons(query: PaginationDto): Promise<PaginatedResult<PersonEntity>> {
+    const { page, limit, sortBy, order, search } = query;
+    const skip = (page - 1) * limit;
+
+    const where = search
+      ? [
+          { firstName: ILike(`%${search}%`) },
+          { lastName: ILike(`%${search}%`) },
+          { email: ILike(`%${search}%`) },
+        ]
+      : undefined;
+
+    const [data, total] = await this.personRepo.findAndCount({
+      where,
+      order: { [sortBy]: order },
+      skip,
+      take: limit,
+    });
+
+    return {
+      data,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   async findPersonById(id: string): Promise<PersonEntity> {
@@ -25,14 +53,14 @@ export class PersonnelService {
     return person;
   }
 
-  async createPerson(data: Partial<PersonEntity>): Promise<PersonEntity> {
-    const person = this.personRepo.create(data);
+  async createPerson(dto: CreatePersonDto): Promise<PersonEntity> {
+    const person = this.personRepo.create(dto);
     return this.personRepo.save(person);
   }
 
-  async updatePerson(id: string, data: Partial<PersonEntity>): Promise<PersonEntity> {
+  async updatePerson(id: string, dto: UpdatePersonDto): Promise<PersonEntity> {
     const person = await this.findPersonById(id);
-    Object.assign(person, data);
+    Object.assign(person, dto);
     return this.personRepo.save(person);
   }
 
@@ -42,22 +70,29 @@ export class PersonnelService {
     return this.assignmentRepo.find({ where: { personId }, relations: ['project'] });
   }
 
+  async findAllActiveAssignments(): Promise<ProjectAssignmentEntity[]> {
+    return this.assignmentRepo.find({
+      where: { isActive: true },
+      relations: ['person', 'project'],
+    });
+  }
+
   async findAssignmentsByProject(projectId: string): Promise<ProjectAssignmentEntity[]> {
     return this.assignmentRepo.find({ where: { projectId }, relations: ['person'] });
   }
 
-  async createAssignment(data: Partial<ProjectAssignmentEntity>): Promise<ProjectAssignmentEntity> {
-    const assignment = this.assignmentRepo.create(data);
+  async createAssignment(dto: CreateAssignmentDto): Promise<ProjectAssignmentEntity> {
+    const assignment = this.assignmentRepo.create(dto);
     return this.assignmentRepo.save(assignment);
   }
 
   async updateAssignment(
     id: string,
-    data: Partial<ProjectAssignmentEntity>,
+    dto: UpdateAssignmentDto,
   ): Promise<ProjectAssignmentEntity> {
     const assignment = await this.assignmentRepo.findOne({ where: { id } });
     if (!assignment) throw new NotFoundException(`Assignment ${id} not found`);
-    Object.assign(assignment, data);
+    Object.assign(assignment, dto);
     return this.assignmentRepo.save(assignment);
   }
 }

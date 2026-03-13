@@ -11,46 +11,44 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { HealthService } from './health.service';
+import { RagOverrideDto } from './dto/rag-override.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
-import { ProjectHealthSnapshotEntity } from './health-snapshot.entity';
 import { UserRole } from '@bizops/shared';
 
 @ApiTags('Project Health')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 @Controller('projects/:projectId/health')
 export class HealthController {
   constructor(private readonly healthService: HealthService) {}
 
   @Get()
-  getHistory(
-    @Param('projectId', ParseUUIDPipe) projectId: string,
-  ): Promise<ProjectHealthSnapshotEntity[]> {
-    return this.healthService.getHistory(projectId);
+  async getHistory(@Param('projectId', ParseUUIDPipe) projectId: string) {
+    const data = await this.healthService.getHistory(projectId);
+    return { data };
   }
 
   @Post('trigger')
-  triggerCalculation(
-    @Param('projectId', ParseUUIDPipe) projectId: string,
-  ): Promise<ProjectHealthSnapshotEntity> {
-    return this.healthService.triggerCalculation(projectId);
+  async triggerCalculation(@Param('projectId', ParseUUIDPipe) projectId: string) {
+    const data = await this.healthService.triggerCalculation(projectId);
+    return { data };
   }
 
   @Post('override')
-  @UseGuards(RolesGuard)
   @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER)
-  override(
+  async override(
     @Param('projectId', ParseUUIDPipe) projectId: string,
-    @Body() body: { overallRag: string; overrideReason: string },
+    @Body() dto: RagOverrideDto,
     @Request() req: { user: { sub: string; role: string } },
-  ): Promise<ProjectHealthSnapshotEntity> {
-    return this.healthService.override(
+  ) {
+    const data = await this.healthService.override(
       projectId,
-      body.overallRag,
-      body.overrideReason,
+      dto.overallRag,
+      dto.overrideReason,
       req.user.sub,
       req.user.role,
     );
+    return { data };
   }
 }

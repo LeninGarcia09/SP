@@ -6,6 +6,7 @@ import {
   updatePerson,
   fetchAssignmentsByPerson,
   fetchAssignmentsByProject,
+  fetchAllActiveAssignments,
   createAssignment,
   updateAssignment,
 } from '../lib/api';
@@ -88,5 +89,12 @@ export function useUpdateAssignment() {
       qc.invalidateQueries({ queryKey: ['personnel'] });
       qc.invalidateQueries({ queryKey: ['projects'] });
     },
+  });
+}
+
+export function useAllActiveAssignments() {
+  return useQuery({
+    queryKey: ['assignments', 'active'],
+    queryFn: () => fetchAllActiveAssignments(),
   });
 }

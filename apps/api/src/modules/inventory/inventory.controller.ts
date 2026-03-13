@@ -5,59 +5,104 @@ import {
   Patch,
   Param,
   Body,
+  Query,
   UseGuards,
   ParseUUIDPipe,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { InventoryService } from './inventory.service';
-import { InventoryItemEntity } from './inventory-item.entity';
-import { InventoryTransactionEntity } from './inventory-transaction.entity';
+import {
+  CreateInventoryItemDto,
+  UpdateInventoryItemDto,
+  CreateInventoryTransactionDto,
+} from './dto/inventory.dto';
+import { PaginationDto } from '../../common/dto/pagination.dto';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { UserRole } from '@bizops/shared';
 
 @ApiTags('Inventory')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 @Controller('inventory')
 export class InventoryController {
   constructor(private readonly inventoryService: InventoryService) {}
 
   @Get()
-  findAllItems(): Promise<InventoryItemEntity[]> {
-    return this.inventoryService.findAllItems();
+  async findAllItems(@Query() query: PaginationDto) {
+    return this.inventoryService.findAllItems(query);
   }
 
   @Get(':id')
-  findItemById(@Param('id', ParseUUIDPipe) id: string): Promise<InventoryItemEntity> {
-    return this.inventoryService.findItemById(id);
+  async findItemById(@Param('id', ParseUUIDPipe) id: string) {
+    const data = await this.inventoryService.findItemById(id);
+    return { data };
   }
 
   @Post()
-  createItem(@Body() body: Partial<InventoryItemEntity>): Promise<InventoryItemEntity> {
-    return this.inventoryService.createItem(body);
+  @Roles(UserRole.GLOBAL_LEAD, UserRole.INVENTORY_MANAGER)
+  async createItem(@Body() dto: CreateInventoryItemDto) {
+    const data = await this.inventoryService.createItem(dto);
+    return { data };
   }
 
   @Patch(':id')
-  updateItem(
+  @Roles(UserRole.GLOBAL_LEAD, UserRole.INVENTORY_MANAGER)
+  async updateItem(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: Partial<InventoryItemEntity>,
-  ): Promise<InventoryItemEntity> {
-    return this.inventoryService.updateItem(id, body);
+    @Body() dto: UpdateInventoryItemDto,
+  ) {
+    const data = await this.inventoryService.updateItem(id, dto);
+    return { data };
   }
 
   @Get(':id/transactions')
-  findTransactions(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<InventoryTransactionEntity[]> {
-    return this.inventoryService.findTransactionsByItem(id);
+  async findTransactions(@Param('id', ParseUUIDPipe) id: string) {
+    const data = await this.inventoryService.findTransactionsByItem(id);
+    return { data };
   }
 
   @Post(':id/transactions')
-  createTransaction(
+  @Roles(UserRole.GLOBAL_LEAD, UserRole.INVENTORY_MANAGER)
+  async createTransaction(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: Partial<InventoryTransactionEntity>,
-  ): Promise<InventoryTransactionEntity> {
-    return this.inventoryService.createTransaction({ ...body, itemId: id });
+    @Body() dto: CreateInventoryTransactionDto,
+  ) {
+    const data = await this.inventoryService.createTransaction(id, dto);
+    return { data };
   }
 
   // No PATCH/DELETE for transactions — append-only audit log
+
+  @Post('import')
+  @Roles(UserRole.GLOBAL_LEAD, UserRole.INVENTORY_MANAGER)
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  async importExcel(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+    const allowed = [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel',
+    ];
+    if (!allowed.includes(file.mimetype)) {
+      throw new BadRequestException('File must be an Excel file (.xlsx or .xls)');
+    }
+    const result = await this.inventoryService.importFromExcel(file.buffer);
+    return { data: result };
+  }
 }

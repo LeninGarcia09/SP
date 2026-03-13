@@ -1,0 +1,67 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  Query,
+  UseGuards,
+  ParseUUIDPipe,
+  Request,
+} from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ProgramsService } from './programs.service';
+import { CreateProgramDto, UpdateProgramDto } from './dto/program.dto';
+import { PaginationDto } from '../../common/dto/pagination.dto';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { UserRole } from '@bizops/shared';
+
+@ApiTags('Programs')
+@ApiBearerAuth()
+@UseGuards(AuthGuard('jwt'), RolesGuard)
+@Controller('programs')
+export class ProgramsController {
+  constructor(private readonly programsService: ProgramsService) {}
+
+  @Get()
+  async findAll(@Query() query: PaginationDto) {
+    return this.programsService.findAll(query);
+  }
+
+  @Get(':id')
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
+    const data = await this.programsService.findById(id);
+    return { data };
+  }
+
+  @Post()
+  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.PROGRAM_MANAGER)
+  async create(
+    @Body() dto: CreateProgramDto,
+    @Request() req: { user: { sub: string } },
+  ) {
+    const data = await this.programsService.create(dto, req.user.sub);
+    return { data };
+  }
+
+  @Patch(':id')
+  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.PROGRAM_MANAGER)
+  async update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateProgramDto,
+  ) {
+    const data = await this.programsService.update(id, dto);
+    return { data };
+  }
+
+  @Delete(':id')
+  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER)
+  async remove(@Param('id', ParseUUIDPipe) id: string) {
+    const data = await this.programsService.softDelete(id);
+    return { data };
+  }
+}

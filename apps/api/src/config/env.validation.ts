@@ -12,4 +12,6 @@ export const envValidationSchema = Joi.object({
   AZURE_AD_CLIENT_SECRET: Joi.string().allow('').default(''),
   AZURE_AD_AUDIENCE: Joi.string().allow('').default(''),
   CORS_ORIGIN: Joi.string().default('http://localhost:5173'),
+  APPLICATIONINSIGHTS_CONNECTION_STRING: Joi.string().allow('').default(''),
+  REDIS_URL: Joi.string().allow('').default(''),
 });

@@ -6,6 +6,7 @@ import {
   updateInventoryItem,
   fetchInventoryTransactions,
   createInventoryTransaction,
+  importInventoryExcel,
 } from '../lib/api';
 import type { PaginationParams } from '../lib/api';
 
@@ -44,6 +45,16 @@ export function useUpdateInventoryItem() {
     onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: ['inventory'] });
       qc.invalidateQueries({ queryKey: ['inventory', variables.id] });
+    },
+  });
+}
+
+export function useImportInventory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: importInventoryExcel,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['inventory'] });
     },
   });
 }

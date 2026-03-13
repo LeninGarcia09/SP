@@ -9,6 +9,12 @@ import {
   TransactionType,
   AssignmentStatus,
   UserRole,
+  NotificationType,
+  SkillCategory,
+  ProficiencyLevel,
+  ProgramStatus,
+  OpportunityStatus,
+  OpportunityStage,
 } from '../types/index.js';
 
 // ─── Project Schemas ───
@@ -167,3 +173,96 @@ export const paginationSchema = z.object({
 });
 
 export type PaginationDto = z.infer<typeof paginationSchema>;
+
+// ─── Notification Schemas ───
+
+export const createNotificationSchema = z.object({
+  userId: z.string().uuid(),
+  type: z.nativeEnum(NotificationType),
+  title: z.string().min(1).max(200),
+  message: z.string().min(1).max(2000),
+  relatedEntityType: z.string().max(50).nullable().default(null),
+  relatedEntityId: z.string().uuid().nullable().default(null),
+});
+
+export type CreateNotificationDto = z.infer<typeof createNotificationSchema>;
+
+// ─── Skill Schemas ───
+
+export const createSkillSchema = z.object({
+  name: z.string().min(1).max(100),
+  category: z.nativeEnum(SkillCategory),
+  description: z.string().max(500).nullable().default(null),
+});
+
+export const updateSkillSchema = createSkillSchema.partial();
+
+export type CreateSkillDto = z.infer<typeof createSkillSchema>;
+export type UpdateSkillDto = z.infer<typeof updateSkillSchema>;
+
+export const assignSkillSchema = z.object({
+  skillId: z.string().uuid(),
+  proficiency: z.nativeEnum(ProficiencyLevel).default(ProficiencyLevel.BEGINNER),
+  yearsOfExperience: z.number().nonnegative().nullable().default(null),
+  notes: z.string().max(500).nullable().default(null),
+});
+
+export const updatePersonSkillSchema = z.object({
+  proficiency: z.nativeEnum(ProficiencyLevel).optional(),
+  yearsOfExperience: z.number().nonnegative().nullable().optional(),
+  notes: z.string().max(500).nullable().optional(),
+});
+
+export type AssignSkillDto = z.infer<typeof assignSkillSchema>;
+export type UpdatePersonSkillDto = z.infer<typeof updatePersonSkillSchema>;
+
+// ─── Program Schemas ───
+
+export const createProgramSchema = z.object({
+  name: z.string().min(1).max(200),
+  description: z.string().max(5000).default(''),
+  status: z.nativeEnum(ProgramStatus).default(ProgramStatus.PLANNING),
+  startDate: z.string().date(),
+  endDate: z.string().date().nullable().default(null),
+  budget: z.number().nonnegative().default(0),
+  managerId: z.string().uuid(),
+  metadata: z.record(z.unknown()).default({}),
+});
+
+export const updateProgramSchema = createProgramSchema.partial();
+
+export type CreateProgramDto = z.infer<typeof createProgramSchema>;
+export type UpdateProgramDto = z.infer<typeof updateProgramSchema>;
+
+// ─── Opportunity Schemas ───
+
+export const createOpportunitySchema = z.object({
+  name: z.string().min(1).max(200),
+  description: z.string().max(5000).default(''),
+  status: z.nativeEnum(OpportunityStatus).default(OpportunityStatus.IDENTIFIED),
+  stage: z.nativeEnum(OpportunityStage).default(OpportunityStage.SEED),
+  estimatedValue: z.number().nonnegative().default(0),
+  probability: z.number().min(0).max(100).default(0),
+  expectedCloseDate: z.string().date().nullable().default(null),
+  clientName: z.string().min(1).max(200),
+  clientContact: z.string().max(200).nullable().default(null),
+  ownerId: z.string().uuid(),
+  metadata: z.record(z.unknown()).default({}),
+});
+
+export const updateOpportunitySchema = createOpportunitySchema.partial();
+
+export type CreateOpportunityDto = z.infer<typeof createOpportunitySchema>;
+export type UpdateOpportunityDto = z.infer<typeof updateOpportunitySchema>;
+
+export const convertOpportunitySchema = z.object({
+  projectName: z.string().min(1).max(200),
+  projectCode: z.string().min(1).max(50),
+  projectLeadId: z.string().uuid(),
+  startDate: z.string().date(),
+  endDate: z.string().date(),
+  budget: z.number().nonnegative().optional(),
+  programId: z.string().uuid().nullable().optional(),
+});
+
+export type ConvertOpportunityDto = z.infer<typeof convertOpportunitySchema>;

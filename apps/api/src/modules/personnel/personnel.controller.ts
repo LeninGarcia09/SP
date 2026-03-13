@@ -5,18 +5,27 @@ import {
   Patch,
   Param,
   Body,
+  Query,
   UseGuards,
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { PersonnelService } from './personnel.service';
-import { PersonEntity } from './person.entity';
-import { ProjectAssignmentEntity } from './project-assignment.entity';
+import {
+  CreatePersonDto,
+  UpdatePersonDto,
+  CreateAssignmentDto,
+  UpdateAssignmentDto,
+} from './dto/personnel.dto';
+import { PaginationDto } from '../../common/dto/pagination.dto';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { UserRole } from '@bizops/shared';
 
 @ApiTags('Personnel')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 @Controller()
 export class PersonnelController {
   constructor(private readonly personnelService: PersonnelService) {}
@@ -24,56 +33,71 @@ export class PersonnelController {
   // --- Person endpoints ---
 
   @Get('personnel')
-  findAllPersons(): Promise<PersonEntity[]> {
-    return this.personnelService.findAllPersons();
+  async findAllPersons(@Query() query: PaginationDto) {
+    return this.personnelService.findAllPersons(query);
   }
 
   @Get('personnel/:id')
-  findPersonById(@Param('id', ParseUUIDPipe) id: string): Promise<PersonEntity> {
-    return this.personnelService.findPersonById(id);
+  async findPersonById(@Param('id', ParseUUIDPipe) id: string) {
+    const data = await this.personnelService.findPersonById(id);
+    return { data };
   }
 
   @Post('personnel')
-  createPerson(@Body() body: Partial<PersonEntity>): Promise<PersonEntity> {
-    return this.personnelService.createPerson(body);
+  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.RESOURCE_MANAGER)
+  async createPerson(@Body() dto: CreatePersonDto) {
+    const data = await this.personnelService.createPerson(dto);
+    return { data };
   }
 
   @Patch('personnel/:id')
-  updatePerson(
+  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.RESOURCE_MANAGER)
+  async updatePerson(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: Partial<PersonEntity>,
-  ): Promise<PersonEntity> {
-    return this.personnelService.updatePerson(id, body);
+    @Body() dto: UpdatePersonDto,
+  ) {
+    const data = await this.personnelService.updatePerson(id, dto);
+    return { data };
   }
 
   // --- Assignment endpoints ---
 
   @Get('personnel/:personId/assignments')
-  findAssignmentsByPerson(
+  async findAssignmentsByPerson(
     @Param('personId', ParseUUIDPipe) personId: string,
-  ): Promise<ProjectAssignmentEntity[]> {
-    return this.personnelService.findAssignmentsByPerson(personId);
+  ) {
+    const data = await this.personnelService.findAssignmentsByPerson(personId);
+    return { data };
+  }
+
+  @Get('assignments')
+  async findAllActiveAssignments() {
+    const data = await this.personnelService.findAllActiveAssignments();
+    return { data };
   }
 
   @Get('projects/:projectId/assignments')
-  findAssignmentsByProject(
+  async findAssignmentsByProject(
     @Param('projectId', ParseUUIDPipe) projectId: string,
-  ): Promise<ProjectAssignmentEntity[]> {
-    return this.personnelService.findAssignmentsByProject(projectId);
+  ) {
+    const data = await this.personnelService.findAssignmentsByProject(projectId);
+    return { data };
   }
 
   @Post('assignments')
-  createAssignment(
-    @Body() body: Partial<ProjectAssignmentEntity>,
-  ): Promise<ProjectAssignmentEntity> {
-    return this.personnelService.createAssignment(body);
+  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.RESOURCE_MANAGER)
+  async createAssignment(@Body() dto: CreateAssignmentDto) {
+    const data = await this.personnelService.createAssignment(dto);
+    return { data };
   }
 
   @Patch('assignments/:id')
-  updateAssignment(
+  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.RESOURCE_MANAGER)
+  async updateAssignment(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: Partial<ProjectAssignmentEntity>,
-  ): Promise<ProjectAssignmentEntity> {
-    return this.personnelService.updateAssignment(id, body);
+    @Body() dto: UpdateAssignmentDto,
+  ) {
+    const data = await this.personnelService.updateAssignment(id, dto);
+    return { data };
   }
 }

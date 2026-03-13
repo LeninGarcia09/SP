@@ -1,10 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
-import { fetchUsers, fetchUser } from '../lib/api';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { fetchUsers, fetchUser, updateUserRole } from '../lib/api';
+import type { PaginationParams } from '../lib/api';
 
-export function useUsers() {
+export function useUsers(params?: PaginationParams) {
   return useQuery({
-    queryKey: ['users'],
-    queryFn: fetchUsers,
+    queryKey: ['users', params],
+    queryFn: () => fetchUsers(params),
   });
 }
 
@@ -13,5 +14,13 @@ export function useUser(id: string) {
     queryKey: ['users', id],
     queryFn: () => fetchUser(id),
     enabled: !!id,
+  });
+}
+
+export function useUpdateUserRole() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, role }: { id: string; role: string }) => updateUserRole(id, role),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
   });
 }

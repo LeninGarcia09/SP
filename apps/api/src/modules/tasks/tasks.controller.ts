@@ -6,49 +6,64 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   UseGuards,
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { TasksService } from './tasks.service';
-import { TaskEntity } from './task.entity';
+import { CreateTaskDto, UpdateTaskDto } from './dto/task.dto';
+import { PaginationDto } from '../../common/dto/pagination.dto';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { UserRole } from '@bizops/shared';
 
 @ApiTags('Tasks')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 @Controller('projects/:projectId/tasks')
 export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
 
   @Get()
-  findByProject(@Param('projectId', ParseUUIDPipe) projectId: string): Promise<TaskEntity[]> {
-    return this.tasksService.findByProject(projectId);
+  async findByProject(
+    @Param('projectId', ParseUUIDPipe) projectId: string,
+    @Query() query: PaginationDto,
+  ) {
+    return this.tasksService.findByProject(projectId, query);
   }
 
   @Get(':id')
-  findById(@Param('id', ParseUUIDPipe) id: string): Promise<TaskEntity> {
-    return this.tasksService.findById(id);
+  async findById(@Param('id', ParseUUIDPipe) id: string) {
+    const data = await this.tasksService.findById(id);
+    return { data };
   }
 
   @Post()
-  create(
+  @Roles(UserRole.GLOBAL_LEAD, UserRole.PROJECT_LEAD)
+  async create(
     @Param('projectId', ParseUUIDPipe) projectId: string,
-    @Body() body: Partial<TaskEntity>,
-  ): Promise<TaskEntity> {
-    return this.tasksService.create(projectId, body);
+    @Body() dto: CreateTaskDto,
+  ) {
+    const data = await this.tasksService.create(projectId, dto);
+    return { data };
   }
 
   @Patch(':id')
-  update(
+  @Roles(UserRole.GLOBAL_LEAD, UserRole.PROJECT_LEAD, UserRole.PROJECT_PERSONNEL)
+  async update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: Partial<TaskEntity>,
-  ): Promise<TaskEntity> {
-    return this.tasksService.update(id, body);
+    @Body() dto: UpdateTaskDto,
+  ) {
+    const data = await this.tasksService.update(id, dto);
+    return { data };
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    return this.tasksService.remove(id);
+  @Roles(UserRole.GLOBAL_LEAD)
+  async remove(@Param('id', ParseUUIDPipe) id: string) {
+    await this.tasksService.remove(id);
+    return { data: null };
   }
 }

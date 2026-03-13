@@ -11,6 +11,11 @@ import { PersonEntity } from '../modules/personnel/person.entity';
 import { ProjectAssignmentEntity } from '../modules/personnel/project-assignment.entity';
 import { InventoryItemEntity } from '../modules/inventory/inventory-item.entity';
 import { InventoryTransactionEntity } from '../modules/inventory/inventory-transaction.entity';
+import { NotificationEntity } from '../modules/notifications/notification.entity';
+import { SkillEntity } from '../modules/skills/skill.entity';
+import { PersonSkillEntity } from '../modules/skills/person-skill.entity';
+import { ProgramEntity } from '../modules/programs/program.entity';
+import { OpportunityEntity } from '../modules/opportunities/opportunity.entity';
 
 dotenv.config();
 
@@ -29,6 +34,11 @@ export const AppDataSource = new DataSource({
     ProjectAssignmentEntity,
     InventoryItemEntity,
     InventoryTransactionEntity,
+    NotificationEntity,
+    SkillEntity,
+    PersonSkillEntity,
+    ProgramEntity,
+    OpportunityEntity,
   ],
   migrations: ['src/database/migrations/*.ts'],
   synchronize: false,

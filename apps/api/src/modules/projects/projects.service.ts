@@ -1,41 +1,130 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { ProjectEntity } from './project.entity';
-import { CreateProjectDto, UpdateProjectDto } from '@bizops/shared';
+import { ProjectMemberEntity } from './project-member.entity';
+import { ProjectNoteEntity } from './project-note.entity';
+import { CreateProjectDto, UpdateProjectDto } from './dto/project.dto';
+import { AddProjectMemberDto, UpdateProjectMemberDto } from './dto/project-member.dto';
+import { CreateProjectNoteDto, UpdateProjectNoteDto } from './dto/project-note.dto';
+import { PaginationDto, PaginatedResult } from '../../common/dto/pagination.dto';
 
 @Injectable()
 export class ProjectsService {
   constructor(
     @InjectRepository(ProjectEntity)
     private readonly projectRepo: Repository<ProjectEntity>,
+    @InjectRepository(ProjectMemberEntity)
+    private readonly memberRepo: Repository<ProjectMemberEntity>,
+    @InjectRepository(ProjectNoteEntity)
+    private readonly noteRepo: Repository<ProjectNoteEntity>,
   ) {}
 
-  findAll() {
-    return this.projectRepo.find({ order: { createdAt: 'DESC' } });
+  async findAll(query: PaginationDto): Promise<PaginatedResult<ProjectEntity>> {
+    const { page, limit, sortBy, order, search } = query;
+    const skip = (page - 1) * limit;
+
+    const where = search
+      ? [
+          { name: ILike(`%${search}%`) },
+          { code: ILike(`%${search}%`) },
+        ]
+      : undefined;
+
+    const [data, total] = await this.projectRepo.findAndCount({
+      where,
+      order: { [sortBy]: order },
+      skip,
+      take: limit,
+    });
+
+    return {
+      data,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+    };
   }
 
-  async findById(id: string) {
+  async findById(id: string): Promise<ProjectEntity> {
     const project = await this.projectRepo.findOneBy({ id });
     if (!project) throw new NotFoundException(`Project ${id} not found`);
     return project;
   }
 
-  create(dto: CreateProjectDto, createdBy: string) {
-    const code = `PROJ-${Date.now()}`; // TODO: sequential code generation
+  async create(dto: CreateProjectDto, createdBy: string): Promise<ProjectEntity> {
+    // Sequential code: PROJ-YYYY-NNN
+    const year = new Date().getFullYear();
+    const count = await this.projectRepo.count();
+    const code = `PROJ-${year}-${String(count + 1).padStart(3, '0')}`;
     const entity = this.projectRepo.create({ ...dto, code, createdBy });
     return this.projectRepo.save(entity);
   }
 
-  async update(id: string, dto: UpdateProjectDto) {
+  async update(id: string, dto: UpdateProjectDto): Promise<ProjectEntity> {
     const project = await this.findById(id);
     Object.assign(project, dto);
     return this.projectRepo.save(project);
   }
 
-  async softDelete(id: string) {
+  async softDelete(id: string): Promise<ProjectEntity> {
     const project = await this.findById(id);
     project.status = 'CANCELLED' as never;
     return this.projectRepo.save(project);
+  }
+
+  // ─── Members ───
+
+  async findMembers(projectId: string): Promise<ProjectMemberEntity[]> {
+    await this.findById(projectId); // ensure project exists
+    return this.memberRepo.find({ where: { projectId }, order: { joinedAt: 'DESC' } });
+  }
+
+  async addMember(projectId: string, dto: AddProjectMemberDto): Promise<ProjectMemberEntity> {
+    await this.findById(projectId);
+    const existing = await this.memberRepo.findOneBy({ projectId, userId: dto.userId });
+    if (existing) throw new ConflictException('User is already a member of this project');
+    const entity = this.memberRepo.create({ projectId, ...dto });
+    return this.memberRepo.save(entity);
+  }
+
+  async updateMemberRole(memberId: string, dto: UpdateProjectMemberDto): Promise<ProjectMemberEntity> {
+    const member = await this.memberRepo.findOneBy({ id: memberId });
+    if (!member) throw new NotFoundException(`Member ${memberId} not found`);
+    member.role = dto.role;
+    return this.memberRepo.save(member);
+  }
+
+  async removeMember(memberId: string): Promise<void> {
+    const member = await this.memberRepo.findOneBy({ id: memberId });
+    if (!member) throw new NotFoundException(`Member ${memberId} not found`);
+    await this.memberRepo.remove(member);
+  }
+
+  // ─── Notes ───
+
+  async findNotes(projectId: string): Promise<ProjectNoteEntity[]> {
+    await this.findById(projectId);
+    return this.noteRepo.find({
+      where: { projectId },
+      order: { isPinned: 'DESC', createdAt: 'DESC' },
+    });
+  }
+
+  async createNote(projectId: string, dto: CreateProjectNoteDto, authorId: string): Promise<ProjectNoteEntity> {
+    await this.findById(projectId);
+    const entity = this.noteRepo.create({ projectId, authorId, ...dto });
+    return this.noteRepo.save(entity);
+  }
+
+  async updateNote(noteId: string, dto: UpdateProjectNoteDto): Promise<ProjectNoteEntity> {
+    const note = await this.noteRepo.findOneBy({ id: noteId });
+    if (!note) throw new NotFoundException(`Note ${noteId} not found`);
+    Object.assign(note, dto);
+    return this.noteRepo.save(note);
+  }
+
+  async deleteNote(noteId: string): Promise<void> {
+    const note = await this.noteRepo.findOneBy({ id: noteId });
+    if (!note) throw new NotFoundException(`Note ${noteId} not found`);
+    await this.noteRepo.remove(note);
   }
 }
