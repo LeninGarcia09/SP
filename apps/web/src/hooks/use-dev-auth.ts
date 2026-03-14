@@ -11,19 +11,29 @@ export function useDevAuth() {
   const setAuth = useAuthStore((s) => s.setAuth);
 
   useEffect(() => {
-    // Always fetch a fresh token on mount to avoid stale/expired tokens
-    api.post('/auth/dev-login')
-      .then((res) => {
-        const data = res.data?.data;
-        if (data?.access_token && data?.user) {
-          setAuth(data.user, data.access_token);
-        }
-        setReady(true);
-      })
-      .catch((err) => {
-        console.error('Dev auto-login failed:', err);
-        setReady(true);
-      });
+    let cancelled = false;
+    const attempt = (retries: number) => {
+      api.post('/auth/dev-login')
+        .then((res) => {
+          if (cancelled) return;
+          const data = res.data?.data;
+          if (data?.access_token && data?.user) {
+            setAuth(data.user, data.access_token);
+          }
+          setReady(true);
+        })
+        .catch((err) => {
+          if (cancelled) return;
+          if (retries > 0) {
+            setTimeout(() => attempt(retries - 1), 2000);
+          } else {
+            console.error('Dev auto-login failed:', err);
+            setReady(true);
+          }
+        });
+    };
+    attempt(3);
+    return () => { cancelled = true; };
   }, [setAuth]);
 
   return ready;

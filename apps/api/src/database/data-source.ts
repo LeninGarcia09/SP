@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
+import * as path from 'path';
 import * as dotenv from 'dotenv';
 import { UserEntity } from '../modules/users/user.entity';
 import { ProjectEntity } from '../modules/projects/project.entity';
@@ -40,7 +41,7 @@ export const AppDataSource = new DataSource({
     ProgramEntity,
     OpportunityEntity,
   ],
-  migrations: ['src/database/migrations/*.ts'],
-  synchronize: false,
+  migrations: [path.join(__dirname, 'migrations', '*{.ts,.js}')],
+  synchronize: process.env.TYPEORM_SYNC === 'true',
   logging: ['error'],
 });
