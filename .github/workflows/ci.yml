@@ -9,6 +9,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -37,6 +38,8 @@ jobs:
 
       - name: Build Web
         run: npm run build:web
+        env:
+          VITE_API_BASE_URL: http://localhost:3000/api/v1
 
       - name: Run API tests
         run: npm test --workspace=apps/api
