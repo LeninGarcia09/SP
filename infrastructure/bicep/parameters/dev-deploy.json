@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment": {
+      "value": "dev"
+    },
+    "swaLocation": {
+      "value": "centralus"
+    },
+    "baseName": {
+      "value": "bizops"
+    },
+    "dbAdminLogin": {
+      "value": "bizopsadmin"
+    },
+    "dbAdminPassword": {
+      "value": "BizOps2026xDev9Pwd"
+    },
+    "jwtSecret": {
+      "value": "xK9mR4tL7vB2wQ5nE8pY1cJ6aU3hG0fD9sZ2kN5oT8rW1yM"
+    },
+    "apiImageTag": {
+      "value": "latest"
+    }
+  }
+}

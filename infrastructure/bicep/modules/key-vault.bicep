@@ -5,6 +5,7 @@ param name string
 param location string
 
 @description('Secrets to store as key-value pairs')
+@secure()
 param secrets object = {}
 
 resource vault 'Microsoft.KeyVault/vaults@2023-07-01' = {

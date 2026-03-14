@@ -10,6 +10,13 @@ param containerAppEnvironmentId string
 @description('Container registry server (e.g. myacr.azurecr.io)')
 param containerRegistryServer string
 
+@description('Container registry username')
+param containerRegistryUsername string
+
+@secure()
+@description('Container registry password')
+param containerRegistryPassword string
+
 @description('Full container image reference (e.g. myacr.azurecr.io/bizops-api:latest)')
 param containerImage string
 
@@ -49,14 +56,14 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
       registries: [
         {
           server: containerRegistryServer
-          username: split(containerRegistryServer, '.')[0]
+          username: containerRegistryUsername
           passwordSecretRef: 'acr-password'
         }
       ]
       secrets: concat(secrets, [
         {
           name: 'acr-password'
-          value: '' // Set via deployment script or managed identity
+          value: containerRegistryPassword
         }
       ])
     }
