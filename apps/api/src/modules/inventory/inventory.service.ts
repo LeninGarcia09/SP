@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ILike, Repository } from 'typeorm';
-import * as XLSX from 'xlsx';
+import * as ExcelJS from 'exceljs';
 import { InventoryItemEntity } from './inventory-item.entity';
 import { InventoryTransactionEntity } from './inventory-transaction.entity';
 import {
@@ -90,16 +90,29 @@ export class InventoryService {
     skipped: number;
     errors: string[];
   }> {
-    const workbook = XLSX.read(buffer, { type: 'buffer' });
-    const sheetName = workbook.SheetNames[0];
-    if (!sheetName) {
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(buffer as unknown as ArrayBuffer);
+    const sheet = workbook.worksheets[0];
+    if (!sheet) {
       throw new BadRequestException('Excel file contains no sheets');
     }
-    const sheet = workbook.Sheets[sheetName];
-    if (!sheet) {
-      throw new BadRequestException('Could not read the first sheet');
-    }
-    const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet);
+    const rows: Record<string, unknown>[] = [];
+    const headers: string[] = [];
+    sheet.eachRow((row, rowNumber) => {
+      if (rowNumber === 1) {
+        row.eachCell((cell, colNumber) => {
+          headers[colNumber] = String(cell.value ?? '');
+        });
+      } else {
+        const obj: Record<string, unknown> = {};
+        row.eachCell((cell, colNumber) => {
+          if (headers[colNumber]) {
+            obj[headers[colNumber]] = cell.value;
+          }
+        });
+        rows.push(obj);
+      }
+    });
     if (rows.length === 0) {
       throw new BadRequestException('Excel sheet is empty');
     }
