@@ -13,10 +13,20 @@ if (aiConnStr) {
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { DataSource } from 'typeorm';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Run pending migrations automatically on startup
+  const dataSource = app.get(DataSource);
+  const pending = await dataSource.showMigrations();
+  if (pending) {
+    console.log('⏳ Running pending database migrations…');
+    await dataSource.runMigrations();
+    console.log('✅ Migrations complete');
+  }
 
   app.setGlobalPrefix('api/v1');
 

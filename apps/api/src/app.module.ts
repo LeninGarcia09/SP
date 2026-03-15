@@ -5,6 +5,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { CacheModule } from '@nestjs/cache-manager';
 import KeyvRedis from '@keyv/redis';
 import Keyv from 'keyv';
+import * as path from 'path';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { ProjectsModule } from './modules/projects/projects.module';
@@ -35,6 +36,8 @@ import { SystemController } from './common/system.controller';
         ssl: config.get<string>('DATABASE_SSL') === 'true' ? { rejectUnauthorized: false } : false,
         autoLoadEntities: true,
         synchronize: false, // NEVER true in production — use migrations
+        migrations: [path.join(__dirname, 'database', 'migrations', '*{.ts,.js}')],
+        migrationsTableName: 'migrations',
         logging: config.get<string>('NODE_ENV') === 'development' ? ['query', 'error'] : ['error'],
       }),
     }),
@@ -70,6 +73,6 @@ import { SystemController } from './common/system.controller';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(RequestLoggerMiddleware).forRoutes('*');
+    consumer.apply(RequestLoggerMiddleware).forRoutes('*path');
   }
 }

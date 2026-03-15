@@ -18,6 +18,10 @@
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\""
   },
+  "dependencies": {
+    "class-validator": "^0.15.1",
+    "class-transformer": "^0.5.1"
+  },
   "engines": {
     "node": ">=22.0.0"
   }
