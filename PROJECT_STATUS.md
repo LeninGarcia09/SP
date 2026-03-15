@@ -1,7 +1,7 @@
 # BizOps Platform — Project Status & Context
 
 > **Purpose:** Quick-reference for AI agents resuming work on this project.
-> **Last updated:** 2026-07-22
+> **Last updated:** 2026-03-14
 > **Full spec:** See `CLAUDE.md` in this same directory for complete data model, RBAC, API conventions.
 
 ---
@@ -61,6 +61,17 @@
 - [x] Environment validation updated (APPLICATIONINSIGHTS_CONNECTION_STRING, REDIS_URL)
 - [ ] Azure AD full MSAL integration (requires tenant config — deferred)
 - [ ] Production monitoring & alerting dashboards (deferred)
+
+### Phase 5 — CI/CD Pipeline ✅
+- [x] Azure Service Principal (`bizops-github-actions`) with Contributor role on resource group
+- [x] Key Vault Secrets Officer role for user (read secrets via `az keyvault`)
+- [x] 10 GitHub Actions secrets configured (AZURE_CREDENTIALS, ACR_*, CONTAINER_APP_NAME, SWA token, API_BASE_URL, DB_ADMIN_PASSWORD, JWT_SECRET)
+- [x] CI workflow passing — build shared + API + web, unit tests
+- [x] Deploy API workflow passing — Docker build → ACR push → Container App update
+- [x] Deploy Web workflow passing — npm build → Azure Static Web Apps deploy
+- [x] Deploy Infrastructure workflow available (Bicep validate + deploy)
+- [x] `workflow_dispatch` trigger added to CI for manual runs
+- [x] `VITE_API_BASE_URL` env var added to CI web build step
 
 ---
 
