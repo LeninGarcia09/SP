@@ -26,6 +26,8 @@ export const createProjectSchema = z.object({
   startDate: z.string().date(),
   endDate: z.string().date(),
   budget: z.number().nonnegative().default(0),
+  actualCost: z.number().nonnegative().default(0),
+  costRate: z.number().nonnegative().default(0),
   projectLeadId: z.string().uuid(),
   metadata: z.record(z.unknown()).default({}),
 });

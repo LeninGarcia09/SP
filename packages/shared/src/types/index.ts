@@ -48,6 +48,8 @@ export interface Project {
   startDate: string;
   endDate: string;
   budget: number;
+  actualCost: number;
+  costRate: number;
   programId: string | null;
   projectLeadId: string;
   createdBy: string;
@@ -311,6 +313,8 @@ export interface Program {
   createdAt: string;
   updatedAt: string;
   projects?: Project[];
+  totalBudget?: number;
+  totalActualCost?: number;
 }
 
 // ─── Opportunities ───

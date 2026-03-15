@@ -13,6 +13,8 @@ function makeProject(overrides: Partial<ProjectEntity> = {}): ProjectEntity {
     startDate: '2026-01-01',
     endDate: '2026-12-31',
     budget: 100,
+    actualCost: 0,
+    costRate: 0,
     programId: null,
     projectLeadId: 'user-1',
     createdBy: 'user-1',
@@ -174,35 +176,57 @@ describe('RagEngine', () => {
       expect(result.budgetRag).toBe('GRAY');
     });
 
-    it('returns GREEN when spend ≤ 90% of budget', () => {
-      const project = makeProject({ budget: 100 });
+    it('returns GRAY when budget set but no cost data available', () => {
+      const project = makeProject({ budget: 100, actualCost: 0, costRate: 0 });
       const tasks = [makeTask({ actualHours: 80 })];
+      const result = engine.calculate(project, tasks);
+      expect(result.budgetRag).toBe('GRAY');
+    });
+
+    it('returns GREEN when actualCost ≤ 90% of budget', () => {
+      const project = makeProject({ budget: 100, actualCost: 80 });
+      const result = engine.calculate(project, []);
+      expect(result.budgetRag).toBe('GREEN');
+    });
+
+    it('returns AMBER when actualCost is 90-100% of budget', () => {
+      const project = makeProject({ budget: 100, actualCost: 95 });
+      const result = engine.calculate(project, []);
+      expect(result.budgetRag).toBe('AMBER');
+    });
+
+    it('returns RED when actualCost > 100% of budget', () => {
+      const project = makeProject({ budget: 100, actualCost: 110 });
+      const result = engine.calculate(project, []);
+      expect(result.budgetRag).toBe('RED');
+    });
+
+    it('derives cost from hours * costRate when no actualCost', () => {
+      const project = makeProject({ budget: 1000, actualCost: 0, costRate: 50 });
+      const tasks = [makeTask({ actualHours: 16 })]; // 16 * 50 = 800 → 80% → GREEN
       const result = engine.calculate(project, tasks);
       expect(result.budgetRag).toBe('GREEN');
     });
 
-    it('returns AMBER when spend is 90-100% of budget', () => {
-      const project = makeProject({ budget: 100 });
-      const tasks = [makeTask({ actualHours: 95 })];
+    it('returns AMBER when derived cost is 90-100% of budget', () => {
+      const project = makeProject({ budget: 1000, actualCost: 0, costRate: 50 });
+      const tasks = [makeTask({ actualHours: 19 })]; // 19 * 50 = 950 → 95% → AMBER
       const result = engine.calculate(project, tasks);
       expect(result.budgetRag).toBe('AMBER');
     });
 
-    it('returns RED when spend > 100% of budget', () => {
-      const project = makeProject({ budget: 100 });
-      const tasks = [makeTask({ actualHours: 110 })];
+    it('returns RED when derived cost exceeds budget', () => {
+      const project = makeProject({ budget: 1000, actualCost: 0, costRate: 50 });
+      const tasks = [makeTask({ actualHours: 22 })]; // 22 * 50 = 1100 → 110% → RED
       const result = engine.calculate(project, tasks);
       expect(result.budgetRag).toBe('RED');
     });
 
-    it('sums actualHours across multiple tasks', () => {
-      const project = makeProject({ budget: 100 });
-      const tasks = [
-        makeTask({ id: 't1', actualHours: 50 }),
-        makeTask({ id: 't2', actualHours: 45 }),
-      ];
+    it('prefers actualCost over derived cost when both available', () => {
+      const project = makeProject({ budget: 1000, actualCost: 500, costRate: 50 });
+      const tasks = [makeTask({ actualHours: 100 })]; // derived = 5000 but actualCost = 500 wins
       const result = engine.calculate(project, tasks);
-      expect(result.budgetRag).toBe('AMBER'); // 95/100 = 95%
+      expect(result.budgetRag).toBe('GREEN'); // 500/1000 = 50%
     });
   });
 
@@ -211,8 +235,8 @@ describe('RagEngine', () => {
   describe('Overall RAG', () => {
     it('returns worst of schedule and budget RAGs', () => {
       // Schedule GREEN, Budget RED → overall RED
-      const project = makeProject({ status: ProjectStatus.ACTIVE, budget: 100 });
-      const tasks = [makeTask({ actualHours: 110, dueDate: FUTURE, status: 'TODO' })];
+      const project = makeProject({ status: ProjectStatus.ACTIVE, budget: 100, actualCost: 110 });
+      const tasks = [makeTask({ dueDate: FUTURE, status: 'TODO' })];
       const result = engine.calculate(project, tasks);
       expect(result.scheduleRag).toBe('GREEN');
       expect(result.budgetRag).toBe('RED');
@@ -220,8 +244,8 @@ describe('RagEngine', () => {
     });
 
     it('returns GREEN when both sub-RAGs are GREEN', () => {
-      const project = makeProject({ status: ProjectStatus.ACTIVE, budget: 100 });
-      const tasks = [makeTask({ actualHours: 50, dueDate: FUTURE, status: 'TODO' })];
+      const project = makeProject({ status: ProjectStatus.ACTIVE, budget: 100, actualCost: 50 });
+      const tasks = [makeTask({ dueDate: FUTURE, status: 'TODO' })];
       const result = engine.calculate(project, tasks);
       expect(result.overallRag).toBe('GREEN');
     });

@@ -223,7 +223,7 @@ export function ProjectDetailPage() {
       <ProjectFormDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} project={p} />
 
       {/* Info Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div className="rounded-lg border p-4">
           <p className="text-xs text-muted-foreground mb-1">{t('common.startDate')}</p>
           <p className="font-medium">{p.startDate}</p>
@@ -235,6 +235,15 @@ export function ProjectDetailPage() {
         <div className="rounded-lg border p-4">
           <p className="text-xs text-muted-foreground mb-1">{t('common.budget')}</p>
           <p className="font-medium">${Number(p.budget).toLocaleString()}</p>
+        </div>
+        <div className="rounded-lg border p-4">
+          <p className="text-xs text-muted-foreground mb-1">{t('projects.actualCost')}</p>
+          <p className="font-medium">${Number(p.actualCost).toLocaleString()}</p>
+          {Number(p.budget) > 0 && (
+            <p className="text-xs text-muted-foreground mt-1">
+              {((Number(p.actualCost) / Number(p.budget)) * 100).toFixed(1)}% {t('projects.ofBudget')}
+            </p>
+          )}
         </div>
         <div className="rounded-lg border p-4">
           <p className="text-xs text-muted-foreground mb-1">{t('projects.health')}</p>

@@ -72,10 +72,23 @@ export function ProgramDetailPage() {
       </div>
 
       {/* Details grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
         <div className="rounded-lg border p-4">
           <p className="text-xs text-muted-foreground mb-1">{t('common.budget')}</p>
           <p className="text-lg font-semibold">${Number(p.budget).toLocaleString()}</p>
+        </div>
+        <div className="rounded-lg border p-4">
+          <p className="text-xs text-muted-foreground mb-1">{t('programs.totalBudget')}</p>
+          <p className="text-lg font-semibold">${Number(p.totalBudget ?? 0).toLocaleString()}</p>
+        </div>
+        <div className="rounded-lg border p-4">
+          <p className="text-xs text-muted-foreground mb-1">{t('programs.totalActualCost')}</p>
+          <p className="text-lg font-semibold">${Number(p.totalActualCost ?? 0).toLocaleString()}</p>
+          {Number(p.totalBudget ?? 0) > 0 && (
+            <p className="text-xs text-muted-foreground mt-1">
+              {((Number(p.totalActualCost ?? 0) / Number(p.totalBudget)) * 100).toFixed(1)}% {t('projects.ofBudget')}
+            </p>
+          )}
         </div>
         <div className="rounded-lg border p-4">
           <p className="text-xs text-muted-foreground mb-1">{t('common.startDate')}</p>
@@ -84,10 +97,6 @@ export function ProgramDetailPage() {
         <div className="rounded-lg border p-4">
           <p className="text-xs text-muted-foreground mb-1">{t('common.endDate')}</p>
           <p className="text-lg font-semibold">{p.endDate ?? t('common.noData')}</p>
-        </div>
-        <div className="rounded-lg border p-4">
-          <p className="text-xs text-muted-foreground mb-1">{t('projects.title')}</p>
-          <p className="text-lg font-semibold">{p.projects?.length ?? 0}</p>
         </div>
       </div>
 
@@ -122,6 +131,7 @@ export function ProgramDetailPage() {
                   <th className="text-left p-3 font-medium">{t('common.name')}</th>
                   <th className="text-left p-3 font-medium">{t('common.status')}</th>
                   <th className="text-left p-3 font-medium">{t('common.budget')}</th>
+                  <th className="text-left p-3 font-medium">{t('projects.actualCost')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -139,6 +149,7 @@ export function ProgramDetailPage() {
                       </span>
                     </td>
                     <td className="p-3">${Number(proj.budget).toLocaleString()}</td>
+                    <td className="p-3">${Number(proj.actualCost).toLocaleString()}</td>
                   </tr>
                 ))}
               </tbody>

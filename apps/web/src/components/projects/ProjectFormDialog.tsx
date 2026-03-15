@@ -32,6 +32,8 @@ const projectFormSchema = z.object({
   startDate: z.string().min(1, 'Start date is required'),
   endDate: z.string().min(1, 'End date is required'),
   budget: z.coerce.number().nonnegative('Budget must be non-negative'),
+  actualCost: z.coerce.number().nonnegative('Actual cost must be non-negative'),
+  costRate: z.coerce.number().nonnegative('Cost rate must be non-negative'),
 });
 
 type ProjectFormValues = z.infer<typeof projectFormSchema>;
@@ -58,6 +60,8 @@ export function ProjectFormDialog({ open, onOpenChange, project }: ProjectFormDi
           startDate: project.startDate,
           endDate: project.endDate,
           budget: Number(project.budget),
+          actualCost: Number(project.actualCost),
+          costRate: Number(project.costRate),
         }
       : {
           name: '',
@@ -66,6 +70,8 @@ export function ProjectFormDialog({ open, onOpenChange, project }: ProjectFormDi
           startDate: '',
           endDate: '',
           budget: 0,
+          actualCost: 0,
+          costRate: 0,
         },
   });
 
@@ -147,6 +153,23 @@ export function ProjectFormDialog({ open, onOpenChange, project }: ProjectFormDi
             {form.formState.errors.budget && (
               <p className="text-sm text-destructive">{form.formState.errors.budget.message}</p>
             )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="actualCost">{t('projectForm.actualCostLabel')}</Label>
+              <Input id="actualCost" type="number" step="0.01" min="0" {...form.register('actualCost')} />
+              {form.formState.errors.actualCost && (
+                <p className="text-sm text-destructive">{form.formState.errors.actualCost.message}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="costRate">{t('projectForm.costRateLabel')}</Label>
+              <Input id="costRate" type="number" step="0.01" min="0" {...form.register('costRate')} />
+              {form.formState.errors.costRate && (
+                <p className="text-sm text-destructive">{form.formState.errors.costRate.message}</p>
+              )}
+            </div>
           </div>
 
           <DialogFooter>

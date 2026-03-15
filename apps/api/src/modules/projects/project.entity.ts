@@ -34,6 +34,12 @@ export class ProjectEntity {
   @Column({ type: 'decimal', precision: 15, scale: 2, default: 0 })
   budget!: number;
 
+  @Column({ type: 'decimal', precision: 15, scale: 2, default: 0 })
+  actualCost!: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  costRate!: number;
+
   @Column({ type: 'uuid', nullable: true })
   programId!: string | null;
 

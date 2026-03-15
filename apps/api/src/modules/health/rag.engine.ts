@@ -74,10 +74,21 @@ export class RagEngine {
     if (!project.budget || Number(project.budget) === 0) return 'GRAY';
 
     const budget = Number(project.budget);
-    const actualSpend = tasks.reduce((sum, t) => sum + Number(t.actualHours || 0), 0);
+    const costRate = Number(project.costRate || 0);
 
-    // For Phase 1 we approximate cost via hours — real cost tracking comes later
-    // Using actualHours as a proxy; in Phase 2 this will use actual dollar amounts
+    let actualSpend: number;
+    if (Number(project.actualCost) > 0) {
+      // Use explicitly tracked actual cost
+      actualSpend = Number(project.actualCost);
+    } else if (costRate > 0) {
+      // Derive cost from task hours * costRate
+      const totalHours = tasks.reduce((sum, t) => sum + Number(t.actualHours || 0), 0);
+      actualSpend = totalHours * costRate;
+    } else {
+      // No cost data available
+      return 'GRAY';
+    }
+
     const spendRatio = actualSpend / budget;
 
     if (spendRatio > 1.0) return 'RED';

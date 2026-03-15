@@ -45,6 +45,18 @@ export class CreateProjectDto {
   @IsOptional()
   budget?: number;
 
+  @ApiPropertyOptional({ default: 0, minimum: 0, description: 'Actual cost spent on the project' })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  actualCost?: number;
+
+  @ApiPropertyOptional({ default: 0, minimum: 0, description: 'Hourly cost rate for converting task hours to dollars' })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  costRate?: number;
+
   @ApiProperty({ format: 'uuid' })
   @IsUUID()
   projectLeadId: string;
@@ -89,6 +101,18 @@ export class UpdateProjectDto {
   @Min(0)
   @IsOptional()
   budget?: number;
+
+  @ApiPropertyOptional({ minimum: 0, description: 'Actual cost spent on the project' })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  actualCost?: number;
+
+  @ApiPropertyOptional({ minimum: 0, description: 'Hourly cost rate for converting task hours to dollars' })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  costRate?: number;
 
   @ApiPropertyOptional({ format: 'uuid' })
   @IsUUID()

@@ -36,13 +36,18 @@ export class ProgramsService {
     };
   }
 
-  async findById(id: string): Promise<ProgramEntity> {
+  async findById(id: string): Promise<ProgramEntity & { totalBudget: number; totalActualCost: number }> {
     const program = await this.programRepo.findOne({
       where: { id },
       relations: ['projects'],
     });
     if (!program) throw new NotFoundException(`Program ${id} not found`);
-    return program;
+
+    const projects = program.projects ?? [];
+    const totalBudget = projects.reduce((sum, p) => sum + Number(p.budget || 0), 0);
+    const totalActualCost = projects.reduce((sum, p) => sum + Number(p.actualCost || 0), 0);
+
+    return Object.assign(program, { totalBudget, totalActualCost });
   }
 
   async create(dto: CreateProgramDto, createdBy: string): Promise<ProgramEntity> {

@@ -116,7 +116,10 @@
     "assignments": "Assignments",
     "addAssignment": "Add Assignment",
     "gantt": "Gantt",
-    "noGantt": "Set start and end dates to see the Gantt chart."
+    "noGantt": "Set start and end dates to see the Gantt chart.",
+    "actualCost": "Actual Cost",
+    "ofBudget": "of budget",
+    "costRate": "Cost Rate ($/hr)"
   },
   "projectForm": {
     "editTitle": "Edit Project",
@@ -131,6 +134,8 @@
     "startDateLabel": "Start Date",
     "endDateLabel": "End Date",
     "budgetLabel": "Budget ($)",
+    "actualCostLabel": "Actual Cost ($)",
+    "costRateLabel": "Cost Rate ($/hr)",
     "programLabel": "Program",
     "createBtn": "Create Project",
     "saveBtn": "Save Changes",
@@ -146,7 +151,9 @@
     "projectsInProgram": "Projects in this Program",
     "noProjects": "No projects linked to this program yet. Assign projects by editing them and setting their program.",
     "timeline": "Timeline",
-    "noTimeline": "No projects with date ranges to display."
+    "noTimeline": "No projects with date ranges to display.",
+    "totalBudget": "Total Budget (Projects)",
+    "totalActualCost": "Total Actual Cost"
   },
   "programForm": {
     "editTitle": "Edit Program",
