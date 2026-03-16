@@ -45,3 +45,70 @@ jobs:
 
       - name: Run API tests
         run: npm test --workspace=apps/api
+
+  e2e-tests:
+    name: Playwright E2E
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: bizops
+          POSTGRES_PASSWORD: bizops_dev_password
+          POSTGRES_DB: bizops_dev
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build shared package
+        run: npm run build:shared
+
+      - name: Build API
+        run: npm run build:api
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+        working-directory: apps/web
+
+      - name: Run Playwright E2E tests
+        run: npx playwright test
+        working-directory: apps/web
+        env:
+          DATABASE_URL: postgresql://bizops:bizops_dev_password@localhost:5432/bizops_dev
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: ci-test-secret
+          NODE_ENV: development
+          TYPEORM_SYNC: "true"
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7
