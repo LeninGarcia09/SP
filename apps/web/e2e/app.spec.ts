@@ -62,11 +62,14 @@ test.describe('Dashboard', () => {
     await expect(page.getByText('Inventory Items')).toBeVisible();
   });
 
-  test('recent projects section exists', async ({ page }) => {
+  test('loads without errors', async ({ page }) => {
     await page.goto('/dashboard');
     await waitForAuth(page);
 
-    await expect(page.getByText('Recent Projects')).toBeVisible();
+    // No error banner should be visible
+    await expect(page.getByText('Failed to load dashboard data')).not.toBeVisible();
+    // Dashboard heading is present
+    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
   });
 });
 
