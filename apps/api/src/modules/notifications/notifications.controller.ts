@@ -11,7 +11,8 @@ import {
   HttpStatus,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service';
 import { CreateNotificationDto, MarkReadDto } from './dto/notification.dto';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -19,8 +20,9 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '@bizops/shared';
 
 @ApiTags('notifications')
+@ApiBearerAuth()
 @Controller('notifications')
-@UseGuards(RolesGuard)
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 export class NotificationsController {
   constructor(private readonly service: NotificationsService) {}
 
