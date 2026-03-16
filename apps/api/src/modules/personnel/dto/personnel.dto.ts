@@ -46,9 +46,10 @@ export class CreatePersonDto {
   @MaxLength(200)
   jobTitle: string;
 
-  @ApiProperty({ format: 'uuid' })
+  @ApiPropertyOptional({ format: 'uuid' })
   @IsUUID()
-  departmentId: string;
+  @IsOptional()
+  departmentId?: string;
 
   @ApiPropertyOptional({ enum: AssignmentStatus, default: AssignmentStatus.ON_BENCH })
   @IsEnum(AssignmentStatus)

@@ -76,8 +76,9 @@ export class InventoryService {
   async createTransaction(
     itemId: string,
     dto: CreateInventoryTransactionDto,
+    performedById: string,
   ): Promise<InventoryTransactionEntity> {
-    const transaction = this.transactionRepo.create({ ...dto, itemId });
+    const transaction = this.transactionRepo.create({ ...dto, itemId, performedById });
     return this.transactionRepo.save(transaction);
   }
 

@@ -11,6 +11,7 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  Request,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
@@ -72,8 +73,9 @@ export class InventoryController {
   async createTransaction(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: CreateInventoryTransactionDto,
+    @Request() req: { user: { sub: string } },
   ) {
-    const data = await this.inventoryService.createTransaction(id, dto);
+    const data = await this.inventoryService.createTransaction(id, dto, req.user.sub);
     return { data };
   }
 

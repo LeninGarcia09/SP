@@ -65,6 +65,11 @@ export class CreateProjectDto {
   @IsObject()
   @IsOptional()
   metadata?: Record<string, unknown>;
+
+  @ApiPropertyOptional({ format: 'uuid', description: 'Program this project belongs to' })
+  @IsUUID()
+  @IsOptional()
+  programId?: string;
 }
 
 export class UpdateProjectDto {
@@ -123,4 +128,9 @@ export class UpdateProjectDto {
   @IsObject()
   @IsOptional()
   metadata?: Record<string, unknown>;
+
+  @ApiPropertyOptional({ format: 'uuid', description: 'Program this project belongs to' })
+  @IsUUID()
+  @IsOptional()
+  programId?: string;
 }
