@@ -75,8 +75,8 @@ export function ProjectDetailPage() {
   const createNote = useCreateProjectNote(id!);
   const updateNote = useUpdateProjectNote(id!);
   const deleteNote = useDeleteProjectNote(id!);
-  const usersQuery = useUsers({ limit: 200 });
-  const personnelQuery = usePersonnel({ limit: 200 });
+  const usersQuery = useUsers({ limit: 100 });
+  const personnelQuery = usePersonnel({ limit: 100 });
 
   // Build searchable assignee options from users + personnel
   const assigneeOptions = useMemo<ComboboxOption[]>(() => {
