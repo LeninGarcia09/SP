@@ -103,12 +103,13 @@ export function Combobox({
         zIndex: 9999,
       }}
       className="rounded-md border border-gray-200 bg-white shadow-xl max-h-60 overflow-y-auto dark:bg-gray-900 dark:border-gray-700"
+      onPointerDown={(e) => e.stopPropagation()}
     >
       {/* Clear option */}
       <button
         type="button"
         className="w-full px-3 py-2 text-left text-sm text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-700"
-        onClick={() => handleSelect('')}
+        onMouseDown={(e) => { e.preventDefault(); handleSelect(''); }}
       >
         {emptyLabel}
       </button>
@@ -127,7 +128,7 @@ export function Combobox({
             'w-full px-3 py-2 text-left text-sm hover:bg-blue-50 dark:hover:bg-blue-900/30 flex items-center justify-between border-b border-gray-50 dark:border-gray-800 last:border-0',
             o.value === value && 'bg-blue-50 dark:bg-blue-900/30 font-medium',
           )}
-          onClick={() => handleSelect(o.value)}
+          onMouseDown={(e) => { e.preventDefault(); handleSelect(o.value); }}
         >
           <span className="text-gray-900 dark:text-gray-100">{o.label}</span>
           {o.sublabel && (
