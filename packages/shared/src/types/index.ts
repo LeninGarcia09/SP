@@ -107,12 +107,38 @@ export interface Task {
   status: TaskStatus;
   priority: Priority;
   assigneeId: string | null;
+  createdById: string | null;
   dueDate: string | null;
   estimatedHours: number | null;
   actualHours: number | null;
   parentTaskId: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+// ─── Task Activity (Audit Log) ───
+
+export enum TaskActivityType {
+  CREATED = 'CREATED',
+  STATUS_CHANGED = 'STATUS_CHANGED',
+  ASSIGNED = 'ASSIGNED',
+  UNASSIGNED = 'UNASSIGNED',
+  PRIORITY_CHANGED = 'PRIORITY_CHANGED',
+  DUE_DATE_CHANGED = 'DUE_DATE_CHANGED',
+  COMMENT_ADDED = 'COMMENT_ADDED',
+  UPDATED = 'UPDATED',
+}
+
+export interface TaskActivity {
+  id: string;
+  taskId: string;
+  userId: string;
+  activityType: TaskActivityType;
+  field: string | null;
+  oldValue: string | null;
+  newValue: string | null;
+  comment: string | null;
+  createdAt: string;
 }
 
 // ─── Health Dashboard ───
@@ -234,6 +260,8 @@ export interface InventoryTransaction {
 export enum NotificationType {
   TASK_ASSIGNED = 'TASK_ASSIGNED',
   TASK_STATUS_CHANGED = 'TASK_STATUS_CHANGED',
+  TASK_OVERDUE = 'TASK_OVERDUE',
+  TASK_COMMENT = 'TASK_COMMENT',
   PROJECT_STATUS_CHANGED = 'PROJECT_STATUS_CHANGED',
   RAG_STATUS_CHANGED = 'RAG_STATUS_CHANGED',
   MEMBER_ADDED = 'MEMBER_ADDED',

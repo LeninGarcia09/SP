@@ -4,6 +4,7 @@ import type {
   PaginationMeta,
   Project,
   Task,
+  TaskActivity,
   ProjectHealthSnapshot,
   ProjectNote,
   Person,
@@ -138,6 +139,16 @@ export async function updateTask(projectId: string, taskId: string, body: Record
 
 export async function deleteTask(projectId: string, taskId: string) {
   await api.delete(`/projects/${projectId}/tasks/${taskId}`);
+}
+
+export async function fetchTaskActivities(projectId: string, taskId: string) {
+  const { data } = await api.get<ApiResponse<TaskActivity[]>>(`/projects/${projectId}/tasks/${taskId}/activities`);
+  return data;
+}
+
+export async function addTaskComment(projectId: string, taskId: string, comment: string) {
+  const { data } = await api.post<ApiResponse<TaskActivity>>(`/projects/${projectId}/tasks/${taskId}/comments`, { comment });
+  return data;
 }
 
 // ─── Health ───

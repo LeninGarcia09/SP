@@ -6,8 +6,10 @@ import { useProject, useDeleteProject, useProjectMembers, useAddProjectMember, u
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '../hooks/use-tasks';
 import { useHealthHistory, useTriggerHealth } from '../hooks/use-health';
 import { useAssignmentsByProject, useCreateAssignment } from '../hooks/use-personnel';
+import { useUsers } from '../hooks/use-users';
 import { ProjectFormDialog } from '../components/projects/ProjectFormDialog';
 import { TaskGantt } from '../components/shared/ProjectGantt';
+import { TaskActivityTimeline } from '../components/tasks/TaskActivityTimeline';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -73,6 +75,7 @@ export function ProjectDetailPage() {
   const createNote = useCreateProjectNote(id!);
   const updateNote = useUpdateProjectNote(id!);
   const deleteNote = useDeleteProjectNote(id!);
+  const usersQuery = useUsers({ limit: 200 });
 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
@@ -87,6 +90,7 @@ export function ProjectDetailPage() {
     description: '',
     status: TaskStatus.TODO as TaskStatus,
     priority: Priority.MEDIUM as Priority,
+    assigneeId: '',
     dueDate: '',
     estimatedHours: '',
     parentTaskId: '',
@@ -130,6 +134,7 @@ export function ProjectDetailPage() {
       description: '',
       status: TaskStatus.TODO,
       priority: Priority.MEDIUM,
+      assigneeId: '',
       dueDate: '',
       estimatedHours: '',
       parentTaskId: '',
@@ -144,6 +149,7 @@ export function ProjectDetailPage() {
       description: task.description,
       status: task.status,
       priority: task.priority,
+      assigneeId: task.assigneeId ?? '',
       dueDate: task.dueDate ?? '',
       estimatedHours: task.estimatedHours?.toString() ?? '',
       parentTaskId: task.parentTaskId ?? '',
@@ -157,6 +163,7 @@ export function ProjectDetailPage() {
       description: taskForm.description,
       status: taskForm.status,
       priority: taskForm.priority,
+      assigneeId: taskForm.assigneeId || null,
       dueDate: taskForm.dueDate || null,
       estimatedHours: taskForm.estimatedHours ? Number(taskForm.estimatedHours) : null,
       parentTaskId: taskForm.parentTaskId || null,
@@ -293,7 +300,7 @@ export function ProjectDetailPage() {
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="text-left p-3 font-medium">{t('projects.taskTitle')}</th>
-                  <th className="text-left p-3 font-medium">{t('projects.parent')}</th>
+                  <th className="text-left p-3 font-medium">{t('tasks.assignee')}</th>
                   <th className="text-left p-3 font-medium">{t('common.status')}</th>
                   <th className="text-left p-3 font-medium">{t('projects.priority')}</th>
                   <th className="text-left p-3 font-medium">{t('projects.dueDate')}</th>
@@ -310,8 +317,8 @@ export function ProjectDetailPage() {
                   >
                     <td className="p-3 font-medium">{task.parentTaskId ? '↳ ' : ''}{task.title}</td>
                     <td className="p-3 text-xs text-muted-foreground">
-                      {task.parentTaskId
-                        ? tasks.data.data.find((t) => t.id === task.parentTaskId)?.title ?? '—'
+                      {task.assigneeId
+                        ? usersQuery.data?.data?.find((u) => u.id === task.assigneeId)?.displayName ?? task.assigneeId.slice(0, 8)
                         : '—'}
                     </td>
                     <td className="p-3">
@@ -648,7 +655,7 @@ export function ProjectDetailPage() {
 
       {/* Task Dialog */}
       <Dialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingTask ? t('common.edit') : t('common.create')}</DialogTitle>
             <DialogDescription>
@@ -672,6 +679,21 @@ export function ProjectDetailPage() {
                 value={taskForm.description}
                 onChange={(e) => setTaskForm((f) => ({ ...f, description: e.target.value }))}
               />
+            </div>
+            <div className="space-y-2">
+              <Label>{t('tasks.assignee')}</Label>
+              <Select
+                value={taskForm.assigneeId}
+                onValueChange={(v) => setTaskForm((f) => ({ ...f, assigneeId: v === '__none__' ? '' : v }))}
+              >
+                <SelectTrigger><SelectValue placeholder={t('tasks.unassigned')} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">{t('tasks.unassigned')}</SelectItem>
+                  {(usersQuery.data?.data ?? []).map((u) => (
+                    <SelectItem key={u.id} value={u.id}>{u.displayName}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -738,6 +760,13 @@ export function ProjectDetailPage() {
                 />
               </div>
             </div>
+
+            {/* Activity Timeline (only when editing) */}
+            {editingTask && (
+              <div className="border-t pt-4">
+                <TaskActivityTimeline projectId={id!} taskId={editingTask.id} />
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setTaskDialogOpen(false)}>{t('common.cancel')}</Button>

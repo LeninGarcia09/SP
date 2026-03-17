@@ -36,6 +36,9 @@ export class TaskEntity {
   @Column({ type: 'uuid', nullable: true })
   assigneeId: string | null;
 
+  @Column({ type: 'uuid', nullable: true })
+  createdById: string | null;
+
   @Column({ type: 'date', nullable: true })
   dueDate: string | null;
 

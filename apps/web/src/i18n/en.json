@@ -472,5 +472,22 @@
     "TRANSFER": "Transfer",
     "MAINTENANCE": "Maintenance",
     "RETIREMENT": "Retirement"
+  },
+  "tasks": {
+    "assignee": "Assignee",
+    "unassigned": "Unassigned",
+    "activityTitle": "Activity & Comments",
+    "commentPlaceholder": "Add a comment… (Ctrl+Enter to send)",
+    "noActivity": "No activity yet.",
+    "activity": {
+      "CREATED": "Task created",
+      "STATUS_CHANGED": "Status changed",
+      "ASSIGNED": "Assigned to",
+      "UNASSIGNED": "Unassigned",
+      "PRIORITY_CHANGED": "Priority changed",
+      "DUE_DATE_CHANGED": "Due date changed",
+      "COMMENT_ADDED": "Comment",
+      "UPDATED": "Updated"
+    }
   }
 }

@@ -3,6 +3,7 @@ import {
   ProjectStatus,
   TaskStatus,
   Priority,
+  TaskActivityType,
   ProjectMemberRole,
   AssetCategory,
   ItemStatus,
@@ -58,6 +59,14 @@ export const updateTaskSchema = createTaskSchema
 
 export type CreateTaskDto = z.infer<typeof createTaskSchema>;
 export type UpdateTaskDto = z.infer<typeof updateTaskSchema>;
+
+// ─── Task Comment Schema ───
+
+export const createTaskCommentSchema = z.object({
+  comment: z.string().min(1).max(5000),
+});
+
+export type CreateTaskCommentDto = z.infer<typeof createTaskCommentSchema>;
 
 // ─── Project Note Schemas ───
 

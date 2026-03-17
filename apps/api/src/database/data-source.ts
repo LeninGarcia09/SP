@@ -7,6 +7,7 @@ import { ProjectEntity } from '../modules/projects/project.entity';
 import { ProjectMemberEntity } from '../modules/projects/project-member.entity';
 import { ProjectNoteEntity } from '../modules/projects/project-note.entity';
 import { TaskEntity } from '../modules/tasks/task.entity';
+import { TaskActivityEntity } from '../modules/tasks/task-activity.entity';
 import { ProjectHealthSnapshotEntity } from '../modules/health/health-snapshot.entity';
 import { PersonEntity } from '../modules/personnel/person.entity';
 import { ProjectAssignmentEntity } from '../modules/personnel/project-assignment.entity';
@@ -30,6 +31,7 @@ export const AppDataSource = new DataSource({
     ProjectMemberEntity,
     ProjectNoteEntity,
     TaskEntity,
+    TaskActivityEntity,
     ProjectHealthSnapshotEntity,
     PersonEntity,
     ProjectAssignmentEntity,

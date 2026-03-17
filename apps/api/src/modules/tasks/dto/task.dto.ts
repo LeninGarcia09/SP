@@ -108,3 +108,11 @@ export class UpdateTaskDto {
   @IsOptional()
   parentTaskId?: string | null;
 }
+
+export class CreateTaskCommentDto {
+  @ApiProperty({ minLength: 1, maxLength: 5000 })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(5000)
+  comment: string;
+}

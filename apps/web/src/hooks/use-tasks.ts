@@ -5,6 +5,8 @@ import {
   createTask,
   updateTask,
   deleteTask,
+  fetchTaskActivities,
+  addTaskComment,
 } from '../lib/api';
 
 export function useTasks(projectId: string) {
@@ -50,6 +52,24 @@ export function useDeleteTask(projectId: string) {
     mutationFn: (taskId: string) => deleteTask(projectId, taskId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['projects', projectId, 'tasks'] });
+    },
+  });
+}
+
+export function useTaskActivities(projectId: string, taskId: string) {
+  return useQuery({
+    queryKey: ['projects', projectId, 'tasks', taskId, 'activities'],
+    queryFn: () => fetchTaskActivities(projectId, taskId),
+    enabled: !!projectId && !!taskId,
+  });
+}
+
+export function useAddTaskComment(projectId: string, taskId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (comment: string) => addTaskComment(projectId, taskId, comment),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['projects', projectId, 'tasks', taskId, 'activities'] });
     },
   });
 }

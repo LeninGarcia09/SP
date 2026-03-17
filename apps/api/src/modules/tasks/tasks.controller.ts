@@ -9,11 +9,12 @@ import {
   Query,
   UseGuards,
   ParseUUIDPipe,
+  Request,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { TasksService } from './tasks.service';
-import { CreateTaskDto, UpdateTaskDto } from './dto/task.dto';
+import { CreateTaskDto, UpdateTaskDto, CreateTaskCommentDto } from './dto/task.dto';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -40,13 +41,31 @@ export class TasksController {
     return { data };
   }
 
+  @Get(':id/activities')
+  async getActivities(@Param('id', ParseUUIDPipe) id: string) {
+    const data = await this.tasksService.getActivities(id);
+    return { data };
+  }
+
   @Post()
   @Roles(UserRole.GLOBAL_LEAD, UserRole.PROJECT_LEAD)
   async create(
     @Param('projectId', ParseUUIDPipe) projectId: string,
     @Body() dto: CreateTaskDto,
+    @Request() req: { user: { sub: string } },
   ) {
-    const data = await this.tasksService.create(projectId, dto);
+    const data = await this.tasksService.create(projectId, dto, req.user.sub);
+    return { data };
+  }
+
+  @Post(':id/comments')
+  @Roles(UserRole.GLOBAL_LEAD, UserRole.PROJECT_LEAD, UserRole.PROJECT_PERSONNEL)
+  async addComment(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CreateTaskCommentDto,
+    @Request() req: { user: { sub: string } },
+  ) {
+    const data = await this.tasksService.addComment(id, req.user.sub, dto.comment);
     return { data };
   }
 
@@ -55,15 +74,19 @@ export class TasksController {
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateTaskDto,
+    @Request() req: { user: { sub: string } },
   ) {
-    const data = await this.tasksService.update(id, dto);
+    const data = await this.tasksService.update(id, dto, req.user.sub);
     return { data };
   }
 
   @Delete(':id')
   @Roles(UserRole.GLOBAL_LEAD)
-  async remove(@Param('id', ParseUUIDPipe) id: string) {
-    await this.tasksService.remove(id);
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: { user: { sub: string } },
+  ) {
+    await this.tasksService.remove(id, req.user.sub);
     return { data: null };
   }
 }
