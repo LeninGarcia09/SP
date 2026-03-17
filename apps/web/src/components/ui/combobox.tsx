@@ -95,6 +95,7 @@ export function Combobox({
   const dropdown = open && rect && createPortal(
     <div
       ref={dropRef}
+      data-combobox-portal
       style={{
         position: 'fixed',
         top: rect.bottom + 4,
@@ -109,7 +110,7 @@ export function Combobox({
       <button
         type="button"
         className="w-full px-3 py-2 text-left text-sm text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-700"
-        onMouseDown={(e) => { e.preventDefault(); handleSelect(''); }}
+        onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); handleSelect(''); }}
       >
         {emptyLabel}
       </button>
@@ -128,7 +129,7 @@ export function Combobox({
             'w-full px-3 py-2 text-left text-sm hover:bg-blue-50 dark:hover:bg-blue-900/30 flex items-center justify-between border-b border-gray-50 dark:border-gray-800 last:border-0',
             o.value === value && 'bg-blue-50 dark:bg-blue-900/30 font-medium',
           )}
-          onMouseDown={(e) => { e.preventDefault(); handleSelect(o.value); }}
+          onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); handleSelect(o.value); }}
         >
           <span className="text-gray-900 dark:text-gray-100">{o.label}</span>
           {o.sublabel && (
