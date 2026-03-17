@@ -102,19 +102,19 @@ export function Combobox({
         width: rect.width,
         zIndex: 9999,
       }}
-      className="rounded-md border bg-popover shadow-lg max-h-60 overflow-y-auto"
+      className="rounded-md border border-gray-200 bg-white shadow-xl max-h-60 overflow-y-auto dark:bg-gray-900 dark:border-gray-700"
     >
       {/* Clear option */}
       <button
         type="button"
-        className="w-full px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted/50 border-b"
+        className="w-full px-3 py-2 text-left text-sm text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-700"
         onClick={() => handleSelect('')}
       >
         {emptyLabel}
       </button>
 
       {filtered.length === 0 && (
-        <div className="px-3 py-2 text-sm text-muted-foreground">
+        <div className="px-3 py-2 text-sm text-gray-400">
           No matches found
         </div>
       )}
@@ -124,14 +124,14 @@ export function Combobox({
           key={o.value}
           type="button"
           className={cn(
-            'w-full px-3 py-2 text-left text-sm hover:bg-muted/50 flex items-center justify-between',
-            o.value === value && 'bg-muted font-medium',
+            'w-full px-3 py-2 text-left text-sm hover:bg-blue-50 dark:hover:bg-blue-900/30 flex items-center justify-between border-b border-gray-50 dark:border-gray-800 last:border-0',
+            o.value === value && 'bg-blue-50 dark:bg-blue-900/30 font-medium',
           )}
           onClick={() => handleSelect(o.value)}
         >
-          <span>{o.label}</span>
+          <span className="text-gray-900 dark:text-gray-100">{o.label}</span>
           {o.sublabel && (
-            <span className="text-xs text-muted-foreground ml-2 truncate">
+            <span className="text-xs text-gray-400 dark:text-gray-500 ml-2 truncate">
               {o.sublabel}
             </span>
           )}
