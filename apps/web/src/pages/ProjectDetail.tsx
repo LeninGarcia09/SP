@@ -5,7 +5,7 @@ import { ArrowLeft, Plus, RefreshCw, Trash2, Pin } from 'lucide-react';
 import { useProject, useDeleteProject, useProjectMembers, useAddProjectMember, useRemoveProjectMember, useProjectNotes, useCreateProjectNote, useUpdateProjectNote, useDeleteProjectNote } from '../hooks/use-projects';
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '../hooks/use-tasks';
 import { useHealthHistory, useTriggerHealth } from '../hooks/use-health';
-import { useAssignmentsByProject, useCreateAssignment, usePersonnel } from '../hooks/use-personnel';
+import { usePersonnel } from '../hooks/use-personnel';
 import { useUsers } from '../hooks/use-users';
 import { ProjectFormDialog } from '../components/projects/ProjectFormDialog';
 import { TaskGantt } from '../components/shared/ProjectGantt';
@@ -68,8 +68,6 @@ export function ProjectDetailPage() {
   const createTask = useCreateTask(id!);
   const updateTask = useUpdateTask(id!);
   const deleteTask = useDeleteTask(id!);
-  const assignments = useAssignmentsByProject(id!);
-  const createAssignment = useCreateAssignment();
   const members = useProjectMembers(id!);
   const addMember = useAddProjectMember();
   const removeMember = useRemoveProjectMember();
@@ -80,18 +78,28 @@ export function ProjectDetailPage() {
   const usersQuery = useUsers({ limit: 200 });
   const personnelQuery = usePersonnel({ limit: 200 });
 
-  // Build searchable assignee options from users + personnel
+  // Build searchable assignee options from users + personnel (prefer firstName+lastName)
   const assigneeOptions = useMemo<ComboboxOption[]>(() => {
     const opts: ComboboxOption[] = [];
     const seen = new Set<string>();
-    // Users first (they have system accounts)
+    // Build personnel name lookup by userId for richer names
+    const personnelByUserId = new Map<string, { firstName: string; lastName: string; email: string }>();
+    for (const p of personnelQuery.data?.data ?? []) {
+      if (p.userId) personnelByUserId.set(p.userId, p);
+    }
+    // Users: prefer firstName+lastName from personnel record when available
     for (const u of usersQuery.data?.data ?? []) {
       if (!seen.has(u.id)) {
         seen.add(u.id);
-        opts.push({ value: u.id, label: u.displayName, sublabel: u.email });
+        const person = personnelByUserId.get(u.id);
+        opts.push({
+          value: u.id,
+          label: person ? `${person.firstName} ${person.lastName}` : u.displayName,
+          sublabel: u.email,
+        });
       }
     }
-    // Personnel who might not be system users
+    // Personnel who are not system users
     for (const p of personnelQuery.data?.data ?? []) {
       if (p.userId && !seen.has(p.userId)) {
         seen.add(p.userId);
@@ -103,7 +111,6 @@ export function ProjectDetailPage() {
 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
-  const [assignmentDialogOpen, setAssignmentDialogOpen] = useState(false);
   const [memberDialogOpen, setMemberDialogOpen] = useState(false);
   const [noteDialogOpen, setNoteDialogOpen] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
@@ -117,16 +124,6 @@ export function ProjectDetailPage() {
     assigneeId: '',
     startDate: '',
     dueDate: '',
-    estimatedHours: '',
-    parentTaskId: '',
-  });
-
-  const [assignmentForm, setAssignmentForm] = useState({
-    personId: '',
-    role: '',
-    allocationPercent: '100',
-    startDate: '',
-    endDate: '',
   });
 
   const [memberForm, setMemberForm] = useState({
@@ -162,8 +159,6 @@ export function ProjectDetailPage() {
       assigneeId: '',
       startDate: '',
       dueDate: '',
-      estimatedHours: '',
-      parentTaskId: '',
     });
     setTaskDialogOpen(true);
   }
@@ -178,8 +173,6 @@ export function ProjectDetailPage() {
       assigneeId: task.assigneeId ?? '',
       startDate: task.startDate ?? '',
       dueDate: task.dueDate ?? '',
-      estimatedHours: task.estimatedHours?.toString() ?? '',
-      parentTaskId: task.parentTaskId ?? '',
     });
     setTaskDialogOpen(true);
   }
@@ -193,8 +186,6 @@ export function ProjectDetailPage() {
       assigneeId: taskForm.assigneeId || null,
       startDate: taskForm.startDate || null,
       dueDate: taskForm.dueDate || null,
-      estimatedHours: taskForm.estimatedHours ? Number(taskForm.estimatedHours) : null,
-      parentTaskId: taskForm.parentTaskId || null,
     };
 
     if (editingTask) {
@@ -214,23 +205,6 @@ export function ProjectDetailPage() {
   async function handleDeleteTask(taskId: string) {
     if (!confirm('Delete this task?')) return;
     await deleteTask.mutateAsync(taskId);
-  }
-
-  function openNewAssignment() {
-    setAssignmentForm({ personId: '', role: '', allocationPercent: '100', startDate: '', endDate: '' });
-    setAssignmentDialogOpen(true);
-  }
-
-  async function handleAssignmentSubmit() {
-    await createAssignment.mutateAsync({
-      personId: assignmentForm.personId,
-      projectId: id!,
-      role: assignmentForm.role,
-      allocationPercent: Number(assignmentForm.allocationPercent),
-      startDate: assignmentForm.startDate,
-      endDate: assignmentForm.endDate || null,
-    });
-    setAssignmentDialogOpen(false);
   }
 
   return (
@@ -346,7 +320,7 @@ export function ProjectDetailPage() {
                     className={`border-b last:border-0 hover:bg-muted/25 cursor-pointer ${isOverdue ? 'bg-red-50' : ''}`}
                     onClick={() => openEditTask(task)}
                   >
-                    <td className="p-3 font-medium">{task.parentTaskId ? '↳ ' : ''}{task.title}</td>
+                    <td className="p-3 font-medium">{task.title}</td>
                     <td className="p-3 text-xs text-muted-foreground">
                       {task.createdById
                         ? assigneeOptions.find((o) => o.value === task.createdById)?.label ?? '—'
@@ -390,63 +364,6 @@ export function ProjectDetailPage() {
         )}
       </div>
 
-      {/* Assignments Section */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold">{t('projects.assignments')}</h3>
-          <Button size="sm" onClick={openNewAssignment}>
-            <Plus className="h-4 w-4 mr-1" /> {t('projects.addAssignment')}
-          </Button>
-        </div>
-
-        {assignments.isLoading && (
-          <div className="rounded-lg border p-4 text-center text-muted-foreground">{t('common.loading')}</div>
-        )}
-
-        {assignments.data?.data && assignments.data.data.length === 0 && (
-          <div className="rounded-lg border p-6 text-center text-muted-foreground">{t('personnel.noAssignments')}</div>
-        )}
-
-        {assignments.data?.data && assignments.data.data.length > 0 && (
-          <div className="rounded-lg border overflow-x-auto">
-            <table className="w-full text-sm min-w-[600px]">
-              <thead>
-                <tr className="border-b bg-muted/50">
-                  <th className="text-left p-3 font-medium">Person ID</th>
-                  <th className="text-left p-3 font-medium">Role</th>
-                  <th className="text-left p-3 font-medium">Allocation</th>
-                  <th className="text-left p-3 font-medium">Start</th>
-                  <th className="text-left p-3 font-medium">End</th>
-                  <th className="text-left p-3 font-medium">Active</th>
-                </tr>
-              </thead>
-              <tbody>
-                {assignments.data.data.map((a) => (
-                  <tr
-                    key={a.id}
-                    className="border-b last:border-0 hover:bg-muted/25 cursor-pointer"
-                    onClick={() => navigate(`/personnel/${a.personId}`)}
-                  >
-                    <td className="p-3 font-mono text-xs">{a.personId}</td>
-                    <td className="p-3">{a.role}</td>
-                    <td className="p-3">{a.allocationPercent}%</td>
-                    <td className="p-3">{a.startDate}</td>
-                    <td className="p-3">{a.endDate ?? t('common.noData')}</td>
-                    <td className="p-3">
-                      <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                        a.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
-                      }`}>
-                        {a.isActive ? t('common.yes') : t('common.no')}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
       {/* Members Section */}
       <div>
         <div className="flex items-center justify-between mb-3">
@@ -472,16 +389,18 @@ export function ProjectDetailPage() {
             <table className="w-full text-sm min-w-[500px]">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  <th className="text-left p-3 font-medium">User ID</th>
-                  <th className="text-left p-3 font-medium">Role</th>
-                  <th className="text-left p-3 font-medium">Joined</th>
+                  <th className="text-left p-3 font-medium">{t('common.name')}</th>
+                  <th className="text-left p-3 font-medium">{t('projects.role')}</th>
+                  <th className="text-left p-3 font-medium">{t('projects.joined')}</th>
                   <th className="text-left p-3 font-medium w-20"></th>
                 </tr>
               </thead>
               <tbody>
                 {members.data.data.map((m) => (
                   <tr key={m.id} className="border-b last:border-0">
-                    <td className="p-3 font-mono text-xs">{m.userId}</td>
+                    <td className="p-3 text-sm">
+                      {assigneeOptions.find((o) => o.value === m.userId)?.label ?? m.userId.slice(0, 8)}
+                    </td>
                     <td className="p-3">
                       <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
                         m.role === ProjectMemberRole.LEAD ? 'bg-purple-100 text-purple-700' :
@@ -787,22 +706,7 @@ export function ProjectDetailPage() {
                 </Select>
               </div>
             </div>
-            <div className="space-y-2">
-              <Label>{t('projects.parent')}</Label>
-              <Select
-                value={taskForm.parentTaskId}
-                onValueChange={(v) => setTaskForm((f) => ({ ...f, parentTaskId: v === '__none__' ? '' : v }))}
-              >
-                <SelectTrigger><SelectValue placeholder={t('tasks.noParent')} /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">{t('tasks.noParent')}</SelectItem>
-                  {(tasks.data?.data ?? []).filter((t) => t.id !== editingTask?.id).map((t) => (
-                    <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="task-start">{t('tasks.startDate')}</Label>
                 <Input
@@ -819,15 +723,6 @@ export function ProjectDetailPage() {
                   type="date"
                   value={taskForm.dueDate}
                   onChange={(e) => setTaskForm((f) => ({ ...f, dueDate: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="task-hours">{t('projects.estHours')}</Label>
-                <Input
-                  id="task-hours"
-                  type="number"
-                  value={taskForm.estimatedHours}
-                  onChange={(e) => setTaskForm((f) => ({ ...f, estimatedHours: e.target.value }))}
                 />
               </div>
             </div>
@@ -851,94 +746,26 @@ export function ProjectDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Assignment Dialog */}
-      <Dialog open={assignmentDialogOpen} onOpenChange={setAssignmentDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>{t('personnel.newAssignment')}</DialogTitle>
-            <DialogDescription>{t('personnel.assignDesc')}</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="assign-person">Person ID</Label>
-              <Input
-                id="assign-person"
-                value={assignmentForm.personId}
-                onChange={(e) => setAssignmentForm((f) => ({ ...f, personId: e.target.value }))}
-                placeholder="UUID of the person"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="assign-role">Role</Label>
-              <Input
-                id="assign-role"
-                value={assignmentForm.role}
-                onChange={(e) => setAssignmentForm((f) => ({ ...f, role: e.target.value }))}
-                placeholder="e.g. Developer, Lead, Analyst"
-              />
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="assign-alloc">Allocation %</Label>
-                <Input
-                  id="assign-alloc"
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={assignmentForm.allocationPercent}
-                  onChange={(e) => setAssignmentForm((f) => ({ ...f, allocationPercent: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="assign-start">Start Date</Label>
-                <Input
-                  id="assign-start"
-                  type="date"
-                  value={assignmentForm.startDate}
-                  onChange={(e) => setAssignmentForm((f) => ({ ...f, startDate: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="assign-end">End Date</Label>
-                <Input
-                  id="assign-end"
-                  type="date"
-                  value={assignmentForm.endDate}
-                  onChange={(e) => setAssignmentForm((f) => ({ ...f, endDate: e.target.value }))}
-                />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAssignmentDialogOpen(false)}>{t('common.cancel')}</Button>
-            <Button
-              onClick={handleAssignmentSubmit}
-              disabled={!assignmentForm.personId || !assignmentForm.role || !assignmentForm.startDate || createAssignment.isPending}
-            >
-              {t('common.create')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* Member Dialog */}
       <Dialog open={memberDialogOpen} onOpenChange={setMemberDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('projects.addMember')}</DialogTitle>
-            <DialogDescription>Add a user to this project team.</DialogDescription>
+            <DialogDescription>{t('projects.addMemberDesc')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div>
-              <Label>User ID</Label>
-              <Input
+              <Label>{t('common.name')}</Label>
+              <Combobox
+                options={assigneeOptions}
                 value={memberForm.userId}
-                onChange={(e) => setMemberForm((f) => ({ ...f, userId: e.target.value }))}
-                placeholder="UUID of the user"
+                onChange={(v) => setMemberForm((f) => ({ ...f, userId: v }))}
+                placeholder={t('tasks.searchAssignee')}
+                emptyLabel="—"
               />
             </div>
             <div>
-              <Label>Role</Label>
+              <Label>{t('projects.role')}</Label>
               <Select
                 value={memberForm.role}
                 onValueChange={(v) => setMemberForm((f) => ({ ...f, role: v as ProjectMemberRole }))}
@@ -967,7 +794,7 @@ export function ProjectDetailPage() {
                 setMemberDialogOpen(false);
               }}
             >
-              Add
+              {t('common.create')}
             </Button>
           </DialogFooter>
         </DialogContent>
