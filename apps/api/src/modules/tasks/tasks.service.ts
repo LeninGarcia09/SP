@@ -6,7 +6,8 @@ import { TaskActivityEntity } from './task-activity.entity';
 import { CreateTaskDto, UpdateTaskDto } from './dto/task.dto';
 import { PaginationDto, PaginatedResult } from '../../common/dto/pagination.dto';
 import { NotificationsService } from '../notifications/notifications.service';
-import { NotificationType, TaskActivityType, TaskStatus } from '@bizops/shared';
+import { ProjectsService } from '../projects/projects.service';
+import { NotificationType, ProjectMemberRole, TaskActivityType, TaskStatus } from '@bizops/shared';
 
 @Injectable()
 export class TasksService {
@@ -16,6 +17,7 @@ export class TasksService {
     @InjectRepository(TaskActivityEntity)
     private readonly activityRepo: Repository<TaskActivityEntity>,
     private readonly notificationsService: NotificationsService,
+    private readonly projectsService: ProjectsService,
   ) {}
 
   async findByProject(
@@ -64,6 +66,7 @@ export class TasksService {
     // Notify assignee if assigned at creation
     if (saved.assigneeId) {
       await this.notifyAssignment(saved, userId);
+      await this.ensureProjectMember(projectId, saved.assigneeId);
     }
 
     return saved;
@@ -78,10 +81,23 @@ export class TasksService {
     const oldTask = { ...task };
 
     Object.assign(task, dto);
+
+    // Auto-set completedDate when status changes to DONE
+    if (dto.status === TaskStatus.DONE && oldTask.status !== TaskStatus.DONE) {
+      task.completedDate = new Date().toISOString().split('T')[0] ?? null;
+    } else if (dto.status && dto.status !== TaskStatus.DONE && oldTask.status === TaskStatus.DONE) {
+      task.completedDate = null;
+    }
+
     const saved = await this.taskRepo.save(task);
 
     // Track specific field changes
     await this.trackChanges(saved, oldTask, userId);
+
+    // Auto-add new assignee as project member
+    if (saved.assigneeId && saved.assigneeId !== oldTask.assigneeId) {
+      await this.ensureProjectMember(saved.projectId, saved.assigneeId);
+    }
 
     return saved;
   }
@@ -245,6 +261,14 @@ export class TasksService {
       );
     }
 
+    // Start date change
+    if (newTask.startDate !== oldTask.startDate) {
+      await this.logActivity(
+        newTask.id, userId, TaskActivityType.UPDATED,
+        'startDate', oldTask.startDate, newTask.startDate,
+      );
+    }
+
     // Generic field changes (title, description, hours)
     const genericFields = ['title', 'description', 'estimatedHours', 'actualHours'] as const;
     for (const field of genericFields) {
@@ -269,5 +293,16 @@ export class TasksService {
       relatedEntityType: 'TASK',
       relatedEntityId: task.id,
     });
+  }
+
+  private async ensureProjectMember(projectId: string, userId: string): Promise<void> {
+    try {
+      await this.projectsService.addMember(projectId, {
+        userId,
+        role: ProjectMemberRole.MEMBER,
+      });
+    } catch {
+      // ConflictException means user is already a member — that's fine
+    }
   }
 }

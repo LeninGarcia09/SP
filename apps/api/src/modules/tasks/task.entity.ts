@@ -40,7 +40,13 @@ export class TaskEntity {
   createdById: string | null;
 
   @Column({ type: 'date', nullable: true })
+  startDate: string | null;
+
+  @Column({ type: 'date', nullable: true })
   dueDate: string | null;
+
+  @Column({ type: 'date', nullable: true })
+  completedDate: string | null;
 
   @Column({ type: 'decimal', precision: 6, scale: 2, nullable: true })
   estimatedHours: number | null;

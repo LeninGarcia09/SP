@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Plus, RefreshCw, Trash2, Pin } from 'lucide-react';
 import { useProject, useDeleteProject, useProjectMembers, useAddProjectMember, useRemoveProjectMember, useProjectNotes, useCreateProjectNote, useUpdateProjectNote, useDeleteProjectNote } from '../hooks/use-projects';
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '../hooks/use-tasks';
 import { useHealthHistory, useTriggerHealth } from '../hooks/use-health';
-import { useAssignmentsByProject, useCreateAssignment } from '../hooks/use-personnel';
+import { useAssignmentsByProject, useCreateAssignment, usePersonnel } from '../hooks/use-personnel';
 import { useUsers } from '../hooks/use-users';
 import { ProjectFormDialog } from '../components/projects/ProjectFormDialog';
 import { TaskGantt } from '../components/shared/ProjectGantt';
@@ -14,6 +14,8 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
+import { Combobox } from '../components/ui/combobox';
+import type { ComboboxOption } from '../components/ui/combobox';
 import {
   Dialog,
   DialogContent,
@@ -76,6 +78,28 @@ export function ProjectDetailPage() {
   const updateNote = useUpdateProjectNote(id!);
   const deleteNote = useDeleteProjectNote(id!);
   const usersQuery = useUsers({ limit: 200 });
+  const personnelQuery = usePersonnel({ limit: 200 });
+
+  // Build searchable assignee options from users + personnel
+  const assigneeOptions = useMemo<ComboboxOption[]>(() => {
+    const opts: ComboboxOption[] = [];
+    const seen = new Set<string>();
+    // Users first (they have system accounts)
+    for (const u of usersQuery.data?.data ?? []) {
+      if (!seen.has(u.id)) {
+        seen.add(u.id);
+        opts.push({ value: u.id, label: u.displayName, sublabel: u.email });
+      }
+    }
+    // Personnel who might not be system users
+    for (const p of personnelQuery.data?.data ?? []) {
+      if (p.userId && !seen.has(p.userId)) {
+        seen.add(p.userId);
+        opts.push({ value: p.userId, label: `${p.firstName} ${p.lastName}`, sublabel: p.email });
+      }
+    }
+    return opts;
+  }, [usersQuery.data, personnelQuery.data]);
 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
@@ -91,6 +115,7 @@ export function ProjectDetailPage() {
     status: TaskStatus.TODO as TaskStatus,
     priority: Priority.MEDIUM as Priority,
     assigneeId: '',
+    startDate: '',
     dueDate: '',
     estimatedHours: '',
     parentTaskId: '',
@@ -135,6 +160,7 @@ export function ProjectDetailPage() {
       status: TaskStatus.TODO,
       priority: Priority.MEDIUM,
       assigneeId: '',
+      startDate: '',
       dueDate: '',
       estimatedHours: '',
       parentTaskId: '',
@@ -150,6 +176,7 @@ export function ProjectDetailPage() {
       status: task.status,
       priority: task.priority,
       assigneeId: task.assigneeId ?? '',
+      startDate: task.startDate ?? '',
       dueDate: task.dueDate ?? '',
       estimatedHours: task.estimatedHours?.toString() ?? '',
       parentTaskId: task.parentTaskId ?? '',
@@ -164,6 +191,7 @@ export function ProjectDetailPage() {
       status: taskForm.status,
       priority: taskForm.priority,
       assigneeId: taskForm.assigneeId || null,
+      startDate: taskForm.startDate || null,
       dueDate: taskForm.dueDate || null,
       estimatedHours: taskForm.estimatedHours ? Number(taskForm.estimatedHours) : null,
       parentTaskId: taskForm.parentTaskId || null,
@@ -296,30 +324,40 @@ export function ProjectDetailPage() {
 
         {tasks.data?.data && tasks.data.data.length > 0 && (
           <div className="rounded-lg border overflow-x-auto">
-            <table className="w-full text-sm min-w-[700px]">
+            <table className="w-full text-sm min-w-[900px]">
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="text-left p-3 font-medium">{t('projects.taskTitle')}</th>
+                  <th className="text-left p-3 font-medium">{t('tasks.createdBy')}</th>
                   <th className="text-left p-3 font-medium">{t('tasks.assignee')}</th>
                   <th className="text-left p-3 font-medium">{t('common.status')}</th>
                   <th className="text-left p-3 font-medium">{t('projects.priority')}</th>
-                  <th className="text-left p-3 font-medium">{t('projects.dueDate')}</th>
-                  <th className="text-left p-3 font-medium">{t('projects.estHours')}</th>
+                  <th className="text-left p-3 font-medium">{t('tasks.startDate')}</th>
+                  <th className="text-left p-3 font-medium">{t('tasks.requiredEnd')}</th>
                   <th className="p-3 w-10"></th>
                 </tr>
               </thead>
               <tbody>
-                {tasks.data.data.map((task) => (
+                {tasks.data.data.map((task) => {
+                  const isOverdue = task.dueDate && task.status !== TaskStatus.DONE && new Date(task.dueDate) < new Date();
+                  return (
                   <tr
                     key={task.id}
-                    className="border-b last:border-0 hover:bg-muted/25 cursor-pointer"
+                    className={`border-b last:border-0 hover:bg-muted/25 cursor-pointer ${isOverdue ? 'bg-red-50' : ''}`}
                     onClick={() => openEditTask(task)}
                   >
                     <td className="p-3 font-medium">{task.parentTaskId ? '↳ ' : ''}{task.title}</td>
                     <td className="p-3 text-xs text-muted-foreground">
-                      {task.assigneeId
-                        ? usersQuery.data?.data?.find((u) => u.id === task.assigneeId)?.displayName ?? task.assigneeId.slice(0, 8)
+                      {task.createdById
+                        ? assigneeOptions.find((o) => o.value === task.createdById)?.label ?? '—'
                         : '—'}
+                      <br />
+                      <span className="text-[10px]">{new Date(task.createdAt).toLocaleDateString()}</span>
+                    </td>
+                    <td className="p-3 text-xs">
+                      {task.assigneeId
+                        ? assigneeOptions.find((o) => o.value === task.assigneeId)?.label ?? task.assigneeId.slice(0, 8)
+                        : <span className="text-muted-foreground">—</span>}
                     </td>
                     <td className="p-3">
                       <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${statusColors[task.status]}`}>
@@ -331,8 +369,10 @@ export function ProjectDetailPage() {
                         {t(`priorities.${task.priority}`)}
                       </span>
                     </td>
-                    <td className="p-3">{task.dueDate ?? '—'}</td>
-                    <td className="p-3">{task.estimatedHours ?? '—'}</td>
+                    <td className="p-3">{task.startDate ?? '—'}</td>
+                    <td className={`p-3 ${isOverdue ? 'text-red-600 font-medium' : ''}`}>
+                      {task.dueDate ?? '—'}
+                    </td>
                     <td className="p-3">
                       <button
                         onClick={(e) => { e.stopPropagation(); handleDeleteTask(task.id); }}
@@ -342,7 +382,8 @@ export function ProjectDetailPage() {
                       </button>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -655,49 +696,70 @@ export function ProjectDetailPage() {
 
       {/* Task Dialog */}
       <Dialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[640px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingTask ? t('common.edit') : t('common.create')}</DialogTitle>
             <DialogDescription>
               {editingTask ? t('projectForm.editDesc') : t('projectForm.newDesc')}
             </DialogDescription>
           </DialogHeader>
+
+          {/* Read-only metadata for existing tasks */}
+          {editingTask && (
+            <div className="flex flex-wrap gap-4 text-xs text-muted-foreground border rounded-lg p-3 bg-muted/30">
+              <div>
+                <span className="font-medium">{t('tasks.createdBy')}:</span>{' '}
+                {assigneeOptions.find((o) => o.value === editingTask.createdById)?.label ?? '—'}
+              </div>
+              <div>
+                <span className="font-medium">{t('tasks.createdDate')}:</span>{' '}
+                {new Date(editingTask.createdAt).toLocaleDateString()}
+              </div>
+              {editingTask.completedDate && (
+                <div>
+                  <span className="font-medium">{t('tasks.completedDate')}:</span>{' '}
+                  {editingTask.completedDate}
+                </div>
+              )}
+              <div>
+                <span className="font-medium">{t('tasks.lastUpdated')}:</span>{' '}
+                {new Date(editingTask.updatedAt).toLocaleString()}
+              </div>
+            </div>
+          )}
+
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="task-title">Title</Label>
+              <Label htmlFor="task-title">{t('projects.taskTitle')}</Label>
               <Input
                 id="task-title"
                 value={taskForm.title}
                 onChange={(e) => setTaskForm((f) => ({ ...f, title: e.target.value }))}
-                placeholder="Task title"
+                placeholder={t('projects.taskTitle')}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="task-desc">Description</Label>
-              <Input
+              <Label htmlFor="task-desc">{t('common.description')}</Label>
+              <Textarea
                 id="task-desc"
+                rows={2}
                 value={taskForm.description}
                 onChange={(e) => setTaskForm((f) => ({ ...f, description: e.target.value }))}
               />
             </div>
             <div className="space-y-2">
               <Label>{t('tasks.assignee')}</Label>
-              <Select
+              <Combobox
+                options={assigneeOptions}
                 value={taskForm.assigneeId}
-                onValueChange={(v) => setTaskForm((f) => ({ ...f, assigneeId: v === '__none__' ? '' : v }))}
-              >
-                <SelectTrigger><SelectValue placeholder={t('tasks.unassigned')} /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">{t('tasks.unassigned')}</SelectItem>
-                  {(usersQuery.data?.data ?? []).map((u) => (
-                    <SelectItem key={u.id} value={u.id}>{u.displayName}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(v) => setTaskForm((f) => ({ ...f, assigneeId: v }))}
+                placeholder={t('tasks.searchAssignee')}
+                emptyLabel={t('tasks.unassigned')}
+              />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Status</Label>
+                <Label>{t('common.status')}</Label>
                 <Select
                   value={taskForm.status}
                   onValueChange={(v) => setTaskForm((f) => ({ ...f, status: v as TaskStatus }))}
@@ -711,7 +773,7 @@ export function ProjectDetailPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Priority</Label>
+                <Label>{t('projects.priority')}</Label>
                 <Select
                   value={taskForm.priority}
                   onValueChange={(v) => setTaskForm((f) => ({ ...f, priority: v as Priority }))}
@@ -726,23 +788,32 @@ export function ProjectDetailPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Parent Task</Label>
+              <Label>{t('projects.parent')}</Label>
               <Select
                 value={taskForm.parentTaskId}
                 onValueChange={(v) => setTaskForm((f) => ({ ...f, parentTaskId: v === '__none__' ? '' : v }))}
               >
-                <SelectTrigger><SelectValue placeholder="None (top-level task)" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t('tasks.noParent')} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__none__">None (top-level task)</SelectItem>
+                  <SelectItem value="__none__">{t('tasks.noParent')}</SelectItem>
                   {(tasks.data?.data ?? []).filter((t) => t.id !== editingTask?.id).map((t) => (
                     <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="task-due">Due Date</Label>
+                <Label htmlFor="task-start">{t('tasks.startDate')}</Label>
+                <Input
+                  id="task-start"
+                  type="date"
+                  value={taskForm.startDate}
+                  onChange={(e) => setTaskForm((f) => ({ ...f, startDate: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="task-due">{t('tasks.requiredEnd')}</Label>
                 <Input
                   id="task-due"
                   type="date"
@@ -751,7 +822,7 @@ export function ProjectDetailPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="task-hours">Estimated Hours</Label>
+                <Label htmlFor="task-hours">{t('projects.estHours')}</Label>
                 <Input
                   id="task-hours"
                   type="number"

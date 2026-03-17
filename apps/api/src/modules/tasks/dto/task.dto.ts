@@ -40,7 +40,12 @@ export class CreateTaskDto {
   @IsOptional()
   assigneeId?: string | null;
 
-  @ApiPropertyOptional({ example: '2025-06-30' })
+  @ApiPropertyOptional({ example: '2025-06-01', description: 'Work start date' })
+  @IsDateString()
+  @IsOptional()
+  startDate?: string | null;
+
+  @ApiPropertyOptional({ example: '2025-06-30', description: 'Required end date' })
   @IsDateString()
   @IsOptional()
   dueDate?: string | null;
@@ -86,7 +91,12 @@ export class UpdateTaskDto {
   @IsOptional()
   assigneeId?: string | null;
 
-  @ApiPropertyOptional({ example: '2025-06-30' })
+  @ApiPropertyOptional({ example: '2025-06-01', description: 'Work start date' })
+  @IsDateString()
+  @IsOptional()
+  startDate?: string | null;
+
+  @ApiPropertyOptional({ example: '2025-06-30', description: 'Required end date' })
   @IsDateString()
   @IsOptional()
   dueDate?: string | null;

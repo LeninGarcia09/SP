@@ -108,7 +108,9 @@ export interface Task {
   priority: Priority;
   assigneeId: string | null;
   createdById: string | null;
+  startDate: string | null;
   dueDate: string | null;
+  completedDate: string | null;
   estimatedHours: number | null;
   actualHours: number | null;
   parentTaskId: string | null;
