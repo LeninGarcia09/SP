@@ -26,14 +26,14 @@ export function ProjectsPage() {
         project={null}
       />
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h2 className="text-2xl font-bold">{t('projects.title')}</h2>
         <div className="flex items-center gap-3">
           <Input
             placeholder={t('projects.search')}
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="w-64"
+            className="w-full sm:w-64"
           />
           <Button onClick={handleNew}>{t('projects.new')}</Button>
         </div>
@@ -61,8 +61,8 @@ export function ProjectsPage() {
 
       {projects.data?.data && projects.data.data.length > 0 && (
         <>
-          <div className="rounded-lg border">
-            <table className="w-full text-sm">
+          <div className="rounded-lg border overflow-x-auto">
+            <table className="w-full text-sm min-w-[640px]">
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="text-left p-3 font-medium">{t('common.code')}</th>

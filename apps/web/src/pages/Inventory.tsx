@@ -32,14 +32,14 @@ export function InventoryPage() {
     <div>
       <InventoryItemFormDialog open={dialogOpen} onOpenChange={setDialogOpen} item={null} />
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h2 className="text-2xl font-bold">{t('inventory.title')}</h2>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Input
             placeholder={t('inventory.search')}
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="w-64"
+            className="w-full sm:w-64"
           />
           <input ref={fileInputRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImport} />
           <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={importMutation.isPending}>
@@ -93,8 +93,8 @@ export function InventoryPage() {
 
       {inventory.data?.data && inventory.data.data.length > 0 && (
         <>
-          <div className="rounded-lg border">
-            <table className="w-full text-sm">
+          <div className="rounded-lg border overflow-x-auto">
+            <table className="w-full text-sm min-w-[700px]">
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="text-left p-3 font-medium">{t('inventory.sku')}</th>

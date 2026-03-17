@@ -179,8 +179,8 @@ export function InventoryDetailPage() {
         )}
 
         {transactions.data?.data && transactions.data.data.length > 0 && (
-          <div className="rounded-lg border">
-            <table className="w-full text-sm">
+          <div className="rounded-lg border overflow-x-auto">
+            <table className="w-full text-sm min-w-[600px]">
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="text-left p-3 font-medium">{t('common.type')}</th>

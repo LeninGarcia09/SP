@@ -167,19 +167,19 @@ export function GanttChartPage() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">{t('gantt.title')}</h1>
           <p className="text-sm text-muted-foreground">
             {t('gantt.subtitle', { count: projects.length })}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Input
             placeholder={t('gantt.search')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-60"
+            className="w-full sm:w-60"
           />
           <select
             value={statusFilter}

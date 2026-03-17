@@ -288,8 +288,8 @@ export function ProjectDetailPage() {
         )}
 
         {tasks.data?.data && tasks.data.data.length > 0 && (
-          <div className="rounded-lg border">
-            <table className="w-full text-sm">
+          <div className="rounded-lg border overflow-x-auto">
+            <table className="w-full text-sm min-w-[700px]">
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="text-left p-3 font-medium">{t('projects.taskTitle')}</th>
@@ -360,8 +360,8 @@ export function ProjectDetailPage() {
         )}
 
         {assignments.data?.data && assignments.data.data.length > 0 && (
-          <div className="rounded-lg border">
-            <table className="w-full text-sm">
+          <div className="rounded-lg border overflow-x-auto">
+            <table className="w-full text-sm min-w-[600px]">
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="text-left p-3 font-medium">Person ID</th>
@@ -420,8 +420,8 @@ export function ProjectDetailPage() {
         )}
 
         {members.data?.data && members.data.data.length > 0 && (
-          <div className="rounded-lg border">
-            <table className="w-full text-sm">
+          <div className="rounded-lg border overflow-x-auto">
+            <table className="w-full text-sm min-w-[500px]">
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="text-left p-3 font-medium">User ID</th>
@@ -488,8 +488,8 @@ export function ProjectDetailPage() {
         )}
 
         {health.data?.data && health.data.data.length > 0 && (
-          <div className="rounded-lg border">
-            <table className="w-full text-sm">
+          <div className="rounded-lg border overflow-x-auto">
+            <table className="w-full text-sm min-w-[600px]">
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="text-left p-3 font-medium">{t('projects.snapshotDate')}</th>

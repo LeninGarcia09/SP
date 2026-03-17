@@ -71,8 +71,8 @@ export function DashboardPage() {
       {projects.data?.data && projects.data.data.length > 0 && (
         <div className="mt-8">
           <h3 className="text-lg font-semibold mb-4">{t('dashboard.recentProjects')}</h3>
-          <div className="rounded-lg border">
-            <table className="w-full text-sm">
+          <div className="rounded-lg border overflow-x-auto">
+            <table className="w-full text-sm min-w-[500px]">
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="text-left p-3 font-medium">{t('common.code')}</th>

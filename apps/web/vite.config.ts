@@ -1,12 +1,48 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import basicSsl from '@vitejs/plugin-basic-ssl';
+import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
 
 const isDev = process.env.NODE_ENV !== 'production';
 
 export default defineConfig({
-  plugins: [react(), ...(isDev ? [basicSsl()] : [])],
+  plugins: [
+    react(),
+    ...(isDev ? [basicSsl()] : []),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['favicon.svg'],
+      manifest: {
+        name: 'BizOps Platform',
+        short_name: 'BizOps',
+        description: 'Business Operations Platform',
+        theme_color: '#0f172a',
+        background_color: '#ffffff',
+        display: 'standalone',
+        orientation: 'portrait-primary',
+        start_url: '/',
+        scope: '/',
+        icons: [
+          { src: '/pwa-icon.svg', sizes: 'any', type: 'image/svg+xml' },
+          { src: '/pwa-icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' },
+        ],
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/.*\/api\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              expiration: { maxEntries: 50, maxAgeSeconds: 300 },
+            },
+          },
+        ],
+      },
+    }),
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

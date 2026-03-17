@@ -28,8 +28,8 @@ export function OpportunitiesPage() {
   const meta = data?.meta;
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold">{t('opportunities.title')}</h1>
         <Button onClick={() => setDialogOpen(true)}>{t('opportunities.new')}</Button>
       </div>
@@ -38,7 +38,7 @@ export function OpportunitiesPage() {
         placeholder={t('opportunities.search')}
         value={search}
         onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-        className="max-w-sm"
+        className="max-w-full sm:max-w-sm"
       />
 
       {isLoading && <p className="text-muted-foreground">{t('common.loading')}</p>}
@@ -49,8 +49,8 @@ export function OpportunitiesPage() {
           {opportunities.length === 0 ? (
             <p className="text-muted-foreground">{t('opportunities.empty')}</p>
           ) : (
-            <div className="rounded-md border">
-              <table className="w-full text-sm">
+            <div className="rounded-md border overflow-x-auto">
+              <table className="w-full text-sm min-w-[640px]">
                 <thead>
                   <tr className="border-b bg-muted/50">
                     <th className="text-left p-3 font-medium">{t('common.code')}</th>

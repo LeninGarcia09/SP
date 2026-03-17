@@ -88,7 +88,7 @@ export function SkillsPage() {
         placeholder={t('skills.search')}
         value={search}
         onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-        className="max-w-sm"
+        className="max-w-full sm:max-w-sm"
       />
 
       {skills.isLoading && (
@@ -102,8 +102,8 @@ export function SkillsPage() {
       )}
 
       {skills.data?.data && skills.data.data.length > 0 && (
-        <div className="rounded-lg border">
-          <table className="w-full text-sm">
+        <div className="rounded-lg border overflow-x-auto">
+          <table className="w-full text-sm min-w-[500px]">
             <thead>
               <tr className="border-b bg-muted/50">
                 <th className="text-left p-3 font-medium">{t('common.name')}</th>
