@@ -78,16 +78,18 @@ export function ProjectDetailPage() {
   const usersQuery = useUsers({ limit: 200 });
   const personnelQuery = usePersonnel({ limit: 200 });
 
-  // Build searchable assignee options from users + personnel (prefer firstName+lastName)
+  // Build searchable assignee options from users + personnel
   const assigneeOptions = useMemo<ComboboxOption[]>(() => {
     const opts: ComboboxOption[] = [];
     const seen = new Set<string>();
-    // Build personnel name lookup by userId for richer names
+
+    // Build personnel lookup by userId for richer names on User records
     const personnelByUserId = new Map<string, { firstName: string; lastName: string; email: string }>();
     for (const p of personnelQuery.data?.data ?? []) {
       if (p.userId) personnelByUserId.set(p.userId, p);
     }
-    // Users: prefer firstName+lastName from personnel record when available
+
+    // 1. Users: prefer firstName+lastName from personnel record when available
     for (const u of usersQuery.data?.data ?? []) {
       if (!seen.has(u.id)) {
         seen.add(u.id);
@@ -99,13 +101,16 @@ export function ProjectDetailPage() {
         });
       }
     }
-    // Personnel who are not system users
+
+    // 2. All personnel — use person.id as value (works for both linked and unlinked)
     for (const p of personnelQuery.data?.data ?? []) {
-      if (p.userId && !seen.has(p.userId)) {
-        seen.add(p.userId);
-        opts.push({ value: p.userId, label: `${p.firstName} ${p.lastName}`, sublabel: p.email });
+      const key = p.userId ?? p.id;
+      if (!seen.has(key)) {
+        seen.add(key);
+        opts.push({ value: p.id, label: `${p.firstName} ${p.lastName}`, sublabel: p.email });
       }
     }
+
     return opts;
   }, [usersQuery.data, personnelQuery.data]);
 
