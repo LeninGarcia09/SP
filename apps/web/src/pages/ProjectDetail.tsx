@@ -678,7 +678,6 @@ export function ProjectDetailPage() {
                 value={taskForm.assigneeId}
                 onChange={(v) => setTaskForm((f) => ({ ...f, assigneeId: v }))}
                 placeholder={t('tasks.searchAssignee')}
-                emptyLabel={t('tasks.unassigned')}
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -766,7 +765,6 @@ export function ProjectDetailPage() {
                 value={memberForm.userId}
                 onChange={(v) => setMemberForm((f) => ({ ...f, userId: v }))}
                 placeholder={t('tasks.searchAssignee')}
-                emptyLabel="—"
               />
             </div>
             <div>

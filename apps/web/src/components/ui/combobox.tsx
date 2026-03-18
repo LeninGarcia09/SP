@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { X } from 'lucide-react';
 import { Input } from './input';
 import { cn } from '../../lib/utils';
 
@@ -13,7 +14,6 @@ interface ComboboxProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  emptyLabel?: string;
   className?: string;
   disabled?: boolean;
 }
@@ -23,7 +23,6 @@ export function Combobox({
   value,
   onChange,
   placeholder = 'Search…',
-  emptyLabel = 'No results',
   className,
   disabled,
 }: ComboboxProps) {
@@ -91,26 +90,49 @@ export function Combobox({
     setSearch('');
   }
 
+  function handleClear() {
+    onChange('');
+    setSearch('');
+    setOpen(false);
+  }
+
   return (
     <div ref={wrapRef} className={cn('relative', className)}>
-      <Input
-        ref={inputRef}
-        value={open ? search : selected?.label ?? ''}
-        placeholder={placeholder}
-        disabled={disabled}
-        onChange={(e) => {
-          setSearch(e.target.value);
-          if (!open) openDropdown();
-        }}
-        onFocus={() => openDropdown()}
-        onKeyDown={(e) => {
-          if (e.key === 'Escape') {
-            setOpen(false);
-            inputRef.current?.blur();
-          }
-        }}
-        className={cn(!open && value && 'text-foreground')}
-      />
+      <div className="relative">
+        <Input
+          ref={inputRef}
+          value={open ? search : selected?.label ?? ''}
+          placeholder={placeholder}
+          disabled={disabled}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            if (!open) openDropdown();
+          }}
+          onFocus={() => openDropdown()}
+          onClick={() => { if (!open) openDropdown(); }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setOpen(false);
+              inputRef.current?.blur();
+            }
+          }}
+          className={cn(
+            !open && value && 'text-foreground',
+            value && !open && 'pr-8',
+          )}
+        />
+        {/* Clear button — visible when a value is selected and dropdown is closed */}
+        {value && !open && !disabled && (
+          <button
+            type="button"
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            onClick={(e) => { e.stopPropagation(); handleClear(); }}
+            tabIndex={-1}
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
 
       {open && rect && (
         <div
@@ -124,15 +146,6 @@ export function Combobox({
           }}
           className="rounded-md border border-gray-200 bg-white shadow-xl max-h-60 overflow-y-auto dark:bg-gray-900 dark:border-gray-700"
         >
-          {/* Clear option */}
-          <button
-            type="button"
-            className="w-full px-3 py-2 text-left text-sm text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-700"
-            onMouseDown={(e) => { e.preventDefault(); handleSelect(''); }}
-          >
-            {emptyLabel}
-          </button>
-
           {filtered.length === 0 && (
             <div className="px-3 py-2 text-sm text-gray-400">
               No matches found
