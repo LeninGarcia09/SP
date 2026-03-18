@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { createPortal } from 'react-dom';
 import { Input } from './input';
 import { cn } from '../../lib/utils';
 
@@ -45,14 +44,14 @@ export function Combobox({
       )
     : options;
 
-  // Measure input position for portal dropdown
+  // Measure input position for fixed-positioned dropdown
   const measure = useCallback(() => {
     if (wrapRef.current) {
       setRect(wrapRef.current.getBoundingClientRect());
     }
   }, []);
 
-  // Close on outside click (check both wrapper and portal dropdown)
+  // Close on outside click
   useEffect(() => {
     if (!open) return;
     function handleClick(e: MouseEvent) {
@@ -92,57 +91,6 @@ export function Combobox({
     setSearch('');
   }
 
-  const dropdown = open && rect && createPortal(
-    <div
-      ref={dropRef}
-      data-combobox-portal
-      style={{
-        position: 'fixed',
-        top: rect.bottom + 4,
-        left: rect.left,
-        width: rect.width,
-        zIndex: 9999,
-      }}
-      className="rounded-md border border-gray-200 bg-white shadow-xl max-h-60 overflow-y-auto dark:bg-gray-900 dark:border-gray-700"
-      onPointerDown={(e) => e.stopPropagation()}
-    >
-      {/* Clear option */}
-      <button
-        type="button"
-        className="w-full px-3 py-2 text-left text-sm text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-700"
-        onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); handleSelect(''); }}
-      >
-        {emptyLabel}
-      </button>
-
-      {filtered.length === 0 && (
-        <div className="px-3 py-2 text-sm text-gray-400">
-          No matches found
-        </div>
-      )}
-
-      {filtered.map((o) => (
-        <button
-          key={o.value}
-          type="button"
-          className={cn(
-            'w-full px-3 py-2 text-left text-sm hover:bg-blue-50 dark:hover:bg-blue-900/30 flex items-center justify-between border-b border-gray-50 dark:border-gray-800 last:border-0',
-            o.value === value && 'bg-blue-50 dark:bg-blue-900/30 font-medium',
-          )}
-          onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); handleSelect(o.value); }}
-        >
-          <span className="text-gray-900 dark:text-gray-100">{o.label}</span>
-          {o.sublabel && (
-            <span className="text-xs text-gray-400 dark:text-gray-500 ml-2 truncate">
-              {o.sublabel}
-            </span>
-          )}
-        </button>
-      ))}
-    </div>,
-    document.body,
-  );
-
   return (
     <div ref={wrapRef} className={cn('relative', className)}>
       <Input
@@ -163,7 +111,54 @@ export function Combobox({
         }}
         className={cn(!open && value && 'text-foreground')}
       />
-      {dropdown}
+
+      {open && rect && (
+        <div
+          ref={dropRef}
+          style={{
+            position: 'fixed',
+            top: rect.bottom + 4,
+            left: rect.left,
+            width: rect.width,
+            zIndex: 9999,
+          }}
+          className="rounded-md border border-gray-200 bg-white shadow-xl max-h-60 overflow-y-auto dark:bg-gray-900 dark:border-gray-700"
+        >
+          {/* Clear option */}
+          <button
+            type="button"
+            className="w-full px-3 py-2 text-left text-sm text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-700"
+            onMouseDown={(e) => { e.preventDefault(); handleSelect(''); }}
+          >
+            {emptyLabel}
+          </button>
+
+          {filtered.length === 0 && (
+            <div className="px-3 py-2 text-sm text-gray-400">
+              No matches found
+            </div>
+          )}
+
+          {filtered.map((o) => (
+            <button
+              key={o.value}
+              type="button"
+              className={cn(
+                'w-full px-3 py-2 text-left text-sm hover:bg-blue-50 dark:hover:bg-blue-900/30 flex items-center justify-between border-b border-gray-50 dark:border-gray-800 last:border-0',
+                o.value === value && 'bg-blue-50 dark:bg-blue-900/30 font-medium',
+              )}
+              onMouseDown={(e) => { e.preventDefault(); handleSelect(o.value); }}
+            >
+              <span className="text-gray-900 dark:text-gray-100">{o.label}</span>
+              {o.sublabel && (
+                <span className="text-xs text-gray-400 dark:text-gray-500 ml-2 truncate">
+                  {o.sublabel}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
