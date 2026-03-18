@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Input } from './input';
 import { cn } from '../../lib/utils';
@@ -28,7 +28,6 @@ export function Combobox({
 }: ComboboxProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const [rect, setRect] = useState<DOMRect | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
@@ -42,13 +41,6 @@ export function Combobox({
           (o.sublabel?.toLowerCase().includes(search.toLowerCase()) ?? false),
       )
     : options;
-
-  // Measure input position for fixed-positioned dropdown
-  const measure = useCallback(() => {
-    if (wrapRef.current) {
-      setRect(wrapRef.current.getBoundingClientRect());
-    }
-  }, []);
 
   // Close on outside click
   useEffect(() => {
@@ -66,27 +58,9 @@ export function Combobox({
     return () => document.removeEventListener('mousedown', handleClick);
   }, [open]);
 
-  // Reposition on scroll/resize while open
-  useEffect(() => {
-    if (!open) return;
-    measure();
-    window.addEventListener('scroll', measure, true);
-    window.addEventListener('resize', measure);
-    return () => {
-      window.removeEventListener('scroll', measure, true);
-      window.removeEventListener('resize', measure);
-    };
-  }, [open, measure]);
-
   function handleSelect(val: string) {
     onChange(val);
     setOpen(false);
-    setSearch('');
-  }
-
-  function openDropdown() {
-    measure();
-    setOpen(true);
     setSearch('');
   }
 
@@ -106,10 +80,10 @@ export function Combobox({
           disabled={disabled}
           onChange={(e) => {
             setSearch(e.target.value);
-            if (!open) openDropdown();
+            if (!open) { setOpen(true); setSearch(e.target.value); }
           }}
-          onFocus={() => openDropdown()}
-          onClick={() => { if (!open) openDropdown(); }}
+          onFocus={() => { setOpen(true); setSearch(''); }}
+          onClick={() => { if (!open) { setOpen(true); setSearch(''); } }}
           onKeyDown={(e) => {
             if (e.key === 'Escape') {
               setOpen(false);
@@ -121,7 +95,6 @@ export function Combobox({
             value && !open && 'pr-8',
           )}
         />
-        {/* Clear button — visible when a value is selected and dropdown is closed */}
         {value && !open && !disabled && (
           <button
             type="button"
@@ -134,17 +107,10 @@ export function Combobox({
         )}
       </div>
 
-      {open && rect && (
+      {open && (
         <div
           ref={dropRef}
-          style={{
-            position: 'fixed',
-            top: rect.bottom + 4,
-            left: rect.left,
-            width: rect.width,
-            zIndex: 9999,
-          }}
-          className="rounded-md border border-gray-200 bg-white shadow-xl max-h-60 overflow-y-auto dark:bg-gray-900 dark:border-gray-700"
+          className="absolute left-0 top-full mt-1 w-full z-[9999] rounded-md border border-gray-200 bg-white shadow-xl max-h-60 overflow-y-auto dark:bg-gray-900 dark:border-gray-700"
         >
           {filtered.length === 0 && (
             <div className="px-3 py-2 text-sm text-gray-400">
