@@ -620,7 +620,7 @@ export function ProjectDetailPage() {
 
       {/* Task Dialog */}
       <Dialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen}>
-        <DialogContent className="sm:max-w-[640px] max-h-[90vh] flex flex-col overflow-visible">
+        <DialogContent className="sm:max-w-[640px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingTask ? t('common.edit') : t('common.create')}</DialogTitle>
             <DialogDescription>
@@ -628,7 +628,6 @@ export function ProjectDetailPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto space-y-4">
           {/* Read-only metadata for existing tasks */}
           {editingTask && (
             <div className="flex flex-wrap gap-4 text-xs text-muted-foreground border rounded-lg p-3 bg-muted/30">
@@ -672,7 +671,7 @@ export function ProjectDetailPage() {
                 onChange={(e) => setTaskForm((f) => ({ ...f, description: e.target.value }))}
               />
             </div>
-            <div className="space-y-2 overflow-visible">
+            <div className="space-y-2">
               <Label>{t('tasks.assignee')}</Label>
               <Combobox
                 options={assigneeOptions}
@@ -739,7 +738,6 @@ export function ProjectDetailPage() {
               </div>
             )}
           </div>
-          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setTaskDialogOpen(false)}>{t('common.cancel')}</Button>
             <Button
@@ -754,13 +752,13 @@ export function ProjectDetailPage() {
 
       {/* Member Dialog */}
       <Dialog open={memberDialogOpen} onOpenChange={setMemberDialogOpen}>
-        <DialogContent className="overflow-visible">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('projects.addMember')}</DialogTitle>
             <DialogDescription>{t('projects.addMemberDesc')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="overflow-visible">
+            <div>
               <Label>{t('common.name')}</Label>
               <Combobox
                 options={assigneeOptions}

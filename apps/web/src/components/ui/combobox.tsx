@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { X } from 'lucide-react';
+import { Popover, PopoverTrigger, PopoverContent } from './popover';
 import { Input } from './input';
 import { cn } from '../../lib/utils';
 
@@ -28,9 +29,7 @@ export function Combobox({
 }: ComboboxProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const wrapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const dropRef = useRef<HTMLDivElement>(null);
 
   const selected = options.find((o) => o.value === value);
 
@@ -41,22 +40,6 @@ export function Combobox({
           (o.sublabel?.toLowerCase().includes(search.toLowerCase()) ?? false),
       )
     : options;
-
-  // Close on outside click
-  useEffect(() => {
-    if (!open) return;
-    function handleClick(e: MouseEvent) {
-      const target = e.target as Node;
-      if (
-        wrapRef.current && !wrapRef.current.contains(target) &&
-        dropRef.current && !dropRef.current.contains(target)
-      ) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [open]);
 
   function handleSelect(val: string) {
     onChange(val);
@@ -71,73 +54,75 @@ export function Combobox({
   }
 
   return (
-    <div ref={wrapRef} className={cn('relative', className)}>
-      <div className="relative">
-        <Input
-          ref={inputRef}
-          value={open ? search : selected?.label ?? ''}
-          placeholder={placeholder}
-          disabled={disabled}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            if (!open) { setOpen(true); setSearch(e.target.value); }
-          }}
-          onFocus={() => { setOpen(true); setSearch(''); }}
-          onClick={() => { if (!open) { setOpen(true); setSearch(''); } }}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') {
-              setOpen(false);
-              inputRef.current?.blur();
-            }
-          }}
-          className={cn(
-            !open && value && 'text-foreground',
-            value && !open && 'pr-8',
-          )}
-        />
-        {value && !open && !disabled && (
-          <button
-            type="button"
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-            onClick={(e) => { e.stopPropagation(); handleClear(); }}
-            tabIndex={-1}
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
-        )}
-      </div>
-
-      {open && (
-        <div
-          ref={dropRef}
-          className="absolute left-0 top-full mt-1 w-full z-[9999] rounded-md border border-gray-200 bg-white shadow-xl max-h-60 overflow-y-auto dark:bg-gray-900 dark:border-gray-700"
-        >
-          {filtered.length === 0 && (
-            <div className="px-3 py-2 text-sm text-gray-400">
-              No matches found
-            </div>
-          )}
-
-          {filtered.map((o) => (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <div className={cn('relative', className)}>
+          <Input
+            ref={inputRef}
+            value={open ? search : selected?.label ?? ''}
+            placeholder={placeholder}
+            disabled={disabled}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              if (!open) setOpen(true);
+            }}
+            onClick={() => { if (!open) setOpen(true); }}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setOpen(false);
+                inputRef.current?.blur();
+              }
+            }}
+            className={cn(
+              !open && value && 'text-foreground',
+              value && !open && 'pr-8',
+            )}
+          />
+          {value && !open && !disabled && (
             <button
-              key={o.value}
               type="button"
-              className={cn(
-                'w-full px-3 py-2 text-left text-sm hover:bg-blue-50 dark:hover:bg-blue-900/30 flex items-center justify-between border-b border-gray-50 dark:border-gray-800 last:border-0',
-                o.value === value && 'bg-blue-50 dark:bg-blue-900/30 font-medium',
-              )}
-              onMouseDown={(e) => { e.preventDefault(); handleSelect(o.value); }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              onClick={(e) => { e.stopPropagation(); handleClear(); }}
+              tabIndex={-1}
             >
-              <span className="text-gray-900 dark:text-gray-100">{o.label}</span>
-              {o.sublabel && (
-                <span className="text-xs text-gray-400 dark:text-gray-500 ml-2 truncate">
-                  {o.sublabel}
-                </span>
-              )}
+              <X className="h-3.5 w-3.5" />
             </button>
-          ))}
+          )}
         </div>
-      )}
-    </div>
+      </PopoverTrigger>
+
+      <PopoverContent
+        className="max-h-60 overflow-y-auto p-0"
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          inputRef.current?.focus();
+        }}
+      >
+        {filtered.length === 0 && (
+          <div className="px-3 py-2 text-sm text-gray-400">
+            No matches found
+          </div>
+        )}
+
+        {filtered.map((o) => (
+          <button
+            key={o.value}
+            type="button"
+            className={cn(
+              'w-full px-3 py-2 text-left text-sm hover:bg-blue-50 dark:hover:bg-blue-900/30 flex items-center justify-between border-b border-gray-50 dark:border-gray-800 last:border-0',
+              o.value === value && 'bg-blue-50 dark:bg-blue-900/30 font-medium',
+            )}
+            onMouseDown={(e) => { e.preventDefault(); handleSelect(o.value); }}
+          >
+            <span className="text-gray-900 dark:text-gray-100">{o.label}</span>
+            {o.sublabel && (
+              <span className="text-xs text-gray-400 dark:text-gray-500 ml-2 truncate">
+                {o.sublabel}
+              </span>
+            )}
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
   );
 }
