@@ -17,6 +17,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { SkillsModule } from './modules/skills/skills.module';
 import { ProgramsModule } from './modules/programs/programs.module';
 import { OpportunitiesModule } from './modules/opportunities/opportunities.module';
+import { CostsModule } from './modules/costs/costs.module';
 import { envValidationSchema } from './config/env.validation';
 import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
 import { SystemController } from './common/system.controller';
@@ -68,6 +69,7 @@ import { SystemController } from './common/system.controller';
     SkillsModule,
     ProgramsModule,
     OpportunitiesModule,
+    CostsModule,
   ],
   controllers: [SystemController],
 })

@@ -1,9 +1,11 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Plus, RefreshCw, Trash2, Pin, Clock } from 'lucide-react';
+import { ArrowLeft, Plus, RefreshCw, Trash2, Pin, Clock, DollarSign, Send, Check, X, ArrowRightLeft } from 'lucide-react';
 import { useProject, useDeleteProject, useProjectMembers, useAddProjectMember, useRemoveProjectMember, useProjectNotes, useCreateProjectNote, useUpdateProjectNote, useDeleteProjectNote, useProjectHoursSummary } from '../hooks/use-projects';
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '../hooks/use-tasks';
+import { useCostEntries, useCostSummary, useCreateCostEntry, useUpdateCostEntry, useDeleteCostEntry, useSubmitCostEntry, useApproveCostEntry, useRejectCostEntry, useTransferCostEntry } from '../hooks/use-costs';
+import { useProjects } from '../hooks/use-projects';
 import { useHealthHistory, useTriggerHealth } from '../hooks/use-health';
 import { usePersonnel } from '../hooks/use-personnel';
 import { useUsers } from '../hooks/use-users';
@@ -31,8 +33,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select';
-import type { Task } from '@bizops/shared';
-import { TaskStatus, Priority, RagStatus, ProjectMemberRole } from '@bizops/shared';
+import type { Task, CostEntry } from '@bizops/shared';
+import { TaskStatus, Priority, RagStatus, ProjectMemberRole, CostCategory, CostEntryStatus } from '@bizops/shared';
 
 const ragColors: Record<RagStatus, string> = {
   [RagStatus.GREEN]: 'bg-green-100 text-green-700',
@@ -56,6 +58,22 @@ const statusColors: Record<TaskStatus, string> = {
   [TaskStatus.DONE]: 'bg-green-100 text-green-700',
 };
 
+const costStatusColors: Record<CostEntryStatus, string> = {
+  [CostEntryStatus.DRAFT]: 'bg-gray-100 text-gray-700',
+  [CostEntryStatus.SUBMITTED]: 'bg-blue-100 text-blue-700',
+  [CostEntryStatus.APPROVED]: 'bg-green-100 text-green-700',
+  [CostEntryStatus.REJECTED]: 'bg-red-100 text-red-700',
+};
+
+const COST_CATEGORY_GROUPS = [
+  { label: 'Vendor & Subcontractor', items: [CostCategory.VENDOR_SERVICE, CostCategory.SUBCONTRACTOR] },
+  { label: 'Equipment & Materials', items: [CostCategory.EQUIPMENT_RENTAL, CostCategory.EQUIPMENT_PURCHASE, CostCategory.MATERIALS, CostCategory.SOFTWARE_LICENSE] },
+  { label: 'Travel & Living', items: [CostCategory.TRAVEL, CostCategory.ACCOMMODATION, CostCategory.MEALS, CostCategory.PER_DIEM] },
+  { label: 'Operations', items: [CostCategory.UTILITIES, CostCategory.INSURANCE, CostCategory.PERMITS_FEES, CostCategory.TRAINING] },
+  { label: 'Financial', items: [CostCategory.TAX, CostCategory.CONTINGENCY] },
+  { label: 'Other', items: [CostCategory.OTHER] },
+];
+
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -78,6 +96,18 @@ export function ProjectDetailPage() {
   const hoursSummary = useProjectHoursSummary(id!);
   const usersQuery = useUsers({ limit: 100 });
   const personnelQuery = usePersonnel({ limit: 100 });
+  const allProjectsQuery = useProjects({ limit: 200 });
+
+  // Cost hooks
+  const costEntries = useCostEntries(id!);
+  const costSummary = useCostSummary(id!);
+  const createCost = useCreateCostEntry(id!);
+  const updateCost = useUpdateCostEntry(id!);
+  const deleteCost = useDeleteCostEntry(id!);
+  const submitCost = useSubmitCostEntry(id!);
+  const approveCost = useApproveCostEntry(id!);
+  const rejectCost = useRejectCostEntry(id!);
+  const transferCost = useTransferCostEntry(id!);
 
   // Build searchable assignee options from users + personnel
   const assigneeOptions = useMemo<ComboboxOption[]>(() => {
@@ -138,6 +168,26 @@ export function ProjectDetailPage() {
     userId: '',
     role: ProjectMemberRole.MEMBER as ProjectMemberRole,
   });
+
+  // Cost state
+  const [costDialogOpen, setCostDialogOpen] = useState(false);
+  const [editingCost, setEditingCost] = useState<CostEntry | null>(null);
+  const [costForm, setCostForm] = useState({
+    category: '' as string,
+    description: '',
+    vendor: '',
+    amount: '',
+    date: new Date().toISOString().split('T')[0],
+    invoiceRef: '',
+    notes: '',
+    taskId: '',
+  });
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectingCostId, setRejectingCostId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+  const [transferringCostId, setTransferringCostId] = useState<string | null>(null);
+  const [transferForm, setTransferForm] = useState({ targetProjectId: '', reason: '' });
 
   if (project.isLoading) {
     return <div className="text-center text-muted-foreground py-12">{t('common.loading')}</div>;
@@ -219,6 +269,55 @@ export function ProjectDetailPage() {
   async function handleDeleteTask(taskId: string) {
     if (!confirm('Delete this task?')) return;
     await deleteTask.mutateAsync(taskId);
+  }
+
+  function openNewCost() {
+    setEditingCost(null);
+    setCostForm({
+      category: '',
+      description: '',
+      vendor: '',
+      amount: '',
+      date: new Date().toISOString().split('T')[0],
+      invoiceRef: '',
+      notes: '',
+      taskId: '',
+    });
+    setCostDialogOpen(true);
+  }
+
+  function openEditCost(cost: CostEntry) {
+    setEditingCost(cost);
+    setCostForm({
+      category: cost.category,
+      description: cost.description,
+      vendor: cost.vendor || '',
+      amount: String(cost.amount),
+      date: cost.date,
+      invoiceRef: cost.invoiceRef || '',
+      notes: cost.notes || '',
+      taskId: cost.taskId || '',
+    });
+    setCostDialogOpen(true);
+  }
+
+  async function handleCostSubmit() {
+    const body: Record<string, unknown> = {
+      category: costForm.category,
+      description: costForm.description,
+      vendor: costForm.vendor || null,
+      amount: Number(costForm.amount),
+      date: costForm.date,
+      invoiceRef: costForm.invoiceRef || null,
+      notes: costForm.notes || null,
+      taskId: costForm.taskId || null,
+    };
+    if (editingCost) {
+      await updateCost.mutateAsync({ costId: editingCost.id, ...body });
+    } else {
+      await createCost.mutateAsync(body);
+    }
+    setCostDialogOpen(false);
   }
 
   return (
@@ -630,6 +729,160 @@ export function ProjectDetailPage() {
         )}
       </div>
 
+      {/* ─── Costs Section ─── */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <DollarSign className="h-5 w-5" /> {t('costs.title')}
+          </h3>
+          <Button size="sm" onClick={openNewCost}>
+            <Plus className="h-4 w-4 mr-1" /> {t('costs.addCost')}
+          </Button>
+        </div>
+
+        {/* Cost Summary Cards */}
+        {costSummary.data?.data && (() => {
+          const cs = costSummary.data.data;
+          const burnColor = cs.burnPercent > 100 ? 'text-red-600' : cs.burnPercent > 90 ? 'text-amber-600' : 'text-green-600';
+          return (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
+              <div className="rounded-lg border p-3">
+                <p className="text-xs text-muted-foreground mb-1">{t('common.budget')}</p>
+                <p className="font-medium">${cs.totalBudget.toLocaleString()}</p>
+              </div>
+              <div className="rounded-lg border p-3">
+                <p className="text-xs text-muted-foreground mb-1">{t('costs.laborCost')}</p>
+                <p className="font-medium">${cs.laborCost.toLocaleString()}</p>
+              </div>
+              <div className="rounded-lg border p-3">
+                <p className="text-xs text-muted-foreground mb-1">{t('costs.nonLaborCost')}</p>
+                <p className="font-medium">${cs.totalCostEntries.toLocaleString()}</p>
+              </div>
+              <div className="rounded-lg border p-3">
+                <p className="text-xs text-muted-foreground mb-1">{t('costs.totalActual')}</p>
+                <p className="font-medium">${cs.totalActualCost.toLocaleString()}</p>
+              </div>
+              <div className="rounded-lg border p-3">
+                <p className="text-xs text-muted-foreground mb-1">{t('costs.remaining')}</p>
+                <p className={`font-medium ${cs.variance < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                  ${cs.variance.toLocaleString()}
+                </p>
+              </div>
+              <div className="rounded-lg border p-3">
+                <p className="text-xs text-muted-foreground mb-1">{t('costs.burnPercent')}</p>
+                <p className={`font-medium ${burnColor}`}>{cs.burnPercent}%</p>
+                {cs.totalBudget > 0 && (
+                  <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                    <div
+                      className={`h-1.5 rounded-full ${cs.burnPercent > 100 ? 'bg-red-500' : cs.burnPercent > 90 ? 'bg-amber-500' : 'bg-green-500'}`}
+                      style={{ width: `${Math.min(cs.burnPercent, 100)}%` }}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Cost by Category breakdown */}
+        {costSummary.data?.data && costSummary.data.data.byCategory.length > 0 && (
+          <div className="rounded-lg border p-4 mb-4">
+            <p className="text-xs font-medium text-muted-foreground mb-2">{t('costs.byCategory')}</p>
+            <div className="space-y-1.5">
+              {costSummary.data.data.byCategory.map((cat) => (
+                <div key={cat.category} className="flex items-center gap-2 text-sm">
+                  <span className="w-32 truncate">{t(`costs.categories.${cat.category}`)}</span>
+                  <div className="flex-1 bg-gray-100 rounded-full h-2">
+                    <div
+                      className="bg-blue-500 h-2 rounded-full"
+                      style={{ width: `${cat.percentage}%` }}
+                    />
+                  </div>
+                  <span className="w-24 text-right text-muted-foreground">${cat.total.toLocaleString()} ({cat.percentage}%)</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Cost Entries Table */}
+        {costEntries.isLoading && (
+          <div className="rounded-lg border p-4 text-center text-muted-foreground">{t('costs.loading')}</div>
+        )}
+
+        {costEntries.data?.data && costEntries.data.data.length === 0 && (
+          <div className="rounded-lg border p-6 text-center text-muted-foreground">{t('costs.noCosts')}</div>
+        )}
+
+        {costEntries.data?.data && costEntries.data.data.length > 0 && (
+          <div className="rounded-lg border overflow-x-auto">
+            <table className="w-full text-sm min-w-[900px]">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="text-left p-3 font-medium">{t('costs.date')}</th>
+                  <th className="text-left p-3 font-medium">{t('costs.category')}</th>
+                  <th className="text-left p-3 font-medium">{t('costs.description')}</th>
+                  <th className="text-left p-3 font-medium">{t('costs.vendor')}</th>
+                  <th className="text-right p-3 font-medium">{t('costs.amount')}</th>
+                  <th className="text-center p-3 font-medium">{t('costs.status')}</th>
+                  <th className="p-3 w-32">{t('common.actions')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {costEntries.data.data.map((cost) => (
+                  <tr key={cost.id} className="border-b last:border-0 hover:bg-muted/30">
+                    <td className="p-3 whitespace-nowrap">{cost.date}</td>
+                    <td className="p-3">
+                      <span className="text-xs">{t(`costs.categories.${cost.category}`)}</span>
+                    </td>
+                    <td className="p-3 max-w-[200px] truncate" title={cost.description}>{cost.description}</td>
+                    <td className="p-3 text-muted-foreground">{cost.vendor || '—'}</td>
+                    <td className="p-3 text-right font-medium">${Number(cost.amount).toLocaleString()}</td>
+                    <td className="p-3 text-center">
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${costStatusColors[cost.status as CostEntryStatus]}`}>
+                        {t(`costs.statusLabels.${cost.status}`)}
+                      </span>
+                    </td>
+                    <td className="p-3">
+                      <div className="flex items-center gap-1">
+                        {cost.status === CostEntryStatus.DRAFT && (
+                          <>
+                            <Button size="sm" variant="ghost" onClick={() => openEditCost(cost)} title={t('common.edit')}>
+                              {t('common.edit')}
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => submitCost.mutate(cost.id)} title={t('costs.submit')}>
+                              <Send className="h-3 w-3" />
+                            </Button>
+                            <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteCost.mutate(cost.id)}>
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </>
+                        )}
+                        {cost.status === CostEntryStatus.SUBMITTED && (
+                          <>
+                            <Button size="sm" variant="ghost" className="text-green-600" onClick={() => approveCost.mutate(cost.id)} title={t('costs.approve')}>
+                              <Check className="h-3 w-3" />
+                            </Button>
+                            <Button size="sm" variant="ghost" className="text-red-600" onClick={() => { setRejectingCostId(cost.id); setRejectReason(''); setRejectDialogOpen(true); }} title={t('costs.reject')}>
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </>
+                        )}
+                        {(cost.status === CostEntryStatus.APPROVED || cost.status === CostEntryStatus.DRAFT) && (
+                          <Button size="sm" variant="ghost" onClick={() => { setTransferringCostId(cost.id); setTransferForm({ targetProjectId: '', reason: '' }); setTransferDialogOpen(true); }} title={t('costs.transfer')}>
+                            <ArrowRightLeft className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
       {/* Note Dialog */}
       <Dialog open={noteDialogOpen} onOpenChange={setNoteDialogOpen}>
         <DialogContent>
@@ -880,6 +1133,204 @@ export function ProjectDetailPage() {
               }}
             >
               {t('common.create')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cost Entry Dialog */}
+      <Dialog open={costDialogOpen} onOpenChange={setCostDialogOpen}>
+        <DialogContent className="sm:max-w-[540px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingCost ? t('costs.editCost') : t('costs.addCost')}</DialogTitle>
+            <DialogDescription>
+              {editingCost ? t('projectForm.editDesc') : t('projectForm.newDesc')}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>{t('costs.category')}</Label>
+              <Select
+                value={costForm.category}
+                onValueChange={(v) => setCostForm((f) => ({ ...f, category: v }))}
+              >
+                <SelectTrigger><SelectValue placeholder={t('costs.category')} /></SelectTrigger>
+                <SelectContent>
+                  {COST_CATEGORY_GROUPS.map((group) => (
+                    <div key={group.label}>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">{group.label}</div>
+                      {group.items.map((cat) => (
+                        <SelectItem key={cat} value={cat}>{t(`costs.categories.${cat}`)}</SelectItem>
+                      ))}
+                    </div>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{t('costs.description')}</Label>
+              <Input
+                value={costForm.description}
+                onChange={(e) => setCostForm((f) => ({ ...f, description: e.target.value }))}
+                placeholder={t('costs.description')}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t('costs.amount')}</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={costForm.amount}
+                  onChange={(e) => setCostForm((f) => ({ ...f, amount: e.target.value }))}
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t('costs.date')}</Label>
+                <Input
+                  type="date"
+                  value={costForm.date}
+                  onChange={(e) => setCostForm((f) => ({ ...f, date: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>{t('costs.vendor')} <span className="text-muted-foreground text-xs">({t('common.optional')})</span></Label>
+              <Input
+                value={costForm.vendor}
+                onChange={(e) => setCostForm((f) => ({ ...f, vendor: e.target.value }))}
+                placeholder={t('costs.vendor')}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t('costs.invoiceRef')} <span className="text-muted-foreground text-xs">({t('common.optional')})</span></Label>
+              <Input
+                value={costForm.invoiceRef}
+                onChange={(e) => setCostForm((f) => ({ ...f, invoiceRef: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t('costs.task')} <span className="text-muted-foreground text-xs">({t('common.optional')})</span></Label>
+              <Select
+                value={costForm.taskId}
+                onValueChange={(v) => setCostForm((f) => ({ ...f, taskId: v === '__none__' ? '' : v }))}
+              >
+                <SelectTrigger><SelectValue placeholder={t('common.none')} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">{t('common.none')}</SelectItem>
+                  {(tasks.data?.data ?? []).map((task) => (
+                    <SelectItem key={task.id} value={task.id}>{task.title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{t('costs.notes')} <span className="text-muted-foreground text-xs">({t('common.optional')})</span></Label>
+              <Textarea
+                rows={2}
+                value={costForm.notes}
+                onChange={(e) => setCostForm((f) => ({ ...f, notes: e.target.value }))}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCostDialogOpen(false)}>{t('common.cancel')}</Button>
+            <Button
+              onClick={handleCostSubmit}
+              disabled={!costForm.category || !costForm.description || !costForm.amount || !costForm.date || createCost.isPending || updateCost.isPending}
+            >
+              {editingCost ? t('common.save') : t('common.create')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Cost Dialog */}
+      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('costs.rejectTitle')}</DialogTitle>
+            <DialogDescription>{t('costs.rejectDesc')}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label>{t('costs.reason')}</Label>
+              <Textarea
+                rows={3}
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectDialogOpen(false)}>{t('common.cancel')}</Button>
+            <Button
+              variant="destructive"
+              disabled={rejectCost.isPending}
+              onClick={async () => {
+                if (rejectingCostId) {
+                  await rejectCost.mutateAsync({ costId: rejectingCostId, reason: rejectReason });
+                }
+                setRejectDialogOpen(false);
+              }}
+            >
+              {t('costs.reject')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Transfer Cost Dialog */}
+      <Dialog open={transferDialogOpen} onOpenChange={setTransferDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('costs.transferTitle')}</DialogTitle>
+            <DialogDescription>{t('costs.transferDesc')}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label>{t('costs.targetProject')}</Label>
+              <Select
+                value={transferForm.targetProjectId}
+                onValueChange={(v) => setTransferForm((f) => ({ ...f, targetProjectId: v }))}
+              >
+                <SelectTrigger><SelectValue placeholder={t('common.project')} /></SelectTrigger>
+                <SelectContent>
+                  {(allProjectsQuery.data?.data ?? [])
+                    .filter((proj) => proj.id !== id)
+                    .map((proj) => (
+                      <SelectItem key={proj.id} value={proj.id}>{proj.code} — {proj.name}</SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>{t('costs.reason')} <span className="text-muted-foreground text-xs">({t('common.optional')})</span></Label>
+              <Textarea
+                rows={2}
+                value={transferForm.reason}
+                onChange={(e) => setTransferForm((f) => ({ ...f, reason: e.target.value }))}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTransferDialogOpen(false)}>{t('common.cancel')}</Button>
+            <Button
+              disabled={!transferForm.targetProjectId || transferCost.isPending}
+              onClick={async () => {
+                if (transferringCostId) {
+                  await transferCost.mutateAsync({
+                    costId: transferringCostId,
+                    targetProjectId: transferForm.targetProjectId,
+                    reason: transferForm.reason,
+                  });
+                }
+                setTransferDialogOpen(false);
+              }}
+            >
+              {t('costs.transfer')}
             </Button>
           </DialogFooter>
         </DialogContent>

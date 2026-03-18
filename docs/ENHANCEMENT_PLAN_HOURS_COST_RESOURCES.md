@@ -131,127 +131,262 @@ GET /api/v1/projects/:id/hours-summary    (NEW)
 
 ---
 
-### Wave 2 — Timesheet & Cost Breakdown (Priority: High)
+### Wave 2 — Full Cost Management Module (Priority: High)
 
-**Goal:** Weekly timesheet view, cost breakdown by resource/task, utilization metrics.
+**Goal:** Replace the single `actualCost` field with a proper cost entries system that tracks ALL project costs — labor, vendors, equipment, materials, travel, meals, and more. Allow costs to be listed, updated, reassigned between projects, and rolled up into budgets.
 
-#### 2.1 TimeEntry Entity (NEW)
+#### Design Decision: Why a Full Cost Module?
 
-Replace the per-task `actualHours` increment model with proper time entries for audit trail.
+The current model has a single `actualCost` field on the Project entity. This is fundamentally flawed for real operations:
 
-**New entity — `TimeEntry`:**
+| Problem | Impact |
+|---------|--------|
+| Single number — no line items | Can't see what money was spent on |
+| No categories | Can't distinguish vendor costs from equipment from meals |
+| No audit trail | Who added $5,000? When? For what? |
+| Can't move costs between projects | If a vendor is shared, must manually adjust both projects |
+| No receipt/doc attachment | No paper trail for expenses |
+| Labor cost separate from other costs | Two disconnected cost systems |
+
+**Industry standard (Dynamics 365, SAP, Oracle):** Three cost transaction types:
+1. **Time** (labor) — hours × rate → computed cost
+2. **Expense** (travel, meals, per diem, misc) — direct cost entries
+3. **Material/Vendor** (equipment, subcontractors, purchases) — direct cost entries
+
+We'll implement a unified **CostEntry** entity that covers types 2 and 3 (labor remains in the hours/timesheet system from Wave 1), with `project.actualCost` becoming a **computed field** summing all cost entries + labor cost.
+
+---
+
+#### 2.1 CostEntry Entity (NEW)
+
 ```typescript
-TimeEntry {
+CostEntry {
   id: uuid PK
-  personId: uuid FK → Person
   projectId: uuid FK → Project
-  taskId: uuid FK → Task (nullable — for non-task project work)
-  date: date                          // The work day
-  hours: decimal(5,2)                 // Hours worked (0.25 increments)
-  description: text nullable          // Work description / notes
-  category: TimeCategory              // REGULAR | OVERTIME | TRAVEL | ADMIN
-  status: TimeEntryStatus             // DRAFT | SUBMITTED | APPROVED | REJECTED
-  submittedAt: timestamp nullable
+  taskId: uuid FK → Task (nullable — for project-level costs)
+  category: CostCategory            // See enum below
+  description: string               // What was this cost for
+  vendor: string nullable           // Vendor/supplier name
+  amount: decimal(15,2)             // Cost amount (positive = expense, negative = credit/refund)
+  currency: string default 'USD'    // ISO currency code (future-proofing)
+  date: date                        // When the cost was incurred
+  invoiceRef: string nullable       // Invoice/PO/receipt reference number
+  status: CostEntryStatus           // DRAFT | SUBMITTED | APPROVED | REJECTED
+  submittedById: uuid FK → User     // Who submitted this entry
   approvedById: uuid FK → User nullable
   approvedAt: timestamp nullable
+  notes: text nullable              // Additional context
+  metadata: jsonb default {}        // Extensible (receipt URL, tags, etc.)
   createdAt, updatedAt: timestamp
 }
 
-enum TimeCategory { REGULAR, OVERTIME, TRAVEL, ADMIN }
-enum TimeEntryStatus { DRAFT, SUBMITTED, APPROVED, REJECTED }
+enum CostCategory {
+  // Vendor & Subcontractor
+  VENDOR_SERVICE        // External vendor/consultant/subcontractor hire
+  SUBCONTRACTOR         // Subcontractor labor
+
+  // Equipment & Materials
+  EQUIPMENT_RENTAL      // Rented equipment (cranes, vehicles, tools)
+  EQUIPMENT_PURCHASE    // Purchased equipment/assets
+  MATERIALS             // Raw materials, supplies, consumables
+  SOFTWARE_LICENSE      // Software subscriptions, licenses
+
+  // Travel & Living
+  TRAVEL                // Transportation (flights, car rental, fuel, tolls)
+  ACCOMMODATION         // Hotels, lodging
+  MEALS                 // Meals, per diem
+  PER_DIEM              // Daily living allowance
+
+  // Operations
+  UTILITIES             // Office space, electricity, internet
+  INSURANCE             // Project-specific insurance
+  PERMITS_FEES          // Government permits, inspection fees, legal fees
+  TRAINING              // Training costs for project team
+
+  // Financial
+  TAX                   // Taxes related to project costs
+  CONTINGENCY           // Contingency reserve usage
+
+  // Other
+  OTHER                 // Anything not fitting above categories
+}
+
+enum CostEntryStatus {
+  DRAFT       // Just entered, not yet reviewed
+  SUBMITTED   // Submitted for approval
+  APPROVED    // Approved — included in actuals
+  REJECTED    // Rejected — not counted
+}
 ```
 
-**Indexes:**
-- `(personId, date)` — for timesheet queries
-- `(projectId, date)` — for project cost rollups
-- `(taskId)` — for task hours rollup
-- `(status)` — for approval queues
+**Key design choices:**
+- **Append-friendly:** Updates tracked via `updatedAt`; deleted entries can be soft-deleted or set to REJECTED
+- **Project AND task level:** Costs can be generic project costs or linked to specific tasks
+- **Vendor field:** Freeform for flexibility; can be upgraded to a Vendor entity in future
+- **Transfer between projects:** Change `projectId` on the entry — history tracked via activity log
+- **Currency field:** Default `'USD'`, placeholder for future multi-currency support
 
-#### 2.2 Weekly Timesheet Page (NEW)
+#### 2.2 CostCategory Management
 
-**New page — `/timesheets`:**
-- Grid layout: rows = projects/tasks, columns = Mon–Sun
-- Cell = hours input (decimal, 0.25 increments)
-- Row totals and column totals
-- Submit button → sets status to SUBMITTED
-- Copy from previous week button
+Categories are defined as an enum (not a separate table) for simplicity. If custom categories are needed later, migrate to a `cost_categories` lookup table.
 
-**Timesheet API:**
+**Category grouping for UI display:**
+
+| Group | Categories |
+|-------|-----------|
+| **Vendor & Subcontractor** | VENDOR_SERVICE, SUBCONTRACTOR |
+| **Equipment & Materials** | EQUIPMENT_RENTAL, EQUIPMENT_PURCHASE, MATERIALS, SOFTWARE_LICENSE |
+| **Travel & Living** | TRAVEL, ACCOMMODATION, MEALS, PER_DIEM |
+| **Operations** | UTILITIES, INSURANCE, PERMITS_FEES, TRAINING |
+| **Financial** | TAX, CONTINGENCY |
+| **Other** | OTHER |
+
+#### 2.3 Project actualCost Becomes Computed
+
+**Current:** `project.actualCost` is a manually-entered decimal field.
+
+**New behavior:**
+- `project.actualCost` = `SUM(approved cost entries) + labor cost`
+- Labor cost = `SUM(task.actualHours) × costRate` (from Wave 1)
+- The field on the Project entity becomes a **cached/computed** value, recalculated on:
+  - Cost entry create/update/delete
+  - Task hours update
+  - Manual trigger (refresh button)
+
+**Migration path:**
+1. If `project.actualCost > 0` and no cost entries exist → create a single `OTHER` cost entry with that amount (preserves existing data)
+2. Going forward, `project.actualCost` is always derived from entries
+
+#### 2.4 API Endpoints
+
 ```
-GET    /api/v1/time-entries?personId=&weekOf=2026-03-16    (returns week's entries)
-POST   /api/v1/time-entries                                (create single entry)
-POST   /api/v1/time-entries/bulk                           (create/update batch for a week)
-PATCH  /api/v1/time-entries/:id                            (update entry)
-DELETE /api/v1/time-entries/:id                             (only if DRAFT status)
-POST   /api/v1/time-entries/submit?weekOf=2026-03-16       (bulk submit week)
+# ─── Cost Entries (project-scoped) ───
+GET    /api/v1/projects/:projectId/costs                  List all cost entries for a project
+POST   /api/v1/projects/:projectId/costs                  Create a cost entry
+GET    /api/v1/projects/:projectId/costs/:id              Get single cost entry
+PATCH  /api/v1/projects/:projectId/costs/:id              Update a cost entry
+DELETE /api/v1/projects/:projectId/costs/:id              Delete (DRAFT only)
+
+# ─── Cost Entry Actions ───
+POST   /api/v1/costs/:id/submit                           Submit for approval
+POST   /api/v1/costs/:id/approve                          Approve entry
+POST   /api/v1/costs/:id/reject                           Reject entry (with reason)
+POST   /api/v1/costs/:id/transfer                         Transfer to another project
+         Body: { targetProjectId: uuid, reason: string }
+
+# ─── Cost Summary & Reports ───
+GET    /api/v1/projects/:projectId/cost-summary           Aggregated cost breakdown
+         Response: {
+           totalBudget, totalCostEntries, laborCost, totalActualCost,
+           variance, burnPercent,
+           byCategory: [{ category, count, total, percentage }],
+           byMonth: [{ month, total }],
+           byVendor: [{ vendor, total, count }]
+         }
+
+# ─── Cross-project cost search ───
+GET    /api/v1/costs?vendor=&category=&from=&to=&status=  Search costs across all projects
 ```
 
-#### 2.3 Cost Breakdown Dashboard
+#### 2.5 Frontend — Project Cost Tab
 
-**New section in ProjectDetail — "Cost Breakdown" tab:**
+**New tab in ProjectDetail — "Costs":**
 
-| View | Description |
-|------|-------------|
-| By Resource | Table: person name, role, hours, rate, cost — sorted by cost desc |
-| By Task | Table: task title, estimated hours, actual hours, labor cost |
-| By Week | Bar chart: weekly cost stacked by resource (Recharts) |
+**Cost Entry List:**
+- Sortable/filterable table: date | category | description | vendor | amount | status | actions
+- Status pills: DRAFT (gray), SUBMITTED (blue), APPROVED (green), REJECTED (red)
+- Inline actions: Edit (draft only), Submit, Delete (draft only)
+- Bulk select + approve/reject (for authorized roles)
+- "Transfer to Project" action (moves entry to different project)
 
-**Backend — new endpoint:**
-```
-GET /api/v1/projects/:id/cost-breakdown
-  Query: ?groupBy=resource|task|week&from=&to=
-  Response: { groups: [{ name, hours, cost, percentage }], total: { hours, cost } }
-```
+**Add Cost Entry Dialog:**
+- Category dropdown (grouped by category group)
+- Description (text)
+- Amount (number, step 0.01)
+- Date (date picker)
+- Vendor (optional text + autocomplete from previous vendors)
+- Task (optional — Combobox linked to project tasks)
+- Invoice/Reference (optional text)
+- Notes (optional textarea)
+- Save as Draft / Submit buttons
 
-**Calculation:**
-- Per resource: `SUM(time_entries.hours) * person_cost_rate` (or project `costRate` as fallback)
-- Per task: `SUM(time_entries.hours WHERE task_id = X) * costRate`
-- Per week: `SUM(time_entries.hours WHERE date BETWEEN week_start AND week_end) * costRate`
+**Cost Summary Cards (top of Costs tab):**
+- **Budget:** $X
+- **Labor Cost:** $X (from hours)
+- **Non-Labor Cost:** $X (from cost entries)
+- **Total Actual:** $X (labor + non-labor)
+- **Remaining:** $X (budget - total actual)
+- **Burn %:** X% with color indicator
 
-#### 2.4 Person Cost Rate (NEW field)
+**Cost Breakdown Charts (Recharts):**
+- **Pie chart:** Cost by category
+- **Bar chart:** Monthly cost trend (stacked by category)
+- **Table:** Top vendors by spend
 
-**Entity change — Person entity:**
+#### 2.6 Budget RAG Enhancement
+
+Update the RAG engine to use the new cost entry totals:
+
 ```typescript
-// Add to Person entity
-costRate: decimal(10,2) nullable  // Person-specific hourly cost rate
-billRate: decimal(10,2) nullable  // Person-specific hourly billing rate (future use)
+// New budget RAG calculation
+const laborCost = totalActualHours * costRate;
+const nonLaborCost = SUM(cost_entries WHERE status = 'APPROVED');
+const totalActualCost = laborCost + nonLaborCost;
+const spendRatio = totalActualCost / budget;
+
+// Same thresholds: GREEN ≤90%, AMBER 90-100%, RED >100%
 ```
 
-**Priority waterfall for cost calculation:**
-1. Person `costRate` (if set) — most specific
-2. Project `costRate` (if set) — project-level default
-3. `0` — no cost tracking
+#### 2.7 RBAC for Cost Entries
 
-#### 2.5 Utilization Report
+| Action | GLOBAL_LEAD | BIZ_OPS_MGR | PROJECT_LEAD | PERSONNEL | INVENTORY_MGR |
+|--------|:-----------:|:-----------:|:------------:|:---------:|:-------------:|
+| Create cost entry | ✅ | ✅ | ✅ (own projects) | ✅ (own projects) | ✅ |
+| Edit draft | ✅ | ✅ | ✅ (own) | ✅ (own) | ✅ (own) |
+| Submit | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Approve/Reject | ✅ | ✅ | ✅ (own projects) | ❌ | ❌ |
+| Delete draft | ✅ | ✅ | ✅ (own) | ✅ (own) | ✅ (own) |
+| Transfer between projects | ✅ | ✅ | ❌ | ❌ | ❌ |
 
-**New page — `/reports/utilization`:**
-- Table: person | available hours (based on capacity - leave) | logged hours | utilization %
-- Color coding: <60% = Red (underutilized), 60-85% = Green (optimal), >85% = Amber (at risk)
-- Filters: department, date range, project
-- Chart: utilization trend over time (Recharts line chart)
+#### 2.8 Notifications
 
-**Backend:**
-```
-GET /api/v1/reports/utilization?from=&to=&departmentId=
-  Response: { persons: [{ id, name, availableHours, loggedHours, utilizationPercent }] }
-```
-
-**Available hours formula:** `workdays_in_period × standard_hours_per_day (8)` (subtract leave in Wave 4)
-
-#### 2.6 Over-Allocation Alerts
-
-**Backend — [personnel.service.ts](apps/api/src/modules/personnel/personnel.service.ts):**
-- On assignment create/update: check if person's total `allocationPercent` exceeds 100%
-- If yes: return warning in response (not blocking) + create notification
-- New notification type: `OVER_ALLOCATION`
-
-**Frontend — CapacityPlanning.tsx:**
-- Highlight over-allocated cells in RED with tooltip showing breakdown
-- Click to see conflicting assignments
+- `COST_SUBMITTED` — notify project lead when team member submits a cost entry
+- `COST_APPROVED` / `COST_REJECTED` — notify submitter
+- `BUDGET_THRESHOLD` — notify project lead when total cost reaches 80% and 100% of budget
 
 #### Data Model Changes
+
 ```sql
--- New table
+-- ─── New table ───
+CREATE TABLE cost_entries (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  task_id UUID REFERENCES tasks(id) ON DELETE SET NULL,
+  category VARCHAR(30) NOT NULL,
+  description VARCHAR(500) NOT NULL,
+  vendor VARCHAR(200),
+  amount DECIMAL(15,2) NOT NULL,
+  currency VARCHAR(3) NOT NULL DEFAULT 'USD',
+  date DATE NOT NULL,
+  invoice_ref VARCHAR(200),
+  status VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
+  submitted_by_id UUID NOT NULL REFERENCES users(id),
+  approved_by_id UUID REFERENCES users(id),
+  approved_at TIMESTAMP,
+  notes TEXT,
+  metadata JSONB DEFAULT '{}',
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- ─── Indexes ───
+CREATE INDEX idx_cost_entries_project ON cost_entries(project_id);
+CREATE INDEX idx_cost_entries_project_status ON cost_entries(project_id, status);
+CREATE INDEX idx_cost_entries_category ON cost_entries(category);
+CREATE INDEX idx_cost_entries_date ON cost_entries(date);
+CREATE INDEX idx_cost_entries_vendor ON cost_entries(vendor) WHERE vendor IS NOT NULL;
+
+-- ─── TimeEntry table (for labor tracking) ───
 CREATE TABLE time_entries (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   person_id UUID NOT NULL REFERENCES persons(id),
@@ -270,13 +405,28 @@ CREATE TABLE time_entries (
   UNIQUE(person_id, project_id, task_id, date, category)
 );
 
--- New columns on persons
+-- ─── New columns on persons ───
 ALTER TABLE persons ADD COLUMN cost_rate DECIMAL(10,2);
 ALTER TABLE persons ADD COLUMN bill_rate DECIMAL(10,2);
 ```
 
-#### API Changes
+#### API Changes (Combined)
+
 ```
+# Cost Entries
+GET    /api/v1/projects/:id/costs                         (list)
+POST   /api/v1/projects/:id/costs                         (create)
+GET    /api/v1/projects/:id/costs/:costId                 (detail)
+PATCH  /api/v1/projects/:id/costs/:costId                 (update)
+DELETE /api/v1/projects/:id/costs/:costId                 (delete draft)
+POST   /api/v1/costs/:id/submit                           (submit)
+POST   /api/v1/costs/:id/approve                          (approve)
+POST   /api/v1/costs/:id/reject                           (reject)
+POST   /api/v1/costs/:id/transfer                         (move to another project)
+GET    /api/v1/projects/:id/cost-summary                  (aggregated breakdown)
+GET    /api/v1/costs                                      (cross-project search)
+
+# Time Entries
 GET    /api/v1/time-entries                               (list with filters)
 POST   /api/v1/time-entries                               (create)
 POST   /api/v1/time-entries/bulk                          (batch create/update)
@@ -284,9 +434,23 @@ PATCH  /api/v1/time-entries/:id                           (update)
 DELETE /api/v1/time-entries/:id                            (delete draft only)
 POST   /api/v1/time-entries/submit                        (bulk submit)
 
-GET    /api/v1/projects/:id/cost-breakdown                (cost breakdown)
+# Reports
+GET    /api/v1/projects/:id/cost-breakdown                (cost breakdown by resource/task/week)
 GET    /api/v1/reports/utilization                        (utilization report)
 ```
+
+#### Wave 2 Implementation Order
+
+1. **Shared types:** `CostEntry`, `CostCategory`, `CostEntryStatus`, `CostSummary` interfaces
+2. **DB migration:** Create `cost_entries` table + `time_entries` table + person columns
+3. **Backend module:** `CostsModule` with entity, service, controller, DTOs
+4. **Cost summary endpoint:** Aggregation queries with category/month/vendor grouping
+5. **RAG engine update:** Use cost entries sum instead of manual `actualCost`
+6. **Frontend hook + API:** `useCostEntries`, `useCreateCostEntry`, `useCostSummary`
+7. **Cost tab UI:** Entry list table + add/edit dialog + summary cards
+8. **Charts:** Pie chart (by category) + bar chart (monthly trend)
+9. **Transfer feature:** Move cost entry between projects with audit trail
+10. **Timesheet page:** Weekly grid view for time entries
 
 ---
 

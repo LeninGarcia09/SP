@@ -4,6 +4,8 @@ import type {
   PaginationMeta,
   Project,
   ProjectHoursSummary,
+  CostEntry,
+  CostSummary,
   Task,
   TaskActivity,
   ProjectHealthSnapshot,
@@ -390,5 +392,51 @@ export async function deleteOpportunity(id: string) {
 
 export async function convertOpportunity(id: string, body: Record<string, unknown>) {
   const { data } = await api.post<ApiResponse<Project>>(`/opportunities/${id}/convert`, body);
+  return data;
+}
+
+// ─── Cost Entries ───
+
+export async function fetchCostEntries(projectId: string) {
+  const { data } = await api.get<ApiResponse<CostEntry[]>>(`/projects/${projectId}/costs`);
+  return data;
+}
+
+export async function createCostEntry(projectId: string, body: Record<string, unknown>) {
+  const { data } = await api.post<ApiResponse<CostEntry>>(`/projects/${projectId}/costs`, body);
+  return data;
+}
+
+export async function updateCostEntry(projectId: string, costId: string, body: Record<string, unknown>) {
+  const { data } = await api.patch<ApiResponse<CostEntry>>(`/projects/${projectId}/costs/${costId}`, body);
+  return data;
+}
+
+export async function deleteCostEntry(projectId: string, costId: string) {
+  await api.delete(`/projects/${projectId}/costs/${costId}`);
+}
+
+export async function submitCostEntry(costId: string) {
+  const { data } = await api.post<ApiResponse<CostEntry>>(`/costs/${costId}/submit`);
+  return data;
+}
+
+export async function approveCostEntry(costId: string) {
+  const { data } = await api.post<ApiResponse<CostEntry>>(`/costs/${costId}/approve`);
+  return data;
+}
+
+export async function rejectCostEntry(costId: string, reason?: string) {
+  const { data } = await api.post<ApiResponse<CostEntry>>(`/costs/${costId}/reject`, { reason });
+  return data;
+}
+
+export async function transferCostEntry(costId: string, targetProjectId: string, reason?: string) {
+  const { data } = await api.post<ApiResponse<CostEntry>>(`/costs/${costId}/transfer`, { targetProjectId, reason });
+  return data;
+}
+
+export async function fetchCostSummary(projectId: string) {
+  const { data } = await api.get<ApiResponse<CostSummary>>(`/projects/${projectId}/cost-summary`);
   return data;
 }

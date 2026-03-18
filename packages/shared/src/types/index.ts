@@ -269,6 +269,10 @@ export enum NotificationType {
   MEMBER_ADDED = 'MEMBER_ADDED',
   NOTE_ADDED = 'NOTE_ADDED',
   HOURS_OVERRUN = 'HOURS_OVERRUN',
+  COST_SUBMITTED = 'COST_SUBMITTED',
+  COST_APPROVED = 'COST_APPROVED',
+  COST_REJECTED = 'COST_REJECTED',
+  BUDGET_THRESHOLD = 'BUDGET_THRESHOLD',
   GENERAL = 'GENERAL',
 }
 
@@ -399,6 +403,75 @@ export interface ProjectHoursSummary {
   tasksWithEstimates: number;
   tasksWithActuals: number;
   laborCost: number;
+}
+
+// ─── Cost Entries ───
+
+export enum CostCategory {
+  VENDOR_SERVICE = 'VENDOR_SERVICE',
+  SUBCONTRACTOR = 'SUBCONTRACTOR',
+  EQUIPMENT_RENTAL = 'EQUIPMENT_RENTAL',
+  EQUIPMENT_PURCHASE = 'EQUIPMENT_PURCHASE',
+  MATERIALS = 'MATERIALS',
+  SOFTWARE_LICENSE = 'SOFTWARE_LICENSE',
+  TRAVEL = 'TRAVEL',
+  ACCOMMODATION = 'ACCOMMODATION',
+  MEALS = 'MEALS',
+  PER_DIEM = 'PER_DIEM',
+  UTILITIES = 'UTILITIES',
+  INSURANCE = 'INSURANCE',
+  PERMITS_FEES = 'PERMITS_FEES',
+  TRAINING = 'TRAINING',
+  TAX = 'TAX',
+  CONTINGENCY = 'CONTINGENCY',
+  OTHER = 'OTHER',
+}
+
+export enum CostEntryStatus {
+  DRAFT = 'DRAFT',
+  SUBMITTED = 'SUBMITTED',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}
+
+export interface CostEntry {
+  id: string;
+  projectId: string;
+  taskId: string | null;
+  category: CostCategory;
+  description: string;
+  vendor: string | null;
+  amount: number;
+  currency: string;
+  date: string;
+  invoiceRef: string | null;
+  status: CostEntryStatus;
+  submittedById: string;
+  approvedById: string | null;
+  approvedAt: string | null;
+  notes: string | null;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CostSummary {
+  totalBudget: number;
+  totalCostEntries: number;
+  laborCost: number;
+  totalActualCost: number;
+  variance: number;
+  burnPercent: number;
+  byCategory: Array<{
+    category: CostCategory;
+    count: number;
+    total: number;
+    percentage: number;
+  }>;
+  byMonth: Array<{
+    month: string;
+    total: number;
+  }>;
 }
 
 // ─── API Response Envelope ───
