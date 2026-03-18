@@ -139,4 +139,12 @@ export class ProjectsController {
   async deleteNote(@Param('noteId', ParseUUIDPipe) noteId: string) {
     await this.projectsService.deleteNote(noteId);
   }
+
+  // ─── Hours Summary ───
+
+  @Get(':id/hours-summary')
+  async getHoursSummary(@Param('id', ParseUUIDPipe) id: string) {
+    const data = await this.projectsService.getHoursSummary(id);
+    return { data };
+  }
 }

@@ -4,10 +4,12 @@ import { ILike, Repository } from 'typeorm';
 import { ProjectEntity } from './project.entity';
 import { ProjectMemberEntity } from './project-member.entity';
 import { ProjectNoteEntity } from './project-note.entity';
+import { TaskEntity } from '../tasks/task.entity';
 import { CreateProjectDto, UpdateProjectDto } from './dto/project.dto';
 import { AddProjectMemberDto, UpdateProjectMemberDto } from './dto/project-member.dto';
 import { CreateProjectNoteDto, UpdateProjectNoteDto } from './dto/project-note.dto';
 import { PaginationDto, PaginatedResult } from '../../common/dto/pagination.dto';
+import type { ProjectHoursSummary } from '@bizops/shared';
 
 @Injectable()
 export class ProjectsService {
@@ -18,6 +20,8 @@ export class ProjectsService {
     private readonly memberRepo: Repository<ProjectMemberEntity>,
     @InjectRepository(ProjectNoteEntity)
     private readonly noteRepo: Repository<ProjectNoteEntity>,
+    @InjectRepository(TaskEntity)
+    private readonly taskRepo: Repository<TaskEntity>,
   ) {}
 
   async findAll(query: PaginationDto): Promise<PaginatedResult<ProjectEntity>> {
@@ -126,5 +130,44 @@ export class ProjectsService {
     const note = await this.noteRepo.findOneBy({ id: noteId });
     if (!note) throw new NotFoundException(`Note ${noteId} not found`);
     await this.noteRepo.remove(note);
+  }
+
+  // ─── Hours Summary ───
+
+  async getHoursSummary(projectId: string): Promise<ProjectHoursSummary> {
+    const project = await this.findById(projectId);
+    const tasks = await this.taskRepo.find({ where: { projectId } });
+
+    let totalEstimatedHours = 0;
+    let totalActualHours = 0;
+    let tasksWithEstimates = 0;
+    let tasksWithActuals = 0;
+
+    for (const task of tasks) {
+      const est = Number(task.estimatedHours) || 0;
+      const act = Number(task.actualHours) || 0;
+      totalEstimatedHours += est;
+      totalActualHours += act;
+      if (est > 0) tasksWithEstimates++;
+      if (act > 0) tasksWithActuals++;
+    }
+
+    const variance = totalEstimatedHours - totalActualHours;
+    const completionPercent = totalEstimatedHours > 0
+      ? Math.round((totalActualHours / totalEstimatedHours) * 100)
+      : 0;
+    const costRate = Number(project.costRate) || 0;
+    const laborCost = totalActualHours * costRate;
+
+    return {
+      totalEstimatedHours,
+      totalActualHours,
+      variance,
+      completionPercent,
+      taskCount: tasks.length,
+      tasksWithEstimates,
+      tasksWithActuals,
+      laborCost,
+    };
   }
 }

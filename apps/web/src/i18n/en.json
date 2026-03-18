@@ -124,6 +124,22 @@
     "ofBudget": "of budget",
     "costRate": "Cost Rate ($/hr)"
   },
+  "hours": {
+    "title": "Hours",
+    "estimated": "Estimated",
+    "actual": "Actual",
+    "variance": "Variance",
+    "completion": "Completion",
+    "laborCost": "Labor Cost",
+    "laborCostTooltip": "Calculated from task hours × cost rate",
+    "noEstimates": "No hour estimates set",
+    "estHours": "Est. Hours",
+    "actHours": "Actual Hours",
+    "overEstimate": "over estimate",
+    "underEstimate": "under estimate",
+    "onTrack": "on track",
+    "tasksTracked": "{{count}} of {{total}} tasks tracked"
+  },
   "projectForm": {
     "editTitle": "Edit Project",
     "newTitle": "New Project",

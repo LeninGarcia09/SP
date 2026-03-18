@@ -99,6 +99,9 @@ export class TasksService {
       await this.ensureProjectMember(saved.projectId, saved.assigneeId);
     }
 
+    // Notify if actual hours exceed estimate by >20%
+    await this.checkHoursOverrun(saved, oldTask, userId);
+
     return saved;
   }
 
@@ -303,6 +306,35 @@ export class TasksService {
       });
     } catch {
       // ConflictException means user is already a member — that's fine
+    }
+  }
+
+  private async checkHoursOverrun(
+    task: TaskEntity,
+    oldTask: TaskEntity,
+    userId: string,
+  ): Promise<void> {
+    const estimated = Number(task.estimatedHours) || 0;
+    const actual = Number(task.actualHours) || 0;
+    const oldActual = Number(oldTask.actualHours) || 0;
+    if (estimated <= 0 || actual <= oldActual) return;
+    // Notify when crossing the 120% threshold
+    const threshold = estimated * 1.2;
+    if (actual > threshold && oldActual <= threshold) {
+      const overrunPct = Math.round(((actual - estimated) / estimated) * 100);
+      const recipients = new Set<string>();
+      if (task.createdById) recipients.add(task.createdById);
+      if (task.assigneeId) recipients.add(task.assigneeId);
+      for (const recipientId of recipients) {
+        await this.notificationsService.create({
+          userId: recipientId,
+          type: NotificationType.HOURS_OVERRUN,
+          title: `Hours overrun: ${task.title}`,
+          message: `Actual hours (${actual}h) exceed estimate (${estimated}h) by ${overrunPct}%`,
+          relatedEntityType: 'TASK',
+          relatedEntityId: task.id,
+        });
+      }
     }
   }
 }

@@ -124,6 +124,22 @@
     "ofBudget": "del presupuesto",
     "costRate": "Tarifa ($/hr)"
   },
+  "hours": {
+    "title": "Horas",
+    "estimated": "Estimadas",
+    "actual": "Reales",
+    "variance": "Variación",
+    "completion": "Completado",
+    "laborCost": "Costo Laboral",
+    "laborCostTooltip": "Calculado de horas de tareas × tarifa",
+    "noEstimates": "Sin estimaciones de horas",
+    "estHours": "Horas Est.",
+    "actHours": "Horas Reales",
+    "overEstimate": "sobre estimación",
+    "underEstimate": "bajo estimación",
+    "onTrack": "en línea",
+    "tasksTracked": "{{count}} de {{total}} tareas rastreadas"
+  },
   "projectForm": {
     "editTitle": "Editar Proyecto",
     "newTitle": "Nuevo Proyecto",

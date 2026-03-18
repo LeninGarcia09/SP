@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Plus, RefreshCw, Trash2, Pin } from 'lucide-react';
-import { useProject, useDeleteProject, useProjectMembers, useAddProjectMember, useRemoveProjectMember, useProjectNotes, useCreateProjectNote, useUpdateProjectNote, useDeleteProjectNote } from '../hooks/use-projects';
+import { ArrowLeft, Plus, RefreshCw, Trash2, Pin, Clock } from 'lucide-react';
+import { useProject, useDeleteProject, useProjectMembers, useAddProjectMember, useRemoveProjectMember, useProjectNotes, useCreateProjectNote, useUpdateProjectNote, useDeleteProjectNote, useProjectHoursSummary } from '../hooks/use-projects';
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '../hooks/use-tasks';
 import { useHealthHistory, useTriggerHealth } from '../hooks/use-health';
 import { usePersonnel } from '../hooks/use-personnel';
@@ -75,6 +75,7 @@ export function ProjectDetailPage() {
   const createNote = useCreateProjectNote(id!);
   const updateNote = useUpdateProjectNote(id!);
   const deleteNote = useDeleteProjectNote(id!);
+  const hoursSummary = useProjectHoursSummary(id!);
   const usersQuery = useUsers({ limit: 100 });
   const personnelQuery = usePersonnel({ limit: 100 });
 
@@ -129,6 +130,8 @@ export function ProjectDetailPage() {
     assigneeId: '',
     startDate: '',
     dueDate: '',
+    estimatedHours: '' as string,
+    actualHours: '' as string,
   });
 
   const [memberForm, setMemberForm] = useState({
@@ -164,6 +167,8 @@ export function ProjectDetailPage() {
       assigneeId: '',
       startDate: '',
       dueDate: '',
+      estimatedHours: '',
+      actualHours: '',
     });
     setTaskDialogOpen(true);
   }
@@ -178,6 +183,8 @@ export function ProjectDetailPage() {
       assigneeId: task.assigneeId ?? '',
       startDate: task.startDate ?? '',
       dueDate: task.dueDate ?? '',
+      estimatedHours: task.estimatedHours != null ? String(task.estimatedHours) : '',
+      actualHours: task.actualHours != null ? String(task.actualHours) : '',
     });
     setTaskDialogOpen(true);
   }
@@ -191,6 +198,8 @@ export function ProjectDetailPage() {
       assigneeId: taskForm.assigneeId || null,
       startDate: taskForm.startDate || null,
       dueDate: taskForm.dueDate || null,
+      estimatedHours: taskForm.estimatedHours ? Number(taskForm.estimatedHours) : null,
+      actualHours: taskForm.actualHours ? Number(taskForm.actualHours) : null,
     };
 
     if (editingTask) {
@@ -237,7 +246,7 @@ export function ProjectDetailPage() {
       <ProjectFormDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} project={p} />
 
       {/* Info Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <div className="rounded-lg border p-4">
           <p className="text-xs text-muted-foreground mb-1">{t('common.startDate')}</p>
           <p className="font-medium">{p.startDate}</p>
@@ -257,6 +266,31 @@ export function ProjectDetailPage() {
             <p className="text-xs text-muted-foreground mt-1">
               {((Number(p.actualCost) / Number(p.budget)) * 100).toFixed(1)}% {t('projects.ofBudget')}
             </p>
+          )}
+        </div>
+        <div className="rounded-lg border p-4">
+          <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+            <Clock className="h-3 w-3" /> {t('hours.title')}
+          </p>
+          {hoursSummary.data?.data ? (() => {
+            const hs = hoursSummary.data.data;
+            const pct = hs.completionPercent;
+            const color = pct > 110 ? 'text-red-600' : pct > 90 ? 'text-amber-600' : 'text-green-600';
+            return (
+              <>
+                <p className="font-medium">{hs.totalActualHours}h <span className="text-muted-foreground font-normal">/ {hs.totalEstimatedHours}h</span></p>
+                {hs.totalEstimatedHours > 0 && (
+                  <p className={`text-xs mt-1 ${color}`}>{pct}% {t('hours.completion')}</p>
+                )}
+                {hs.laborCost > 0 && (
+                  <p className="text-xs text-muted-foreground mt-0.5" title={t('hours.laborCostTooltip')}>
+                    {t('hours.laborCost')}: ${hs.laborCost.toLocaleString()}
+                  </p>
+                )}
+              </>
+            );
+          })() : (
+            <span className="text-sm text-muted-foreground">{t('hours.noEstimates')}</span>
           )}
         </div>
         <div className="rounded-lg border p-4">
@@ -303,15 +337,15 @@ export function ProjectDetailPage() {
 
         {tasks.data?.data && tasks.data.data.length > 0 && (
           <div className="rounded-lg border overflow-x-auto">
-            <table className="w-full text-sm min-w-[900px]">
+            <table className="w-full text-sm min-w-[1100px]">
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="text-left p-3 font-medium">{t('projects.taskTitle')}</th>
-                  <th className="text-left p-3 font-medium">{t('tasks.createdBy')}</th>
                   <th className="text-left p-3 font-medium">{t('tasks.assignee')}</th>
                   <th className="text-left p-3 font-medium">{t('common.status')}</th>
                   <th className="text-left p-3 font-medium">{t('projects.priority')}</th>
-                  <th className="text-left p-3 font-medium">{t('tasks.startDate')}</th>
+                  <th className="text-right p-3 font-medium">{t('hours.estHours')}</th>
+                  <th className="text-right p-3 font-medium">{t('hours.actHours')}</th>
                   <th className="text-left p-3 font-medium">{t('tasks.requiredEnd')}</th>
                   <th className="p-3 w-10"></th>
                 </tr>
@@ -319,19 +353,23 @@ export function ProjectDetailPage() {
               <tbody>
                 {tasks.data.data.map((task) => {
                   const isOverdue = task.dueDate && task.status !== TaskStatus.DONE && new Date(task.dueDate) < new Date();
+                  const est = Number(task.estimatedHours) || 0;
+                  const act = Number(task.actualHours) || 0;
+                  const hoursOverrun = est > 0 && act > est;
                   return (
                   <tr
                     key={task.id}
                     className={`border-b last:border-0 hover:bg-muted/25 cursor-pointer ${isOverdue ? 'bg-red-50' : ''}`}
                     onClick={() => openEditTask(task)}
                   >
-                    <td className="p-3 font-medium">{task.title}</td>
-                    <td className="p-3 text-xs text-muted-foreground">
-                      {task.createdById
-                        ? assigneeOptions.find((o) => o.value === task.createdById)?.label ?? '—'
-                        : '—'}
-                      <br />
-                      <span className="text-[10px]">{new Date(task.createdAt).toLocaleDateString()}</span>
+                    <td className="p-3 font-medium">
+                      {task.title}
+                      <span className="block text-[10px] text-muted-foreground">
+                        {task.createdById
+                          ? assigneeOptions.find((o) => o.value === task.createdById)?.label ?? ''
+                          : ''}
+                        {' · '}{new Date(task.createdAt).toLocaleDateString()}
+                      </span>
                     </td>
                     <td className="p-3 text-xs">
                       {task.assigneeId
@@ -348,7 +386,20 @@ export function ProjectDetailPage() {
                         {t(`priorities.${task.priority}`)}
                       </span>
                     </td>
-                    <td className="p-3">{task.startDate ?? '—'}</td>
+                    <td className="p-3 text-right tabular-nums text-muted-foreground">
+                      {est > 0 ? `${est}h` : '—'}
+                    </td>
+                    <td className={`p-3 text-right tabular-nums ${hoursOverrun ? 'text-red-600 font-medium' : ''}`}>
+                      {act > 0 ? `${act}h` : '—'}
+                      {est > 0 && act > 0 && (
+                        <div className="w-full bg-gray-200 rounded-full h-1 mt-1">
+                          <div
+                            className={`h-1 rounded-full ${hoursOverrun ? 'bg-red-500' : 'bg-green-500'}`}
+                            style={{ width: `${Math.min((act / est) * 100, 100)}%` }}
+                          />
+                        </div>
+                      )}
+                    </td>
                     <td className={`p-3 ${isOverdue ? 'text-red-600 font-medium' : ''}`}>
                       {task.dueDate ?? '—'}
                     </td>
@@ -728,6 +779,37 @@ export function ProjectDetailPage() {
                   value={taskForm.dueDate}
                   onChange={(e) => setTaskForm((f) => ({ ...f, dueDate: e.target.value }))}
                 />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="task-est-hours">{t('hours.estHours')}</Label>
+                <Input
+                  id="task-est-hours"
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={taskForm.estimatedHours}
+                  onChange={(e) => setTaskForm((f) => ({ ...f, estimatedHours: e.target.value }))}
+                  placeholder="0"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="task-act-hours">{t('hours.actHours')}</Label>
+                <Input
+                  id="task-act-hours"
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={taskForm.actualHours}
+                  onChange={(e) => setTaskForm((f) => ({ ...f, actualHours: e.target.value }))}
+                  placeholder="0"
+                />
+                {taskForm.estimatedHours && taskForm.actualHours && Number(taskForm.estimatedHours) > 0 && (
+                  <p className={`text-xs ${Number(taskForm.actualHours) > Number(taskForm.estimatedHours) ? 'text-red-600' : 'text-green-600'}`}>
+                    {Math.round((Number(taskForm.actualHours) / Number(taskForm.estimatedHours)) * 100)}% {t('hours.completion')}
+                  </p>
+                )}
               </div>
             </div>
 

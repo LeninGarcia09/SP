@@ -12,6 +12,7 @@ import {
   createProjectNote,
   updateProjectNote,
   deleteProjectNote,
+  fetchProjectHoursSummary,
 } from '../lib/api';
 import type { PaginationParams } from '../lib/api';
 
@@ -132,5 +133,15 @@ export function useDeleteProjectNote(projectId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['projects', projectId, 'notes'] });
     },
+  });
+}
+
+// ─── Hours Summary ───
+
+export function useProjectHoursSummary(projectId: string) {
+  return useQuery({
+    queryKey: ['projects', projectId, 'hours-summary'],
+    queryFn: () => fetchProjectHoursSummary(projectId),
+    enabled: !!projectId,
   });
 }

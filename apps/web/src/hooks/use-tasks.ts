@@ -31,6 +31,7 @@ export function useCreateTask(projectId: string) {
     mutationFn: (body: Record<string, unknown>) => createTask(projectId, body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['projects', projectId, 'tasks'] });
+      qc.invalidateQueries({ queryKey: ['projects', projectId, 'hours-summary'] });
     },
   });
 }
@@ -42,6 +43,7 @@ export function useUpdateTask(projectId: string) {
       updateTask(projectId, taskId, body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['projects', projectId, 'tasks'] });
+      qc.invalidateQueries({ queryKey: ['projects', projectId, 'hours-summary'] });
     },
   });
 }
@@ -52,6 +54,7 @@ export function useDeleteTask(projectId: string) {
     mutationFn: (taskId: string) => deleteTask(projectId, taskId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['projects', projectId, 'tasks'] });
+      qc.invalidateQueries({ queryKey: ['projects', projectId, 'hours-summary'] });
     },
   });
 }

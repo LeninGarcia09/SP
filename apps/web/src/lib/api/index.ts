@@ -3,6 +3,7 @@ import type {
   ApiResponse,
   PaginationMeta,
   Project,
+  ProjectHoursSummary,
   Task,
   TaskActivity,
   ProjectHealthSnapshot,
@@ -98,6 +99,11 @@ export async function removeProjectMember(memberId: string) {
 
 export async function fetchProjectNotes(projectId: string) {
   const { data } = await api.get<ApiResponse<ProjectNote[]>>(`/projects/${projectId}/notes`);
+  return data;
+}
+
+export async function fetchProjectHoursSummary(projectId: string) {
+  const { data } = await api.get<ApiResponse<ProjectHoursSummary>>(`/projects/${projectId}/hours-summary`);
   return data;
 }
 

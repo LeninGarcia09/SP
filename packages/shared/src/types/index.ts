@@ -268,6 +268,7 @@ export enum NotificationType {
   RAG_STATUS_CHANGED = 'RAG_STATUS_CHANGED',
   MEMBER_ADDED = 'MEMBER_ADDED',
   NOTE_ADDED = 'NOTE_ADDED',
+  HOURS_OVERRUN = 'HOURS_OVERRUN',
   GENERAL = 'GENERAL',
 }
 
@@ -385,6 +386,19 @@ export interface Opportunity {
   metadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
+}
+
+// ─── Project Hours Summary ───
+
+export interface ProjectHoursSummary {
+  totalEstimatedHours: number;
+  totalActualHours: number;
+  variance: number;
+  completionPercent: number;
+  taskCount: number;
+  tasksWithEstimates: number;
+  tasksWithActuals: number;
+  laborCost: number;
 }
 
 // ─── API Response Envelope ───
