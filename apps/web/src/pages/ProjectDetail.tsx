@@ -658,9 +658,9 @@ export function ProjectDetailPage() {
         )}
       </div>
 
-      {/* Tasks Section (unassigned to deliverables) */}
+      {/* Tasks Section (all tasks) */}
       {(() => {
-        const unassignedTasks = (tasks.data?.data ?? []).filter((t) => !t.deliverableId);
+        const allTasks = tasks.data?.data ?? [];
         return (
       <div>
         <div className="flex items-center justify-between mb-3">
@@ -674,16 +674,17 @@ export function ProjectDetailPage() {
           <div className="rounded-lg border p-4 text-center text-muted-foreground">{t('projects.loadingTasks')}</div>
         )}
 
-        {unassignedTasks.length === 0 && !tasks.isLoading && (
+        {allTasks.length === 0 && !tasks.isLoading && (
           <div className="rounded-lg border p-6 text-center text-muted-foreground">{t('projects.noTasks')}</div>
         )}
 
-        {unassignedTasks.length > 0 && (
+        {allTasks.length > 0 && (
           <div className="rounded-lg border overflow-x-auto">
             <table className="w-full text-sm min-w-[1100px]">
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="text-left p-3 font-medium">{t('projects.taskTitle')}</th>
+                  <th className="text-left p-3 font-medium">{t('deliverables.deliverable')}</th>
                   <th className="text-left p-3 font-medium">{t('tasks.assignee')}</th>
                   <th className="text-left p-3 font-medium">{t('common.status')}</th>
                   <th className="text-left p-3 font-medium">{t('projects.priority')}</th>
@@ -695,7 +696,7 @@ export function ProjectDetailPage() {
                 </tr>
               </thead>
               <tbody>
-                {unassignedTasks.map((task) => {
+                {allTasks.map((task) => {
                   const isOverdue = task.dueDate && task.status !== TaskStatus.DONE && new Date(task.dueDate) < new Date();
                   const est = Number(task.estimatedHours) || 0;
                   const act = Number(task.actualHours) || 0;
@@ -714,6 +715,13 @@ export function ProjectDetailPage() {
                           : ''}
                         {' · '}{new Date(task.createdAt).toLocaleDateString()}
                       </span>
+                    </td>
+                    <td className="p-3 text-xs">
+                      {task.deliverableId
+                        ? <span className="inline-flex items-center rounded-full bg-purple-100 text-purple-700 px-2 py-0.5 text-[10px] font-medium truncate max-w-[120px]">
+                            {deliverables.data?.find((d) => d.id === task.deliverableId)?.title ?? '—'}
+                          </span>
+                        : <span className="text-muted-foreground">—</span>}
                     </td>
                     <td className="p-3 text-xs">
                       {task.assigneeId

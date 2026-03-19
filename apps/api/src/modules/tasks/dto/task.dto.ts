@@ -56,6 +56,12 @@ export class CreateTaskDto {
   @IsOptional()
   estimatedHours?: number | null;
 
+  @ApiPropertyOptional({ minimum: 0 })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  actualHours?: number | null;
+
   @ApiPropertyOptional({ format: 'uuid' })
   @IsUUID()
   @IsOptional()
