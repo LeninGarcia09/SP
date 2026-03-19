@@ -230,6 +230,15 @@ export function ProjectDetailPage() {
   });
   const [expandedDeliverables, setExpandedDeliverables] = useState<Set<string>>(new Set());
 
+  // Build task cost lookup from taskCosts query (must be before early returns)
+  const taskCostMap = useMemo(() => {
+    const map = new Map<string, { laborCost: number; directCosts: number; totalCost: number }>();
+    for (const tc of taskCosts.data ?? []) {
+      map.set(tc.taskId, { laborCost: tc.laborCost, directCosts: tc.directCosts, totalCost: tc.totalCost });
+    }
+    return map;
+  }, [taskCosts.data]);
+
   if (project.isLoading) {
     return <div className="text-center text-muted-foreground py-12">{t('common.loading')}</div>;
   }
@@ -392,15 +401,6 @@ export function ProjectDetailPage() {
       return next;
     });
   }
-
-  // Build task cost lookup from taskCosts query
-  const taskCostMap = useMemo(() => {
-    const map = new Map<string, { laborCost: number; directCosts: number; totalCost: number }>();
-    for (const tc of taskCosts.data ?? []) {
-      map.set(tc.taskId, { laborCost: tc.laborCost, directCosts: tc.directCosts, totalCost: tc.totalCost });
-    }
-    return map;
-  }, [taskCosts.data]);
 
   async function handleCostSubmit() {
     const body: Record<string, unknown> = {
