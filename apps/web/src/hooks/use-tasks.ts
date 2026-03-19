@@ -32,6 +32,8 @@ export function useCreateTask(projectId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['projects', projectId, 'tasks'] });
       qc.invalidateQueries({ queryKey: ['projects', projectId, 'hours-summary'] });
+      qc.invalidateQueries({ queryKey: ['deliverables', projectId] });
+      qc.invalidateQueries({ queryKey: ['task-costs', projectId] });
     },
   });
 }
@@ -44,6 +46,8 @@ export function useUpdateTask(projectId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['projects', projectId, 'tasks'] });
       qc.invalidateQueries({ queryKey: ['projects', projectId, 'hours-summary'] });
+      qc.invalidateQueries({ queryKey: ['deliverables', projectId] });
+      qc.invalidateQueries({ queryKey: ['task-costs', projectId] });
     },
   });
 }
@@ -55,6 +59,8 @@ export function useDeleteTask(projectId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['projects', projectId, 'tasks'] });
       qc.invalidateQueries({ queryKey: ['projects', projectId, 'hours-summary'] });
+      qc.invalidateQueries({ queryKey: ['deliverables', projectId] });
+      qc.invalidateQueries({ queryKey: ['task-costs', projectId] });
     },
   });
 }

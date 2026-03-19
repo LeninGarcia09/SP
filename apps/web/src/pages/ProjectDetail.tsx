@@ -272,6 +272,10 @@ export function ProjectDetailPage() {
       deliverableId: deliverableId ?? '',
       costRate: '',
     });
+    // Auto-expand deliverable so user sees the task after creation
+    if (deliverableId) {
+      setExpandedDeliverables((prev) => new Set(prev).add(deliverableId));
+    }
     setTaskDialogOpen(true);
   }
 
@@ -577,8 +581,8 @@ export function ProjectDetailPage() {
                     </div>
                     <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
                       <Button size="sm" variant="ghost" onClick={() => openEditDeliverable(d)}>{t('common.edit')}</Button>
-                      <Button size="sm" variant="ghost" onClick={() => openNewTask(d.id)}>
-                        <Plus className="h-3 w-3" />
+                      <Button size="sm" variant="ghost" onClick={() => openNewTask(d.id)} title={t('deliverables.addTask')}>
+                        <Plus className="h-3 w-3 mr-1" /> {t('deliverables.addTask')}
                       </Button>
                       <Button size="sm" variant="ghost" className="text-destructive" onClick={() => {
                         if (confirm(t('deliverables.confirmDelete'))) deleteDeliverable.mutate(d.id);
@@ -603,8 +607,14 @@ export function ProjectDetailPage() {
                         </div>
                       )}
                       {delTasks.length === 0 ? (
-                        <div className="p-4 text-center text-sm text-muted-foreground">{t('deliverables.noTasks')}</div>
+                        <div className="p-6 text-center">
+                          <p className="text-sm text-muted-foreground mb-3">{t('deliverables.noTasks')}</p>
+                          <Button size="sm" variant="outline" onClick={() => openNewTask(d.id)}>
+                            <Plus className="h-4 w-4 mr-1" /> {t('deliverables.addTask')}
+                          </Button>
+                        </div>
                       ) : (
+                        <>
                         <table className="w-full text-sm">
                           <tbody>
                             {delTasks.map((task) => {
@@ -632,6 +642,12 @@ export function ProjectDetailPage() {
                             })}
                           </tbody>
                         </table>
+                        <div className="px-4 py-2 border-t">
+                          <Button size="sm" variant="ghost" className="w-full text-muted-foreground hover:text-foreground" onClick={() => openNewTask(d.id)}>
+                            <Plus className="h-4 w-4 mr-1" /> {t('deliverables.addTask')}
+                          </Button>
+                        </div>
+                        </>
                       )}
                     </div>
                   )}

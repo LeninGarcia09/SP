@@ -212,6 +212,7 @@
     "name": "Nombre",
     "none": "Sin entregables aún. Crea uno para agrupar tareas.",
     "noTasks": "Sin tareas en este entregable.",
+    "addTask": "Agregar Tarea",
     "tasks": "tareas",
     "done": "completadas",
     "ofBudget": "del presupuesto",

@@ -212,6 +212,7 @@
     "name": "Name",
     "none": "No deliverables yet. Create one to group tasks.",
     "noTasks": "No tasks in this deliverable.",
+    "addTask": "Add Task",
     "tasks": "tasks",
     "done": "done",
     "ofBudget": "of budget",
