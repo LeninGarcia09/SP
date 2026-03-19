@@ -6,6 +6,9 @@ import type {
   ProjectHoursSummary,
   CostEntry,
   CostSummary,
+  CostForecast,
+  BurnChartData,
+  ResourceMatchResult,
   Task,
   TaskActivity,
   ProjectHealthSnapshot,
@@ -438,5 +441,27 @@ export async function transferCostEntry(costId: string, targetProjectId: string,
 
 export async function fetchCostSummary(projectId: string) {
   const { data } = await api.get<ApiResponse<CostSummary>>(`/projects/${projectId}/cost-summary`);
+  return data;
+}
+
+// ─── Cost Forecasting & Burn Data (Wave 3) ───
+
+export async function fetchCostForecast(projectId: string) {
+  const { data } = await api.get<ApiResponse<CostForecast>>(`/projects/${projectId}/cost-forecast`);
+  return data;
+}
+
+export async function fetchBurnData(projectId: string, metric: 'hours' | 'cost' = 'hours') {
+  const { data } = await api.get<ApiResponse<BurnChartData>>(`/projects/${projectId}/burn-data`, { params: { metric } });
+  return data;
+}
+
+// ─── Resource Matching (Wave 3) ───
+
+export async function fetchResourceMatches(skills: string[], minAllocation?: number, availableFrom?: string) {
+  const params: Record<string, string> = { skills: skills.join(',') };
+  if (minAllocation !== undefined) params.minAllocation = String(minAllocation);
+  if (availableFrom) params.availableFrom = availableFrom;
+  const { data } = await api.get<ApiResponse<ResourceMatchResult>>('/personnel/match', { params });
   return data;
 }

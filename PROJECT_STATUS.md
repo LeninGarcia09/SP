@@ -1,7 +1,7 @@
 # BizOps Platform — Project Status & Context
 
 > **Purpose:** Quick-reference for AI agents resuming work on this project.
-> **Last updated:** 2026-03-14
+> **Last updated:** 2026-03-18
 > **Full spec:** See `CLAUDE.md` in this same directory for complete data model, RBAC, API conventions.
 
 ---
@@ -72,6 +72,43 @@
 - [x] Deploy Infrastructure workflow available (Bicep validate + deploy)
 - [x] `workflow_dispatch` trigger added to CI for manual runs
 - [x] `VITE_API_BASE_URL` env var added to CI web build step
+
+### Enhancement Waves — Hours, Cost & Resource Management
+
+#### Wave 1 — Hours Tracking Foundation ✅
+- [x] Task hours UI (estimatedHours/actualHours) in ProjectDetail task form + table
+- [x] Hours progress bar on task rows with overrun coloring
+- [x] `GET /projects/:id/hours-summary` endpoint with rollup
+- [x] Project Hours Summary card in ProjectDetail
+- [x] Hours-overrun notification (>20% over)
+- [x] Automatic labor cost from hours × project costRate
+
+#### Wave 2 — Full Cost Management Module ✅
+- [x] CostEntry entity + migration (cost_entries table with indexes)
+- [x] CostsModule: full CRUD + submit/approve/reject/transfer workflow
+- [x] Cost summary endpoint with category/month breakdowns
+- [x] Project actualCost computed from entries + labor
+- [x] Budget threshold notifications (80%, 100%)
+- [x] Frontend: cost summary cards, category breakdown, cost entries table
+- [x] Frontend: add/edit cost dialog, reject dialog, transfer dialog
+
+#### Wave 3 — Analytics & Forecasting ✅
+- [x] Cost Forecasting (EAC/ETC/VAC/CPI) — `GET /projects/:id/cost-forecast`
+- [x] Burn-Down chart — `GET /projects/:id/burn-data?metric=hours|cost`
+- [x] Skills-Based Resource Matching — `GET /personnel/match?skills=&minAllocation=`
+- [x] Start/Stop Timer — localStorage-based, per-task timer with auto-log on stop
+- [x] ActiveTimerBar in layout header (shows running timer globally)
+- [x] CostForecastCard component with EAC/ETC/VAC/CPI display + progress bar
+- [x] BurnChart component with Recharts (hours/cost toggle, ideal vs actual lines)
+- [x] ResourceFinder dialog with skill search + allocation filter
+- [x] TaskTimerButton on each task row (start/stop with elapsed display)
+- [x] i18n translations for forecast, burnChart, timer, resourceFinder (EN + ES)
+
+#### Wave 4 — Approvals & Leave (Not Started)
+- [ ] Time entry approval workflow (DRAFT → SUBMITTED → APPROVED/REJECTED)
+- [ ] Leave/absence tracking entity + API
+- [ ] Approval queue page
+- [ ] Capacity planning leave integration
 
 ---
 

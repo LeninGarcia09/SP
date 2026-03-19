@@ -12,7 +12,7 @@ import {
   RejectCostEntryDto,
 } from './dto/cost-entry.dto';
 import { CostEntryStatus, NotificationType } from '@bizops/shared';
-import type { CostSummary } from '@bizops/shared';
+import type { CostSummary, CostForecast, BurnChartData } from '@bizops/shared';
 
 @Injectable()
 export class CostsService {
@@ -231,6 +231,136 @@ export class CostsService {
       byCategory,
       byMonth,
     };
+  }
+
+  async getCostForecast(projectId: string): Promise<CostForecast> {
+    const project = await this.projectRepo.findOneBy({ id: projectId });
+    if (!project) throw new NotFoundException(`Project ${projectId} not found`);
+
+    const tasks = await this.taskRepo.find({ where: { projectId } });
+
+    const totalEstimated = tasks.reduce((sum, t) => sum + Number(t.estimatedHours || 0), 0);
+    const totalActual = tasks.reduce((sum, t) => sum + Number(t.actualHours || 0), 0);
+    const remainingHours = Math.max(0, totalEstimated - totalActual);
+    const costRate = Number(project.costRate || 0);
+
+    // Labor cost from hours
+    const laborCost = totalActual * costRate;
+
+    // Non-labor cost from approved cost entries
+    const result = await this.costRepo
+      .createQueryBuilder('ce')
+      .select('COALESCE(SUM(ce.amount), 0)', 'total')
+      .where('ce.projectId = :projectId', { projectId })
+      .andWhere('ce.status = :status', { status: CostEntryStatus.APPROVED })
+      .getRawOne();
+    const nonLaborCost = Number(result?.total || 0);
+
+    const actualCost = laborCost + nonLaborCost;
+    const budget = Number(project.budget || 0);
+
+    // ETC = remaining hours × cost rate (labor portion only; non-labor assumed done)
+    const etc = remainingHours * costRate;
+    // EAC = actual cost + ETC
+    const eac = actualCost + etc;
+    // VAC = budget - EAC
+    const vac = budget - eac;
+    // CPI = budget / EAC (>1 = under budget, <1 = over budget)
+    const cpi = eac > 0 ? Math.round((budget / eac) * 100) / 100 : 0;
+
+    return {
+      budget,
+      actualCost,
+      laborCost,
+      eac,
+      etc,
+      vac,
+      cpi,
+      remainingHours,
+      totalEstimated,
+      totalActual,
+      projectedOverrun: eac > budget && budget > 0,
+      projectedCompletionCost: eac,
+    };
+  }
+
+  async getBurnData(projectId: string, metric: 'hours' | 'cost'): Promise<BurnChartData> {
+    const project = await this.projectRepo.findOneBy({ id: projectId });
+    if (!project) throw new NotFoundException(`Project ${projectId} not found`);
+
+    const tasks = await this.taskRepo.find({ where: { projectId } });
+
+    const totalEstimated = tasks.reduce((sum, t) => sum + Number(t.estimatedHours || 0), 0);
+    const costRate = Number(project.costRate || 0);
+    const totalScope = metric === 'hours' ? totalEstimated : totalEstimated * costRate;
+
+    // Build date range from project start to end (or today if ongoing)
+    const start = new Date(project.startDate);
+    const endRaw = new Date(project.endDate);
+    const today = new Date();
+    const end = endRaw > today ? endRaw : today;
+
+    // Generate weekly date points
+    const dates: string[] = [];
+    const ideal: number[] = [];
+    const actual: number[] = [];
+    const scope: number[] = [];
+
+    const totalDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+
+    // Collect completed task data indexed by completion date
+    const completedByDate = new Map<string, number>();
+    for (const task of tasks) {
+      if (task.completedDate) {
+        const date = task.completedDate.substring(0, 10);
+        const value = metric === 'hours'
+          ? Number(task.actualHours || task.estimatedHours || 0)
+          : Number(task.actualHours || task.estimatedHours || 0) * costRate;
+        completedByDate.set(date, (completedByDate.get(date) || 0) + value);
+      }
+    }
+
+    // Generate data points (weekly intervals, max ~52 points)
+    const interval = Math.max(1, Math.floor(totalDays / 52));
+    let cumulativeActual = 0;
+
+    for (let dayOffset = 0; dayOffset <= totalDays; dayOffset += interval) {
+      const pointDate = new Date(start);
+      pointDate.setDate(pointDate.getDate() + dayOffset);
+      const dateStr = pointDate.toISOString().substring(0, 10);
+
+      dates.push(dateStr);
+
+      // Ideal: linear burn-down from total scope to 0
+      const progress = dayOffset / totalDays;
+      ideal.push(Math.round((totalScope * (1 - progress)) * 100) / 100);
+
+      // Actual: remaining = scope - cumulative completed up to this date
+      for (const [completedDate, value] of completedByDate.entries()) {
+        if (completedDate <= dateStr) {
+          cumulativeActual += value;
+          completedByDate.delete(completedDate);
+        }
+      }
+      actual.push(Math.round((totalScope - cumulativeActual) * 100) / 100);
+
+      // Scope line (constant unless scope changes)
+      scope.push(totalScope);
+    }
+
+    // Ensure the last point is included
+    const lastDate = end.toISOString().substring(0, 10);
+    if (dates[dates.length - 1] !== lastDate) {
+      dates.push(lastDate);
+      ideal.push(0);
+      for (const [, value] of completedByDate.entries()) {
+        cumulativeActual += value;
+      }
+      actual.push(Math.round((totalScope - cumulativeActual) * 100) / 100);
+      scope.push(totalScope);
+    }
+
+    return { dates, ideal, actual, scope };
   }
 
   private async recalculateProjectCost(projectId: string): Promise<void> {

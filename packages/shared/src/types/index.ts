@@ -495,3 +495,43 @@ export interface ApiErrorResponse {
     details?: unknown;
   };
 }
+
+// ─── Cost Forecasting (Wave 3) ───
+
+export interface CostForecast {
+  budget: number;
+  actualCost: number;
+  laborCost: number;
+  eac: number;   // Estimate at Completion
+  etc: number;   // Estimate to Complete
+  vac: number;   // Variance at Completion
+  cpi: number;   // Cost Performance Index
+  remainingHours: number;
+  totalEstimated: number;
+  totalActual: number;
+  projectedOverrun: boolean;
+  projectedCompletionCost: number;
+}
+
+// ─── Burn Chart Data (Wave 3) ───
+
+export interface BurnChartData {
+  dates: string[];
+  ideal: number[];
+  actual: number[];
+  scope: number[];
+}
+
+// ─── Skills-Based Resource Matching (Wave 3) ───
+
+export interface ResourceMatch {
+  person: Person;
+  matchScore: number;
+  currentAllocation: number;
+  availablePercent: number;
+  matchedSkills: string[];
+}
+
+export interface ResourceMatchResult {
+  matches: ResourceMatch[];
+}

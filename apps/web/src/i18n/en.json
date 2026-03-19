@@ -576,5 +576,50 @@
       "COMMENT_ADDED": "Comment",
       "UPDATED": "Updated"
     }
+  },
+  "forecast": {
+    "title": "Cost Forecast",
+    "overrun": "Projected Overrun",
+    "eac": "EAC",
+    "eacDesc": "Estimate at Completion",
+    "etc": "ETC",
+    "etcDesc": "Estimate to Complete",
+    "vac": "VAC",
+    "vacDesc": "Variance at Completion",
+    "cpi": "CPI",
+    "underBudget": "Under budget",
+    "overBudget": "Over budget",
+    "spent": "Spent",
+    "actualPct": "{{pct}}% spent",
+    "eacPct": "{{pct}}% projected",
+    "hoursRemaining": "Hours remaining",
+    "hoursProgress": "Hours"
+  },
+  "burnChart": {
+    "title": "Burn-Down Chart",
+    "hours": "Hours",
+    "cost": "Cost",
+    "ideal": "Ideal",
+    "actual": "Actual",
+    "scope": "Scope",
+    "noData": "Not enough data to display the burn chart. Add tasks with dates."
+  },
+  "timer": {
+    "start": "Start timer",
+    "stop": "Stop timer",
+    "otherRunning": "Another timer is already running"
+  },
+  "resourceFinder": {
+    "title": "Find Team Members",
+    "desc": "Search for personnel by skills and availability.",
+    "skills": "Required Skills",
+    "searchSkills": "Type to search skills…",
+    "minAvailable": "Min. Available",
+    "results": "{{count}} matches found",
+    "noMatches": "No matching personnel found.",
+    "match": "match",
+    "allocated": "Allocated",
+    "available": "Available",
+    "assign": "Assign"
   }
 }

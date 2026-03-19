@@ -6,6 +6,7 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   UseGuards,
   ParseUUIDPipe,
   Request,
@@ -120,6 +121,24 @@ export class CostsController {
   @Get('projects/:projectId/cost-summary')
   async getCostSummary(@Param('projectId', ParseUUIDPipe) projectId: string) {
     const data = await this.costsService.getCostSummary(projectId);
+    return { data };
+  }
+
+  // ─── Cost forecasting (Wave 3) ───
+
+  @Get('projects/:projectId/cost-forecast')
+  async getCostForecast(@Param('projectId', ParseUUIDPipe) projectId: string) {
+    const data = await this.costsService.getCostForecast(projectId);
+    return { data };
+  }
+
+  @Get('projects/:projectId/burn-data')
+  async getBurnData(
+    @Param('projectId', ParseUUIDPipe) projectId: string,
+    @Query('metric') metric?: string,
+  ) {
+    const m = metric === 'cost' ? 'cost' : 'hours';
+    const data = await this.costsService.getBurnData(projectId, m);
     return { data };
   }
 }

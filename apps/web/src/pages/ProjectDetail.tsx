@@ -1,10 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Plus, RefreshCw, Trash2, Pin, Clock, DollarSign, Send, Check, X, ArrowRightLeft } from 'lucide-react';
+import { ArrowLeft, Plus, RefreshCw, Trash2, Pin, Clock, DollarSign, Send, Check, X, ArrowRightLeft, Search } from 'lucide-react';
 import { useProject, useDeleteProject, useProjectMembers, useAddProjectMember, useRemoveProjectMember, useProjectNotes, useCreateProjectNote, useUpdateProjectNote, useDeleteProjectNote, useProjectHoursSummary } from '../hooks/use-projects';
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '../hooks/use-tasks';
-import { useCostEntries, useCostSummary, useCreateCostEntry, useUpdateCostEntry, useDeleteCostEntry, useSubmitCostEntry, useApproveCostEntry, useRejectCostEntry, useTransferCostEntry } from '../hooks/use-costs';
+import { useCostEntries, useCostSummary, useCreateCostEntry, useUpdateCostEntry, useDeleteCostEntry, useSubmitCostEntry, useApproveCostEntry, useRejectCostEntry, useTransferCostEntry, useCostForecast, useBurnData } from '../hooks/use-costs';
 import { useProjects } from '../hooks/use-projects';
 import { useHealthHistory, useTriggerHealth } from '../hooks/use-health';
 import { usePersonnel } from '../hooks/use-personnel';
@@ -12,6 +12,10 @@ import { useUsers } from '../hooks/use-users';
 import { ProjectFormDialog } from '../components/projects/ProjectFormDialog';
 import { TaskGantt } from '../components/shared/ProjectGantt';
 import { TaskActivityTimeline } from '../components/tasks/TaskActivityTimeline';
+import { CostForecastCard } from '../components/projects/CostForecastCard';
+import { BurnChart } from '../components/projects/BurnChart';
+import { TaskTimerButton } from '../components/projects/TaskTimer';
+import { ResourceFinder } from '../components/projects/ResourceFinder';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -108,6 +112,20 @@ export function ProjectDetailPage() {
   const approveCost = useApproveCostEntry(id!);
   const rejectCost = useRejectCostEntry(id!);
   const transferCost = useTransferCostEntry(id!);
+
+  // Wave 3: Forecast, burn data, and resource finder
+  const costForecast = useCostForecast(id!);
+  const [burnMetric, setBurnMetric] = useState<'hours' | 'cost'>('hours');
+  const burnData = useBurnData(id!, burnMetric);
+  const [resourceFinderOpen, setResourceFinderOpen] = useState(false);
+
+  const handleTimerStop = useCallback((taskId: string, hours: number) => {
+    if (hours > 0) {
+      const task = (tasks.data?.data ?? []).find((t) => t.id === taskId);
+      const currentHours = Number(task?.actualHours || 0);
+      updateTask.mutate({ taskId, actualHours: currentHours + hours });
+    }
+  }, [tasks.data, updateTask]);
 
   // Build searchable assignee options from users + personnel
   const assigneeOptions = useMemo<ComboboxOption[]>(() => {
@@ -446,7 +464,7 @@ export function ProjectDetailPage() {
                   <th className="text-right p-3 font-medium">{t('hours.estHours')}</th>
                   <th className="text-right p-3 font-medium">{t('hours.actHours')}</th>
                   <th className="text-left p-3 font-medium">{t('tasks.requiredEnd')}</th>
-                  <th className="p-3 w-10"></th>
+                  <th className="p-3 w-20"></th>
                 </tr>
               </thead>
               <tbody>
@@ -503,12 +521,20 @@ export function ProjectDetailPage() {
                       {task.dueDate ?? '—'}
                     </td>
                     <td className="p-3">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleDeleteTask(task.id); }}
-                        className="text-muted-foreground hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <TaskTimerButton
+                          taskId={task.id}
+                          taskTitle={task.title}
+                          projectId={id!}
+                          onStop={(hours) => handleTimerStop(task.id, hours)}
+                        />
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDeleteTask(task.id); }}
+                          className="text-muted-foreground hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                   );
@@ -882,6 +908,24 @@ export function ProjectDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Wave 3: Cost Forecast & Burn Chart */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {costForecast.data?.data && (
+          <CostForecastCard forecast={costForecast.data.data} />
+        )}
+        {burnData.data?.data && (
+          <BurnChart data={burnData.data.data} metric={burnMetric} onMetricChange={setBurnMetric} />
+        )}
+      </div>
+
+      {/* Wave 3: Find Team Members */}
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" onClick={() => setResourceFinderOpen(true)}>
+          <Search className="h-4 w-4 mr-1" /> {t('resourceFinder.title')}
+        </Button>
+      </div>
+      <ResourceFinder open={resourceFinderOpen} onOpenChange={setResourceFinderOpen} />
 
       {/* Note Dialog */}
       <Dialog open={noteDialogOpen} onOpenChange={setNoteDialogOpen}>

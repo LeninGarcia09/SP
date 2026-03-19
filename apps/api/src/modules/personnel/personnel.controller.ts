@@ -37,6 +37,20 @@ export class PersonnelController {
     return this.personnelService.findAllPersons(query);
   }
 
+  // ─── Skills-Based Resource Matching (Wave 3) — must be before :id route ───
+
+  @Get('personnel/match')
+  async matchPersonnel(
+    @Query('skills') skills?: string,
+    @Query('minAllocation') minAllocation?: string,
+    @Query('availableFrom') availableFrom?: string,
+  ) {
+    const skillNames = skills ? skills.split(',').map((s) => s.trim()).filter(Boolean) : [];
+    const minAlloc = minAllocation ? Number(minAllocation) : undefined;
+    const matches = await this.personnelService.matchPersonnel(skillNames, minAlloc, availableFrom);
+    return { data: { matches } };
+  }
+
   @Get('personnel/:id')
   async findPersonById(@Param('id', ParseUUIDPipe) id: string) {
     const data = await this.personnelService.findPersonById(id);

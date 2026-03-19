@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useNotifications, useUnreadCount, useMarkNotificationRead, useMarkAllRead } from '../../hooks/use-notifications';
 import { Button } from '../ui/button';
 import { useAuthStore } from '../../store/auth-store';
+import { ActiveTimerBar } from '../projects/TaskTimer';
 import telnubLogo from '../../assets/telnub-logo.svg';
 
 interface NavItem {
@@ -245,6 +246,7 @@ export function Layout() {
               <span className="text-xs">({authUser.role})</span>
             </div>
           )}
+          <ActiveTimerBar />
           <Button variant="ghost" size="sm" onClick={toggleLang} className="gap-1.5 text-xs">
             <Globe className="h-4 w-4" />
             <span className="hidden sm:inline">{i18n.language === 'es' ? 'EN' : 'ES'}</span>

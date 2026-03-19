@@ -9,6 +9,8 @@ import {
   rejectCostEntry,
   transferCostEntry,
   fetchCostSummary,
+  fetchCostForecast,
+  fetchBurnData,
 } from '../lib/api';
 
 export function useCostEntries(projectId: string) {
@@ -107,5 +109,23 @@ export function useTransferCostEntry(projectId: string) {
       qc.invalidateQueries({ queryKey: ['projects', projectId, 'costs'] });
       qc.invalidateQueries({ queryKey: ['projects', projectId, 'cost-summary'] });
     },
+  });
+}
+
+// ─── Wave 3: Cost Forecasting & Burn Data ───
+
+export function useCostForecast(projectId: string) {
+  return useQuery({
+    queryKey: ['projects', projectId, 'cost-forecast'],
+    queryFn: () => fetchCostForecast(projectId),
+    enabled: !!projectId,
+  });
+}
+
+export function useBurnData(projectId: string, metric: 'hours' | 'cost' = 'hours') {
+  return useQuery({
+    queryKey: ['projects', projectId, 'burn-data', metric],
+    queryFn: () => fetchBurnData(projectId, metric),
+    enabled: !!projectId,
   });
 }

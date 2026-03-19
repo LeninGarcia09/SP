@@ -576,5 +576,50 @@
       "COMMENT_ADDED": "Comentario",
       "UPDATED": "Actualizado"
     }
+  },
+  "forecast": {
+    "title": "Pronóstico de Costos",
+    "overrun": "Sobrecosto Proyectado",
+    "eac": "EAC",
+    "eacDesc": "Estimación al Finalizar",
+    "etc": "ETC",
+    "etcDesc": "Estimación para Completar",
+    "vac": "VAC",
+    "vacDesc": "Variación al Finalizar",
+    "cpi": "IPC",
+    "underBudget": "Bajo presupuesto",
+    "overBudget": "Sobre presupuesto",
+    "spent": "Gastado",
+    "actualPct": "{{pct}}% gastado",
+    "eacPct": "{{pct}}% proyectado",
+    "hoursRemaining": "Horas restantes",
+    "hoursProgress": "Horas"
+  },
+  "burnChart": {
+    "title": "Gráfico de Quema",
+    "hours": "Horas",
+    "cost": "Costos",
+    "ideal": "Ideal",
+    "actual": "Real",
+    "scope": "Alcance",
+    "noData": "Datos insuficientes para mostrar el gráfico. Agregue tareas con fechas."
+  },
+  "timer": {
+    "start": "Iniciar cronómetro",
+    "stop": "Detener cronómetro",
+    "otherRunning": "Ya hay otro cronómetro activo"
+  },
+  "resourceFinder": {
+    "title": "Buscar Miembros de Equipo",
+    "desc": "Busque personal por habilidades y disponibilidad.",
+    "skills": "Habilidades Requeridas",
+    "searchSkills": "Escriba para buscar habilidades…",
+    "minAvailable": "Mín. Disponible",
+    "results": "{{count}} coincidencias encontradas",
+    "noMatches": "No se encontró personal que coincida.",
+    "match": "coincidencia",
+    "allocated": "Asignado",
+    "available": "Disponible",
+    "assign": "Asignar"
   }
 }

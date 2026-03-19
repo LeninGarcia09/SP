@@ -9,6 +9,7 @@ import {
   fetchAllActiveAssignments,
   createAssignment,
   updateAssignment,
+  fetchResourceMatches,
 } from '../lib/api';
 import type { PaginationParams } from '../lib/api';
 
@@ -96,5 +97,15 @@ export function useAllActiveAssignments() {
   return useQuery({
     queryKey: ['assignments', 'active'],
     queryFn: () => fetchAllActiveAssignments(),
+  });
+}
+
+// ─── Wave 3: Skills-Based Resource Matching ───
+
+export function useResourceMatches(skills: string[], minAllocation?: number, availableFrom?: string) {
+  return useQuery({
+    queryKey: ['personnel', 'match', skills, minAllocation, availableFrom],
+    queryFn: () => fetchResourceMatches(skills, minAllocation, availableFrom),
+    enabled: skills.length > 0,
   });
 }
