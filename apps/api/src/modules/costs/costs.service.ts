@@ -11,8 +11,8 @@ import {
   TransferCostEntryDto,
   RejectCostEntryDto,
 } from './dto/cost-entry.dto';
-import { CostEntryStatus, NotificationType } from '@bizops/shared';
-import type { CostSummary, CostForecast, BurnChartData } from '@bizops/shared';
+import { CostEntryStatus, NotificationType, TaskStatus } from '@bizops/shared';
+import type { CostSummary, CostForecast, BurnChartData, TaskCostBreakdown } from '@bizops/shared';
 
 @Injectable()
 export class CostsService {
@@ -186,10 +186,12 @@ export class CostsService {
 
     const totalCostEntries = entries.reduce((sum, e) => sum + Number(e.amount), 0);
 
-    // Calculate labor cost
+    // Calculate labor cost (per-task rate with project fallback)
     const tasks = await this.taskRepo.find({ where: { projectId } });
-    const totalHours = tasks.reduce((sum, t) => sum + Number(t.actualHours || 0), 0);
-    const laborCost = totalHours * Number(project.costRate || 0);
+    const laborCost = tasks.reduce((sum, t) => {
+      const rate = Number(t.costRate ?? project.costRate ?? 0);
+      return sum + Number(t.actualHours || 0) * rate;
+    }, 0);
 
     const totalActualCost = totalCostEntries + laborCost;
     const totalBudget = Number(project.budget || 0);
@@ -244,8 +246,17 @@ export class CostsService {
     const remainingHours = Math.max(0, totalEstimated - totalActual);
     const costRate = Number(project.costRate || 0);
 
-    // Labor cost from hours
-    const laborCost = totalActual * costRate;
+    // Labor cost using per-task rates with project fallback
+    const laborCost = tasks.reduce((sum, t) => {
+      const rate = Number(t.costRate ?? costRate);
+      return sum + Number(t.actualHours || 0) * rate;
+    }, 0);
+
+    // Remaining labor uses weighted average rate from tasks with estimates
+    const tasksWithEstimates = tasks.filter((t) => Number(t.estimatedHours || 0) > 0);
+    const avgRate = tasksWithEstimates.length > 0
+      ? tasksWithEstimates.reduce((s, t) => s + Number(t.costRate ?? costRate), 0) / tasksWithEstimates.length
+      : costRate;
 
     // Non-labor cost from approved cost entries
     const result = await this.costRepo
@@ -259,8 +270,8 @@ export class CostsService {
     const actualCost = laborCost + nonLaborCost;
     const budget = Number(project.budget || 0);
 
-    // ETC = remaining hours × cost rate (labor portion only; non-labor assumed done)
-    const etc = remainingHours * costRate;
+    // ETC = remaining hours × average rate (labor portion only; non-labor assumed done)
+    const etc = remainingHours * avgRate;
     // EAC = actual cost + ETC
     const eac = actualCost + etc;
     // VAC = budget - EAC
@@ -363,6 +374,46 @@ export class CostsService {
     return { dates, ideal, actual, scope };
   }
 
+  /** Per-task cost breakdown for an entire project */
+  async getTaskCostBreakdowns(projectId: string): Promise<TaskCostBreakdown[]> {
+    const project = await this.projectRepo.findOneBy({ id: projectId });
+    if (!project) throw new NotFoundException(`Project ${projectId} not found`);
+
+    const projectCostRate = Number(project.costRate || 0);
+    const tasks = await this.taskRepo.find({
+      where: { projectId },
+      order: { createdAt: 'ASC' },
+    });
+
+    const breakdowns: TaskCostBreakdown[] = [];
+    for (const t of tasks) {
+      const rate = Number(t.costRate ?? projectCostRate);
+      const actualHours = Number(t.actualHours || 0);
+      const laborCost = actualHours * rate;
+
+      const result = await this.costRepo
+        .createQueryBuilder('ce')
+        .select('COALESCE(SUM(ce.amount), 0)', 'total')
+        .where('ce.taskId = :taskId', { taskId: t.id })
+        .andWhere('ce.status = :status', { status: CostEntryStatus.APPROVED })
+        .getRawOne();
+      const directCosts = Number(result?.total || 0);
+
+      breakdowns.push({
+        taskId: t.id,
+        taskTitle: t.title,
+        estimatedHours: Number(t.estimatedHours || 0),
+        actualHours,
+        costRate: rate,
+        laborCost: Math.round(laborCost * 100) / 100,
+        directCosts: Math.round(directCosts * 100) / 100,
+        totalCost: Math.round((laborCost + directCosts) * 100) / 100,
+      });
+    }
+
+    return breakdowns;
+  }
+
   private async recalculateProjectCost(projectId: string): Promise<void> {
     const result = await this.costRepo
       .createQueryBuilder('ce')
@@ -379,7 +430,10 @@ export class CostsService {
     if (!project) return;
 
     const totalHours = tasks.reduce((sum, t) => sum + Number(t.actualHours || 0), 0);
-    const laborCost = totalHours * Number(project.costRate || 0);
+    const laborCost = tasks.reduce((sum, t) => {
+      const rate = Number(t.costRate ?? project.costRate ?? 0);
+      return sum + Number(t.actualHours || 0) * rate;
+    }, 0);
 
     project.actualCost = nonLaborCost + laborCost;
     await this.projectRepo.save(project);

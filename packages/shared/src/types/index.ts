@@ -114,8 +114,54 @@ export interface Task {
   estimatedHours: number | null;
   actualHours: number | null;
   parentTaskId: string | null;
+  deliverableId: string | null;
+  costRate: number | null;
   createdAt: string;
   updatedAt: string;
+}
+
+// ─── Deliverables ───
+
+export enum DeliverableStatus {
+  PLANNED = 'PLANNED',
+  IN_PROGRESS = 'IN_PROGRESS',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+}
+
+export interface Deliverable {
+  id: string;
+  projectId: string;
+  title: string;
+  description: string | null;
+  status: DeliverableStatus;
+  budget: number;
+  startDate: string | null;
+  dueDate: string | null;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DeliverableSummary extends Deliverable {
+  taskCount: number;
+  completedTaskCount: number;
+  totalEstimatedHours: number;
+  totalActualHours: number;
+  laborCost: number;
+  directCost: number;
+  totalCost: number;
+}
+
+export interface TaskCostBreakdown {
+  taskId: string;
+  taskTitle: string;
+  estimatedHours: number;
+  actualHours: number;
+  costRate: number;
+  laborCost: number;
+  directCosts: number;
+  totalCost: number;
 }
 
 // ─── Task Activity (Audit Log) ───

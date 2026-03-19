@@ -198,6 +198,33 @@
       "SUBMITTED": "Submitted",
       "APPROVED": "Approved",
       "REJECTED": "Rejected"
+    },
+    "taskCost": "Cost",
+    "taskCostRate": "Cost Rate ($/hr)",
+    "projectRate": "project rate"
+  },
+  "deliverables": {
+    "title": "Deliverables",
+    "add": "Add Deliverable",
+    "edit": "Edit Deliverable",
+    "addDesc": "Create a deliverable to group related tasks.",
+    "editDesc": "Update the deliverable details.",
+    "name": "Name",
+    "none": "No deliverables yet. Create one to group tasks.",
+    "noTasks": "No tasks in this deliverable.",
+    "tasks": "tasks",
+    "done": "done",
+    "ofBudget": "of budget",
+    "laborCost": "Labor",
+    "directCost": "Direct",
+    "total": "Total",
+    "deliverable": "Deliverable",
+    "confirmDelete": "Delete this deliverable? Tasks will be unlinked but not deleted.",
+    "statuses": {
+      "PLANNED": "Planned",
+      "IN_PROGRESS": "In Progress",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Cancelled"
     }
   },
   "projectForm": {

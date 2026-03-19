@@ -60,6 +60,17 @@ export class CreateTaskDto {
   @IsUUID()
   @IsOptional()
   parentTaskId?: string | null;
+
+  @ApiPropertyOptional({ format: 'uuid', description: 'Deliverable this task belongs to' })
+  @IsUUID()
+  @IsOptional()
+  deliverableId?: string | null;
+
+  @ApiPropertyOptional({ minimum: 0, description: 'Per-task cost rate override ($/hr). Uses project rate if null.' })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  costRate?: number | null;
 }
 
 export class UpdateTaskDto {
@@ -117,6 +128,17 @@ export class UpdateTaskDto {
   @IsUUID()
   @IsOptional()
   parentTaskId?: string | null;
+
+  @ApiPropertyOptional({ format: 'uuid', description: 'Deliverable this task belongs to' })
+  @IsUUID()
+  @IsOptional()
+  deliverableId?: string | null;
+
+  @ApiPropertyOptional({ minimum: 0, description: 'Per-task cost rate override ($/hr). Uses project rate if null.' })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  costRate?: number | null;
 }
 
 export class CreateTaskCommentDto {

@@ -11,6 +11,7 @@ import type {
   ResourceMatchResult,
   Task,
   TaskActivity,
+  TaskCostBreakdown,
   ProjectHealthSnapshot,
   ProjectNote,
   Person,
@@ -24,6 +25,7 @@ import type {
   PersonSkill,
   Program,
   Opportunity,
+  DeliverableSummary,
 } from '@bizops/shared';
 
 // ─── Query Params ───
@@ -463,5 +465,38 @@ export async function fetchResourceMatches(skills: string[], minAllocation?: num
   if (minAllocation !== undefined) params.minAllocation = String(minAllocation);
   if (availableFrom) params.availableFrom = availableFrom;
   const { data } = await api.get<ApiResponse<ResourceMatchResult>>('/personnel/match', { params });
+  return data;
+}
+
+// ─── Deliverables ───
+
+export async function fetchDeliverables(projectId: string) {
+  const { data } = await api.get<ApiResponse<DeliverableSummary[]>>(`/projects/${projectId}/deliverables`);
+  return data;
+}
+
+export async function createDeliverable(projectId: string, body: Record<string, unknown>) {
+  const { data } = await api.post<ApiResponse<DeliverableSummary>>(`/projects/${projectId}/deliverables`, body);
+  return data;
+}
+
+export async function updateDeliverable(projectId: string, id: string, body: Record<string, unknown>) {
+  const { data } = await api.patch<ApiResponse<DeliverableSummary>>(`/projects/${projectId}/deliverables/${id}`, body);
+  return data;
+}
+
+export async function deleteDeliverable(projectId: string, id: string) {
+  await api.delete(`/projects/${projectId}/deliverables/${id}`);
+}
+
+export async function fetchDeliverableTaskCosts(projectId: string, deliverableId: string) {
+  const { data } = await api.get<ApiResponse<TaskCostBreakdown[]>>(`/projects/${projectId}/deliverables/${deliverableId}/task-costs`);
+  return data;
+}
+
+// ─── Task Cost Breakdown ───
+
+export async function fetchTaskCostBreakdowns(projectId: string) {
+  const { data } = await api.get<ApiResponse<TaskCostBreakdown[]>>(`/projects/${projectId}/task-costs`);
   return data;
 }

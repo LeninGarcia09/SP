@@ -198,6 +198,33 @@
       "SUBMITTED": "Enviado",
       "APPROVED": "Aprobado",
       "REJECTED": "Rechazado"
+    },
+    "taskCost": "Costo",
+    "taskCostRate": "Tarifa ($/hr)",
+    "projectRate": "tarifa del proyecto"
+  },
+  "deliverables": {
+    "title": "Entregables",
+    "add": "Agregar Entregable",
+    "edit": "Editar Entregable",
+    "addDesc": "Crea un entregable para agrupar tareas relacionadas.",
+    "editDesc": "Actualiza los detalles del entregable.",
+    "name": "Nombre",
+    "none": "Sin entregables aún. Crea uno para agrupar tareas.",
+    "noTasks": "Sin tareas en este entregable.",
+    "tasks": "tareas",
+    "done": "completadas",
+    "ofBudget": "del presupuesto",
+    "laborCost": "Mano de obra",
+    "directCost": "Directo",
+    "total": "Total",
+    "deliverable": "Entregable",
+    "confirmDelete": "¿Eliminar este entregable? Las tareas se desenlazarán pero no se eliminarán.",
+    "statuses": {
+      "PLANNED": "Planificado",
+      "IN_PROGRESS": "En Progreso",
+      "COMPLETED": "Completado",
+      "CANCELLED": "Cancelado"
     }
   },
   "projectForm": {

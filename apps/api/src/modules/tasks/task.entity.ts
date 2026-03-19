@@ -8,6 +8,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { ProjectEntity } from '../projects/project.entity';
+import { DeliverableEntity } from '../deliverables/deliverable.entity';
 
 @Entity('tasks')
 export class TaskEntity {
@@ -60,6 +61,16 @@ export class TaskEntity {
   @ManyToOne(() => TaskEntity, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'parentTaskId' })
   parentTask: TaskEntity | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  deliverableId: string | null;
+
+  @ManyToOne(() => DeliverableEntity, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'deliverableId' })
+  deliverable: DeliverableEntity | null;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  costRate: number | null;
 
   @CreateDateColumn()
   createdAt: Date;

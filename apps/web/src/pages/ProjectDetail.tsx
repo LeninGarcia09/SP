@@ -1,10 +1,11 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Plus, RefreshCw, Trash2, Pin, Clock, DollarSign, Send, Check, X, ArrowRightLeft, Search } from 'lucide-react';
+import { ArrowLeft, Plus, RefreshCw, Trash2, Pin, Clock, DollarSign, Send, Check, X, ArrowRightLeft, Search, ChevronDown, ChevronRight, Package } from 'lucide-react';
 import { useProject, useDeleteProject, useProjectMembers, useAddProjectMember, useRemoveProjectMember, useProjectNotes, useCreateProjectNote, useUpdateProjectNote, useDeleteProjectNote, useProjectHoursSummary } from '../hooks/use-projects';
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '../hooks/use-tasks';
 import { useCostEntries, useCostSummary, useCreateCostEntry, useUpdateCostEntry, useDeleteCostEntry, useSubmitCostEntry, useApproveCostEntry, useRejectCostEntry, useTransferCostEntry, useCostForecast, useBurnData } from '../hooks/use-costs';
+import { useDeliverables, useCreateDeliverable, useUpdateDeliverable, useDeleteDeliverable, useTaskCostBreakdowns } from '../hooks/use-deliverables';
 import { useProjects } from '../hooks/use-projects';
 import { useHealthHistory, useTriggerHealth } from '../hooks/use-health';
 import { usePersonnel } from '../hooks/use-personnel';
@@ -38,7 +39,7 @@ import {
   SelectValue,
 } from '../components/ui/select';
 import type { Task, CostEntry } from '@bizops/shared';
-import { TaskStatus, Priority, RagStatus, ProjectMemberRole, CostCategory, CostEntryStatus } from '@bizops/shared';
+import { TaskStatus, Priority, RagStatus, ProjectMemberRole, CostCategory, CostEntryStatus, DeliverableStatus } from '@bizops/shared';
 
 const ragColors: Record<RagStatus, string> = {
   [RagStatus.GREEN]: 'bg-green-100 text-green-700',
@@ -119,6 +120,13 @@ export function ProjectDetailPage() {
   const burnData = useBurnData(id!, burnMetric);
   const [resourceFinderOpen, setResourceFinderOpen] = useState(false);
 
+  // Deliverables hooks
+  const deliverables = useDeliverables(id);
+  const createDeliverable = useCreateDeliverable(id!);
+  const updateDeliverable = useUpdateDeliverable(id!);
+  const deleteDeliverable = useDeleteDeliverable(id!);
+  const taskCosts = useTaskCostBreakdowns(id);
+
   const handleTimerStop = useCallback((taskId: string, hours: number) => {
     if (hours > 0) {
       const task = (tasks.data?.data ?? []).find((t) => t.id === taskId);
@@ -180,6 +188,8 @@ export function ProjectDetailPage() {
     dueDate: '',
     estimatedHours: '' as string,
     actualHours: '' as string,
+    deliverableId: '' as string,
+    costRate: '' as string,
   });
 
   const [memberForm, setMemberForm] = useState({
@@ -207,6 +217,19 @@ export function ProjectDetailPage() {
   const [transferringCostId, setTransferringCostId] = useState<string | null>(null);
   const [transferForm, setTransferForm] = useState({ targetProjectId: '', reason: '' });
 
+  // Deliverable state
+  const [deliverableDialogOpen, setDeliverableDialogOpen] = useState(false);
+  const [editingDeliverable, setEditingDeliverable] = useState<import('@bizops/shared').DeliverableSummary | null>(null);
+  const [deliverableForm, setDeliverableForm] = useState({
+    title: '',
+    description: '',
+    status: DeliverableStatus.PLANNED as DeliverableStatus,
+    budget: '',
+    startDate: '',
+    dueDate: '',
+  });
+  const [expandedDeliverables, setExpandedDeliverables] = useState<Set<string>>(new Set());
+
   if (project.isLoading) {
     return <div className="text-center text-muted-foreground py-12">{t('common.loading')}</div>;
   }
@@ -225,7 +248,7 @@ export function ProjectDetailPage() {
   const p = project.data.data;
   const latestHealth = health.data?.data?.[0];
 
-  function openNewTask() {
+  function openNewTask(deliverableId?: string) {
     setEditingTask(null);
     setTaskForm({
       title: '',
@@ -237,6 +260,8 @@ export function ProjectDetailPage() {
       dueDate: '',
       estimatedHours: '',
       actualHours: '',
+      deliverableId: deliverableId ?? '',
+      costRate: '',
     });
     setTaskDialogOpen(true);
   }
@@ -253,6 +278,8 @@ export function ProjectDetailPage() {
       dueDate: task.dueDate ?? '',
       estimatedHours: task.estimatedHours != null ? String(task.estimatedHours) : '',
       actualHours: task.actualHours != null ? String(task.actualHours) : '',
+      deliverableId: task.deliverableId ?? '',
+      costRate: task.costRate != null ? String(task.costRate) : '',
     });
     setTaskDialogOpen(true);
   }
@@ -268,6 +295,8 @@ export function ProjectDetailPage() {
       dueDate: taskForm.dueDate || null,
       estimatedHours: taskForm.estimatedHours ? Number(taskForm.estimatedHours) : null,
       actualHours: taskForm.actualHours ? Number(taskForm.actualHours) : null,
+      deliverableId: taskForm.deliverableId || null,
+      costRate: taskForm.costRate ? Number(taskForm.costRate) : null,
     };
 
     if (editingTask) {
@@ -318,6 +347,60 @@ export function ProjectDetailPage() {
     });
     setCostDialogOpen(true);
   }
+
+  function openNewDeliverable() {
+    setEditingDeliverable(null);
+    setDeliverableForm({ title: '', description: '', status: DeliverableStatus.PLANNED, budget: '', startDate: '', dueDate: '' });
+    setDeliverableDialogOpen(true);
+  }
+
+  function openEditDeliverable(d: import('@bizops/shared').DeliverableSummary) {
+    setEditingDeliverable(d);
+    setDeliverableForm({
+      title: d.title,
+      description: d.description ?? '',
+      status: d.status,
+      budget: d.budget ? String(d.budget) : '',
+      startDate: d.startDate ?? '',
+      dueDate: d.dueDate ?? '',
+    });
+    setDeliverableDialogOpen(true);
+  }
+
+  async function handleDeliverableSubmit() {
+    const body: Record<string, unknown> = {
+      title: deliverableForm.title,
+      description: deliverableForm.description || null,
+      status: deliverableForm.status,
+      budget: deliverableForm.budget ? Number(deliverableForm.budget) : 0,
+      startDate: deliverableForm.startDate || null,
+      dueDate: deliverableForm.dueDate || null,
+    };
+    if (editingDeliverable) {
+      await updateDeliverable.mutateAsync({ id: editingDeliverable.id, ...body });
+    } else {
+      await createDeliverable.mutateAsync(body);
+    }
+    setDeliverableDialogOpen(false);
+  }
+
+  function toggleDeliverable(deliverableId: string) {
+    setExpandedDeliverables((prev) => {
+      const next = new Set(prev);
+      if (next.has(deliverableId)) next.delete(deliverableId);
+      else next.add(deliverableId);
+      return next;
+    });
+  }
+
+  // Build task cost lookup from taskCosts query
+  const taskCostMap = useMemo(() => {
+    const map = new Map<string, { laborCost: number; directCosts: number; totalCost: number }>();
+    for (const tc of taskCosts.data ?? []) {
+      map.set(tc.taskId, { laborCost: tc.laborCost, directCosts: tc.directCosts, totalCost: tc.totalCost });
+    }
+    return map;
+  }, [taskCosts.data]);
 
   async function handleCostSubmit() {
     const body: Record<string, unknown> = {
@@ -435,11 +518,138 @@ export function ProjectDetailPage() {
         <TaskGantt tasks={tasks.data?.data ?? []} projectStart={p.startDate} projectEnd={p.endDate} />
       </div>
 
-      {/* Tasks Section */}
+      {/* ─── Deliverables Section ─── */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <Package className="h-5 w-5" /> {t('deliverables.title')}
+          </h3>
+          <Button size="sm" onClick={openNewDeliverable}>
+            <Plus className="h-4 w-4 mr-1" /> {t('deliverables.add')}
+          </Button>
+        </div>
+
+        {deliverables.data && deliverables.data.length === 0 && (
+          <div className="rounded-lg border p-6 text-center text-muted-foreground">{t('deliverables.none')}</div>
+        )}
+
+        {deliverables.data && deliverables.data.length > 0 && (
+          <div className="space-y-3">
+            {deliverables.data.map((d) => {
+              const isExpanded = expandedDeliverables.has(d.id);
+              const delTasks = (tasks.data?.data ?? []).filter((t) => t.deliverableId === d.id);
+              const progress = d.taskCount > 0 ? Math.round((d.completedTaskCount / d.taskCount) * 100) : 0;
+              const budgetUsed = d.budget > 0 ? Math.round((d.totalCost / d.budget) * 100) : 0;
+
+              return (
+                <div key={d.id} className="rounded-lg border">
+                  {/* Deliverable header */}
+                  <div
+                    className="flex items-center gap-3 p-4 cursor-pointer hover:bg-muted/30"
+                    onClick={() => toggleDeliverable(d.id)}
+                  >
+                    {isExpanded ? <ChevronDown className="h-4 w-4 shrink-0" /> : <ChevronRight className="h-4 w-4 shrink-0" />}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium truncate">{d.title}</span>
+                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                          d.status === DeliverableStatus.COMPLETED ? 'bg-green-100 text-green-700' :
+                          d.status === DeliverableStatus.IN_PROGRESS ? 'bg-blue-100 text-blue-700' :
+                          d.status === DeliverableStatus.CANCELLED ? 'bg-red-100 text-red-700' :
+                          'bg-gray-100 text-gray-700'
+                        }`}>{t(`deliverables.statuses.${d.status}`)}</span>
+                      </div>
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
+                        <span>{d.taskCount} {t('deliverables.tasks')} ({d.completedTaskCount} {t('deliverables.done')})</span>
+                        <span>{d.totalActualHours}h / {d.totalEstimatedHours}h</span>
+                        {d.budget > 0 && <span>${d.totalCost.toLocaleString()} / ${d.budget.toLocaleString()}</span>}
+                      </div>
+                    </div>
+                    {/* Progress bar */}
+                    <div className="w-24 shrink-0">
+                      <div className="w-full bg-gray-200 rounded-full h-1.5">
+                        <div
+                          className={`h-1.5 rounded-full ${progress === 100 ? 'bg-green-500' : 'bg-blue-500'}`}
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                      <p className="text-[10px] text-center text-muted-foreground mt-0.5">{progress}%</p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <Button size="sm" variant="ghost" onClick={() => openEditDeliverable(d)}>{t('common.edit')}</Button>
+                      <Button size="sm" variant="ghost" onClick={() => openNewTask(d.id)}>
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => {
+                        if (confirm(t('deliverables.confirmDelete'))) deleteDeliverable.mutate(d.id);
+                      }}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Expanded: show tasks + cost breakdown */}
+                  {isExpanded && (
+                    <div className="border-t">
+                      {/* Cost summary row */}
+                      {d.budget > 0 && (
+                        <div className="flex items-center gap-4 px-4 py-2 bg-muted/20 text-xs">
+                          <span>{t('deliverables.laborCost')}: <strong>${d.laborCost.toLocaleString()}</strong></span>
+                          <span>{t('deliverables.directCost')}: <strong>${d.directCost.toLocaleString()}</strong></span>
+                          <span>{t('deliverables.total')}: <strong>${d.totalCost.toLocaleString()}</strong></span>
+                          <span className={budgetUsed > 100 ? 'text-red-600 font-medium' : budgetUsed > 90 ? 'text-amber-600' : 'text-green-600'}>
+                            {budgetUsed}% {t('deliverables.ofBudget')}
+                          </span>
+                        </div>
+                      )}
+                      {delTasks.length === 0 ? (
+                        <div className="p-4 text-center text-sm text-muted-foreground">{t('deliverables.noTasks')}</div>
+                      ) : (
+                        <table className="w-full text-sm">
+                          <tbody>
+                            {delTasks.map((task) => {
+                              const tc = taskCostMap.get(task.id);
+                              const est = Number(task.estimatedHours) || 0;
+                              const act = Number(task.actualHours) || 0;
+                              return (
+                                <tr key={task.id} className="border-b last:border-0 hover:bg-muted/25 cursor-pointer" onClick={() => openEditTask(task)}>
+                                  <td className="p-3 font-medium">{task.title}</td>
+                                  <td className="p-3">
+                                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${statusColors[task.status]}`}>
+                                      {t(`statuses.${task.status}`)}
+                                    </span>
+                                  </td>
+                                  <td className="p-3 text-right tabular-nums text-muted-foreground">{est > 0 ? `${est}h` : '—'}</td>
+                                  <td className="p-3 text-right tabular-nums">{act > 0 ? `${act}h` : '—'}</td>
+                                  <td className="p-3 text-right tabular-nums text-muted-foreground">
+                                    {tc ? `$${tc.totalCost.toLocaleString()}` : '—'}
+                                  </td>
+                                  <td className="p-3 w-16">
+                                    <TaskTimerButton taskId={task.id} taskTitle={task.title} projectId={id!} onStop={(hours) => handleTimerStop(task.id, hours)} />
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Tasks Section (unassigned to deliverables) */}
+      {(() => {
+        const unassignedTasks = (tasks.data?.data ?? []).filter((t) => !t.deliverableId);
+        return (
       <div>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-semibold">{t('projects.tasks')}</h3>
-          <Button size="sm" onClick={openNewTask}>
+          <Button size="sm" onClick={() => openNewTask()}>
             <Plus className="h-4 w-4 mr-1" /> {t('projects.addTask')}
           </Button>
         </div>
@@ -448,11 +658,11 @@ export function ProjectDetailPage() {
           <div className="rounded-lg border p-4 text-center text-muted-foreground">{t('projects.loadingTasks')}</div>
         )}
 
-        {tasks.data?.data && tasks.data.data.length === 0 && (
+        {unassignedTasks.length === 0 && !tasks.isLoading && (
           <div className="rounded-lg border p-6 text-center text-muted-foreground">{t('projects.noTasks')}</div>
         )}
 
-        {tasks.data?.data && tasks.data.data.length > 0 && (
+        {unassignedTasks.length > 0 && (
           <div className="rounded-lg border overflow-x-auto">
             <table className="w-full text-sm min-w-[1100px]">
               <thead>
@@ -463,12 +673,13 @@ export function ProjectDetailPage() {
                   <th className="text-left p-3 font-medium">{t('projects.priority')}</th>
                   <th className="text-right p-3 font-medium">{t('hours.estHours')}</th>
                   <th className="text-right p-3 font-medium">{t('hours.actHours')}</th>
+                  <th className="text-right p-3 font-medium">{t('costs.taskCost')}</th>
                   <th className="text-left p-3 font-medium">{t('tasks.requiredEnd')}</th>
                   <th className="p-3 w-20"></th>
                 </tr>
               </thead>
               <tbody>
-                {tasks.data.data.map((task) => {
+                {unassignedTasks.map((task) => {
                   const isOverdue = task.dueDate && task.status !== TaskStatus.DONE && new Date(task.dueDate) < new Date();
                   const est = Number(task.estimatedHours) || 0;
                   const act = Number(task.actualHours) || 0;
@@ -517,6 +728,9 @@ export function ProjectDetailPage() {
                         </div>
                       )}
                     </td>
+                    <td className="p-3 text-right tabular-nums text-muted-foreground">
+                      {(() => { const tc = taskCostMap.get(task.id); return tc ? `$${tc.totalCost.toLocaleString()}` : '—'; })()}
+                    </td>
                     <td className={`p-3 ${isOverdue ? 'text-red-600 font-medium' : ''}`}>
                       {task.dueDate ?? '—'}
                     </td>
@@ -544,6 +758,8 @@ export function ProjectDetailPage() {
           </div>
         )}
       </div>
+        );
+      })()}
 
       {/* Members Section */}
       <div>
@@ -1109,6 +1325,35 @@ export function ProjectDetailPage() {
                 )}
               </div>
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t('deliverables.deliverable')} <span className="text-muted-foreground text-xs">({t('common.optional')})</span></Label>
+                <Select
+                  value={taskForm.deliverableId || '__none__'}
+                  onValueChange={(v) => setTaskForm((f) => ({ ...f, deliverableId: v === '__none__' ? '' : v }))}
+                >
+                  <SelectTrigger><SelectValue placeholder={t('common.none')} /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">{t('common.none')}</SelectItem>
+                    {(deliverables.data ?? []).map((d) => (
+                      <SelectItem key={d.id} value={d.id}>{d.title}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="task-cost-rate">{t('costs.taskCostRate')} <span className="text-muted-foreground text-xs">({t('common.optional')})</span></Label>
+                <Input
+                  id="task-cost-rate"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={taskForm.costRate}
+                  onChange={(e) => setTaskForm((f) => ({ ...f, costRate: e.target.value }))}
+                  placeholder={p ? `${Number(p.costRate)} (${t('costs.projectRate')})` : '0'}
+                />
+              </div>
+            </div>
 
             {/* Activity Timeline (only when editing) */}
             {editingTask && (
@@ -1375,6 +1620,90 @@ export function ProjectDetailPage() {
               }}
             >
               {t('costs.transfer')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Deliverable Dialog */}
+      <Dialog open={deliverableDialogOpen} onOpenChange={setDeliverableDialogOpen}>
+        <DialogContent className="sm:max-w-[540px]">
+          <DialogHeader>
+            <DialogTitle>{editingDeliverable ? t('deliverables.edit') : t('deliverables.add')}</DialogTitle>
+            <DialogDescription>
+              {editingDeliverable ? t('deliverables.editDesc') : t('deliverables.addDesc')}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>{t('deliverables.name')}</Label>
+              <Input
+                value={deliverableForm.title}
+                onChange={(e) => setDeliverableForm((f) => ({ ...f, title: e.target.value }))}
+                placeholder={t('deliverables.name')}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t('common.description')} <span className="text-muted-foreground text-xs">({t('common.optional')})</span></Label>
+              <Textarea
+                rows={2}
+                value={deliverableForm.description}
+                onChange={(e) => setDeliverableForm((f) => ({ ...f, description: e.target.value }))}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t('common.status')}</Label>
+                <Select
+                  value={deliverableForm.status}
+                  onValueChange={(v) => setDeliverableForm((f) => ({ ...f, status: v as DeliverableStatus }))}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.values(DeliverableStatus).map((s) => (
+                      <SelectItem key={s} value={s}>{t(`deliverables.statuses.${s}`)}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>{t('common.budget')}</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={deliverableForm.budget}
+                  onChange={(e) => setDeliverableForm((f) => ({ ...f, budget: e.target.value }))}
+                  placeholder="0"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t('common.startDate')}</Label>
+                <Input
+                  type="date"
+                  value={deliverableForm.startDate}
+                  onChange={(e) => setDeliverableForm((f) => ({ ...f, startDate: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t('tasks.requiredEnd')}</Label>
+                <Input
+                  type="date"
+                  value={deliverableForm.dueDate}
+                  onChange={(e) => setDeliverableForm((f) => ({ ...f, dueDate: e.target.value }))}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeliverableDialogOpen(false)}>{t('common.cancel')}</Button>
+            <Button
+              onClick={handleDeliverableSubmit}
+              disabled={!deliverableForm.title || createDeliverable.isPending || updateDeliverable.isPending}
+            >
+              {editingDeliverable ? t('common.save') : t('common.create')}
             </Button>
           </DialogFooter>
         </DialogContent>

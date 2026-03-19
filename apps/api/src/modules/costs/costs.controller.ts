@@ -124,6 +124,12 @@ export class CostsController {
     return { data };
   }
 
+  @Get('projects/:projectId/task-costs')
+  async getTaskCosts(@Param('projectId', ParseUUIDPipe) projectId: string) {
+    const data = await this.costsService.getTaskCostBreakdowns(projectId);
+    return { data };
+  }
+
   // ─── Cost forecasting (Wave 3) ───
 
   @Get('projects/:projectId/cost-forecast')
