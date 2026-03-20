@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Plus, RefreshCw, Trash2, Pin, Clock, DollarSign, Send, Check, X, ArrowRightLeft, Search, ChevronDown, ChevronRight, Package } from 'lucide-react';
+import { ArrowLeft, Plus, RefreshCw, Trash2, Pin, Clock, DollarSign, Send, Check, X, ArrowRightLeft, Search, ChevronDown, ChevronRight, Package, Link } from 'lucide-react';
 import { useProject, useDeleteProject, useProjectMembers, useAddProjectMember, useRemoveProjectMember, useProjectNotes, useCreateProjectNote, useUpdateProjectNote, useDeleteProjectNote, useProjectHoursSummary } from '../hooks/use-projects';
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '../hooks/use-tasks';
 import { useCostEntries, useCostSummary, useCreateCostEntry, useUpdateCostEntry, useDeleteCostEntry, useSubmitCostEntry, useApproveCostEntry, useRejectCostEntry, useTransferCostEntry, useCostForecast, useBurnData } from '../hooks/use-costs';
@@ -229,6 +229,7 @@ export function ProjectDetailPage() {
     dueDate: '',
   });
   const [expandedDeliverables, setExpandedDeliverables] = useState<Set<string>>(new Set());
+  const [assigningToDeliverable, setAssigningToDeliverable] = useState<string | null>(null);
 
   // Build task cost lookup from taskCosts query (must be before early returns)
   const taskCostMap = useMemo(() => {
@@ -584,6 +585,9 @@ export function ProjectDetailPage() {
                       <Button size="sm" variant="ghost" onClick={() => openNewTask(d.id)} title={t('deliverables.addTask')}>
                         <Plus className="h-3 w-3 mr-1" /> {t('deliverables.addTask')}
                       </Button>
+                      <Button size="sm" variant="ghost" onClick={() => setAssigningToDeliverable(assigningToDeliverable === d.id ? null : d.id)} title={t('deliverables.assignExisting')}>
+                        <Link className="h-3 w-3 mr-1" /> {t('deliverables.assignExisting')}
+                      </Button>
                       <Button size="sm" variant="ghost" className="text-destructive" onClick={() => {
                         if (confirm(t('deliverables.confirmDelete'))) deleteDeliverable.mutate(d.id);
                       }}>
@@ -606,12 +610,47 @@ export function ProjectDetailPage() {
                           </span>
                         </div>
                       )}
+                      {/* Inline assign-existing-task search */}
+                      {assigningToDeliverable === d.id && (() => {
+                        const availableTasks = (tasks.data?.data ?? []).filter((t) => t.deliverableId !== d.id);
+                        const taskOptions: ComboboxOption[] = availableTasks.map((t) => ({
+                          value: t.id,
+                          label: t.title,
+                          sublabel: t.deliverableId ? `${t.status} — ${(deliverables.data ?? []).find((dd) => dd.id === t.deliverableId)?.title ?? t.status}` : t.status,
+                        }));
+                        return (
+                          <div className="px-4 py-3 bg-blue-50/50 border-b flex items-center gap-2">
+                            <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <div className="flex-1">
+                              <Combobox
+                                options={taskOptions}
+                                value=""
+                                onChange={(taskId) => {
+                                  if (taskId) {
+                                    updateTask.mutate({ taskId, deliverableId: d.id });
+                                    setAssigningToDeliverable(null);
+                                  }
+                                }}
+                                placeholder={t('deliverables.searchTask')}
+                              />
+                            </div>
+                            <Button size="sm" variant="ghost" onClick={() => setAssigningToDeliverable(null)}>
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        );
+                      })()}
                       {delTasks.length === 0 ? (
                         <div className="p-6 text-center">
                           <p className="text-sm text-muted-foreground mb-3">{t('deliverables.noTasks')}</p>
-                          <Button size="sm" variant="outline" onClick={() => openNewTask(d.id)}>
-                            <Plus className="h-4 w-4 mr-1" /> {t('deliverables.addTask')}
-                          </Button>
+                          <div className="flex items-center justify-center gap-2">
+                            <Button size="sm" variant="outline" onClick={() => openNewTask(d.id)}>
+                              <Plus className="h-4 w-4 mr-1" /> {t('deliverables.addTask')}
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => setAssigningToDeliverable(d.id)}>
+                              <Link className="h-4 w-4 mr-1" /> {t('deliverables.assignExisting')}
+                            </Button>
+                          </div>
                         </div>
                       ) : (
                         <>
@@ -642,9 +681,12 @@ export function ProjectDetailPage() {
                             })}
                           </tbody>
                         </table>
-                        <div className="px-4 py-2 border-t">
-                          <Button size="sm" variant="ghost" className="w-full text-muted-foreground hover:text-foreground" onClick={() => openNewTask(d.id)}>
+                        <div className="px-4 py-2 border-t flex gap-2">
+                          <Button size="sm" variant="ghost" className="flex-1 text-muted-foreground hover:text-foreground" onClick={() => openNewTask(d.id)}>
                             <Plus className="h-4 w-4 mr-1" /> {t('deliverables.addTask')}
+                          </Button>
+                          <Button size="sm" variant="ghost" className="flex-1 text-muted-foreground hover:text-foreground" onClick={() => setAssigningToDeliverable(d.id)}>
+                            <Link className="h-4 w-4 mr-1" /> {t('deliverables.assignExisting')}
                           </Button>
                         </div>
                         </>
