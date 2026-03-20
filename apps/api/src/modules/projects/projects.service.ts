@@ -71,8 +71,7 @@ export class ProjectsService {
 
   async softDelete(id: string): Promise<ProjectEntity> {
     const project = await this.findById(id);
-    project.status = 'CANCELLED' as never;
-    return this.projectRepo.save(project);
+    return this.projectRepo.softRemove(project);
   }
 
   // ─── Members ───
