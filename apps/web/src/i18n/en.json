@@ -252,6 +252,10 @@
     "actualCostLabel": "Actual Cost ($)",
     "costRateLabel": "Cost Rate ($/hr)",
     "programLabel": "Program",
+    "projectLead": "Project Lead",
+    "projectLeadPlaceholder": "Select lead",
+    "currentUser": "Current user (me)",
+    "program": "Program",
     "createBtn": "Create Project",
     "saveBtn": "Save Changes",
     "nameRequired": "Name is required"

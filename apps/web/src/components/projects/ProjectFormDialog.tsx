@@ -5,6 +5,9 @@ import { useTranslation } from 'react-i18next';
 import { ProjectStatus } from '@bizops/shared';
 import type { Project } from '@bizops/shared';
 import { useCreateProject, useUpdateProject } from '../../hooks/use-projects';
+import { useUsers } from '../../hooks/use-users';
+import { usePrograms } from '../../hooks/use-programs';
+import { usePersonnel } from '../../hooks/use-personnel';
 import {
   Dialog,
   DialogContent,
@@ -34,6 +37,8 @@ const projectFormSchema = z.object({
   budget: z.coerce.number().nonnegative('Budget must be non-negative'),
   actualCost: z.coerce.number().nonnegative('Actual cost must be non-negative'),
   costRate: z.coerce.number().nonnegative('Cost rate must be non-negative'),
+  projectLeadId: z.string().optional(),
+  programId: z.string().optional(),
 });
 
 type ProjectFormValues = z.infer<typeof projectFormSchema>;
@@ -49,6 +54,9 @@ export function ProjectFormDialog({ open, onOpenChange, project }: ProjectFormDi
   const { t } = useTranslation();
   const createMutation = useCreateProject();
   const updateMutation = useUpdateProject();
+  const usersQuery = useUsers({ limit: 100 });
+  const personnelQuery = usePersonnel({ limit: 100 });
+  const programsQuery = usePrograms({ limit: 100 });
 
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectFormSchema),
@@ -62,6 +70,8 @@ export function ProjectFormDialog({ open, onOpenChange, project }: ProjectFormDi
           budget: Number(project.budget),
           actualCost: Number(project.actualCost),
           costRate: Number(project.costRate),
+          projectLeadId: project.projectLeadId ?? '',
+          programId: project.programId ?? '',
         }
       : {
           name: '',
@@ -72,24 +82,54 @@ export function ProjectFormDialog({ open, onOpenChange, project }: ProjectFormDi
           budget: 0,
           actualCost: 0,
           costRate: 0,
+          projectLeadId: '',
+          programId: '',
         },
   });
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   async function onSubmit(values: ProjectFormValues) {
+    const body = {
+      ...values,
+      projectLeadId: values.projectLeadId || undefined,
+      programId: values.programId || undefined,
+    };
     if (isEdit && project) {
-      await updateMutation.mutateAsync({ id: project.id, ...values });
+      await updateMutation.mutateAsync({ id: project.id, ...body });
     } else {
-      await createMutation.mutateAsync(values);
+      await createMutation.mutateAsync(body);
     }
     form.reset();
     onOpenChange(false);
   }
 
+  // Build lead options from users + personnel
+  const leadOptions = (() => {
+    const opts: { value: string; label: string }[] = [];
+    const seen = new Set<string>();
+    const personnelByUserId = new Map<string, { firstName: string; lastName: string }>();
+    for (const p of personnelQuery.data?.data ?? []) {
+      if (p.userId) personnelByUserId.set(p.userId, p);
+    }
+    for (const u of usersQuery.data?.data ?? []) {
+      if (!seen.has(u.id)) {
+        seen.add(u.id);
+        const person = personnelByUserId.get(u.id);
+        opts.push({ value: u.id, label: person ? `${person.firstName} ${person.lastName}` : u.displayName });
+      }
+    }
+    return opts;
+  })();
+
+  const programOptions = (programsQuery.data?.data ?? []).map((p) => ({
+    value: p.id,
+    label: p.name,
+  }));
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEdit ? t('projectForm.editTitle') : t('projectForm.newTitle')}</DialogTitle>
           <DialogDescription>
@@ -169,6 +209,39 @@ export function ProjectFormDialog({ open, onOpenChange, project }: ProjectFormDi
               {form.formState.errors.costRate && (
                 <p className="text-sm text-destructive">{form.formState.errors.costRate.message}</p>
               )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>{t('projectForm.projectLead')} <span className="text-muted-foreground text-xs">({t('common.optional')})</span></Label>
+              <Select
+                value={form.watch('projectLeadId') || '__none__'}
+                onValueChange={(v) => form.setValue('projectLeadId', v === '__none__' ? '' : v)}
+              >
+                <SelectTrigger><SelectValue placeholder={t('projectForm.projectLeadPlaceholder')} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">{t('projectForm.currentUser')}</SelectItem>
+                  {leadOptions.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{t('projectForm.program')} <span className="text-muted-foreground text-xs">({t('common.optional')})</span></Label>
+              <Select
+                value={form.watch('programId') || '__none__'}
+                onValueChange={(v) => form.setValue('programId', v === '__none__' ? '' : v)}
+              >
+                <SelectTrigger><SelectValue placeholder={t('common.none')} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">{t('common.none')}</SelectItem>
+                  {programOptions.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

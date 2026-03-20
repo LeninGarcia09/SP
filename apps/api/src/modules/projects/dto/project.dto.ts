@@ -57,9 +57,10 @@ export class CreateProjectDto {
   @IsOptional()
   costRate?: number;
 
-  @ApiProperty({ format: 'uuid' })
+  @ApiPropertyOptional({ format: 'uuid', description: 'Project lead. Defaults to the current user if not provided.' })
   @IsUUID()
-  projectLeadId: string;
+  @IsOptional()
+  projectLeadId?: string;
 
   @ApiPropertyOptional({ default: {} })
   @IsObject()

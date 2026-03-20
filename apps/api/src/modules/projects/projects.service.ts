@@ -59,7 +59,8 @@ export class ProjectsService {
     const year = new Date().getFullYear();
     const count = await this.projectRepo.count();
     const code = `PROJ-${year}-${String(count + 1).padStart(3, '0')}`;
-    const entity = this.projectRepo.create({ ...dto, code, createdBy });
+    const projectLeadId = dto.projectLeadId ?? createdBy;
+    const entity = this.projectRepo.create({ ...dto, code, createdBy, projectLeadId });
     return this.projectRepo.save(entity);
   }
 
