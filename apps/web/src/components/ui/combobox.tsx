@@ -81,7 +81,7 @@ export function Combobox({
           {value && !open && !disabled && (
             <button
               type="button"
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-sm text-muted-foreground hover:text-foreground"
               onClick={(e) => { e.stopPropagation(); handleClear(); }}
               tabIndex={-1}
             >
@@ -99,7 +99,7 @@ export function Combobox({
         }}
       >
         {filtered.length === 0 && (
-          <div className="px-3 py-2 text-sm text-gray-400">
+          <div className="px-3 py-2 text-sm text-muted-foreground">
             No matches found
           </div>
         )}
@@ -109,14 +109,14 @@ export function Combobox({
             key={o.value}
             type="button"
             className={cn(
-              'w-full px-3 py-2 text-left text-sm hover:bg-blue-50 dark:hover:bg-blue-900/30 flex items-center justify-between border-b border-gray-50 dark:border-gray-800 last:border-0',
-              o.value === value && 'bg-blue-50 dark:bg-blue-900/30 font-medium',
+              'w-full px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground flex items-center justify-between border-b border-border/40 last:border-0 transition-colors',
+              o.value === value && 'bg-accent text-accent-foreground font-medium',
             )}
             onMouseDown={(e) => { e.preventDefault(); handleSelect(o.value); }}
           >
-            <span className="text-gray-900 dark:text-gray-100">{o.label}</span>
+            <span className="text-foreground">{o.label}</span>
             {o.sublabel && (
-              <span className="text-xs text-gray-400 dark:text-gray-500 ml-2 truncate">
+              <span className="text-xs text-muted-foreground ml-2 truncate">
                 {o.sublabel}
               </span>
             )}
