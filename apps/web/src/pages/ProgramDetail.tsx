@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Trash2 } from 'lucide-react';
+import { ArrowLeft, Trash2, Link, Unlink } from 'lucide-react';
 import { useProgram, useDeleteProgram } from '../hooks/use-programs';
+import { useUpdateProject } from '../hooks/use-projects';
 import { useUsers } from '../hooks/use-users';
 import { usePermissions } from '../hooks/use-permissions';
 import { ProgramFormDialog } from '../components/programs/ProgramFormDialog';
+import { LinkProjectsDialog } from '../components/programs/LinkProjectsDialog';
 import { ProgramTimeline } from '../components/shared/ProjectGantt';
 import { Button } from '../components/ui/button';
 
@@ -23,9 +25,11 @@ export function ProgramDetailPage() {
   const { t } = useTranslation();
   const program = useProgram(id!);
   const deleteProgram = useDeleteProgram();
+  const updateProject = useUpdateProject();
   const usersQuery = useUsers({ limit: 100 });
   const { can } = usePermissions();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
 
   if (program.isLoading) {
     return <div className="p-6 text-center text-muted-foreground">{t('common.loading')}</div>;
@@ -61,6 +65,7 @@ export function ProgramDetailPage() {
   return (
     <div>
       <ProgramFormDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} program={p} />
+      <LinkProjectsDialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen} programId={id!} />
 
       <div className="flex items-center gap-3 mb-6">
         <Button variant="ghost" size="sm" onClick={() => navigate('/programs')}>
@@ -135,7 +140,14 @@ export function ProgramDetailPage() {
 
       {/* Linked projects */}
       <div>
-        <h3 className="text-lg font-semibold mb-3">{t('programs.projectsInProgram')}</h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-semibold">{t('programs.projectsInProgram')}</h3>
+          {can('programs.update') && (
+            <Button variant="outline" size="sm" onClick={() => setLinkDialogOpen(true)}>
+              <Link className="h-4 w-4 mr-1" />{t('programs.linkProjects')}
+            </Button>
+          )}
+        </div>
         {(!p.projects || p.projects.length === 0) ? (
           <div className="rounded-lg border p-6 text-center text-muted-foreground">
             {t('programs.noProjects')}
@@ -150,6 +162,9 @@ export function ProgramDetailPage() {
                   <th className="text-left p-3 font-medium">{t('common.status')}</th>
                   <th className="text-left p-3 font-medium">{t('common.budget')}</th>
                   <th className="text-left p-3 font-medium">{t('projects.actualCost')}</th>
+                  {can('programs.update') && (
+                    <th className="text-right p-3 font-medium w-16"></th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -168,6 +183,22 @@ export function ProgramDetailPage() {
                     </td>
                     <td className="p-3">${Number(proj.budget).toLocaleString()}</td>
                     <td className="p-3">${Number(proj.actualCost).toLocaleString()}</td>
+                    {can('programs.update') && (
+                      <td className="p-3 text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          title={t('programs.unlinkProject')}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            updateProject.mutateAsync({ id: proj.id, programId: null });
+                          }}
+                        >
+                          <Unlink className="h-3.5 w-3.5" />
+                        </Button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

@@ -123,7 +123,8 @@
     "noGantt": "Set start and end dates to see the Gantt chart.",
     "actualCost": "Actual Cost",
     "ofBudget": "of budget",
-    "costRate": "Cost Rate ($/hr)"
+    "costRate": "Cost Rate ($/hr)",
+    "program": "Program"
   },
   "hours": {
     "title": "Hours",
@@ -273,7 +274,12 @@
     "noTimeline": "No projects with date ranges to display.",
     "totalBudget": "Total Budget (Projects)",
     "totalActualCost": "Total Actual Cost",
-    "manager": "Manager"
+    "manager": "Manager",
+    "linkProjects": "Link Projects",
+    "linkProjectsDesc": "Select projects to add to this program.",
+    "linkSelected": "Link {{count}} project(s)",
+    "unlinkProject": "Unlink from program",
+    "noUnassignedProjects": "No unassigned projects found."
   },
   "programForm": {
     "editTitle": "Edit Program",

@@ -123,7 +123,8 @@
     "noGantt": "Establece fechas de inicio y fin para ver el diagrama Gantt.",
     "actualCost": "Costo Real",
     "ofBudget": "del presupuesto",
-    "costRate": "Tarifa ($/hr)"
+    "costRate": "Tarifa ($/hr)",
+    "program": "Programa"
   },
   "hours": {
     "title": "Horas",
@@ -273,7 +274,12 @@
     "noTimeline": "No hay proyectos con rangos de fechas para mostrar.",
     "totalBudget": "Presupuesto Total (Proyectos)",
     "totalActualCost": "Costo Real Total",
-    "manager": "Gerente"
+    "manager": "Gerente",
+    "linkProjects": "Vincular Proyectos",
+    "linkProjectsDesc": "Selecciona proyectos para agregar a este programa.",
+    "linkSelected": "Vincular {{count}} proyecto(s)",
+    "unlinkProject": "Desvincular del programa",
+    "noUnassignedProjects": "No se encontraron proyectos sin asignar."
   },
   "programForm": {
     "editTitle": "Editar Programa",

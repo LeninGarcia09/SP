@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useProjects } from '../hooks/use-projects';
+import { usePrograms } from '../hooks/use-programs';
 import { usePermissions } from '../hooks/use-permissions';
 import { ProjectFormDialog } from '../components/projects/ProjectFormDialog';
 import { Button } from '../components/ui/button';
@@ -15,6 +16,10 @@ export function ProjectsPage() {
   const { t } = useTranslation();
   const { can } = usePermissions();
   const projects = useProjects({ page, limit: 25, search: search || undefined });
+  const programsQuery = usePrograms({ limit: 100 });
+  const programMap = new Map(
+    (programsQuery.data?.data ?? []).map((p) => [p.id, p.name]),
+  );
 
   function handleNew() {
     setDialogOpen(true);
@@ -75,6 +80,7 @@ export function ProjectsPage() {
                   <th className="text-left p-3 font-medium">{t('common.startDate')}</th>
                   <th className="text-left p-3 font-medium">{t('common.endDate')}</th>
                   <th className="text-left p-3 font-medium">{t('common.budget')}</th>
+                  <th className="text-left p-3 font-medium">{t('projects.program')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -96,6 +102,9 @@ export function ProjectsPage() {
                     <td className="p-3">{project.startDate ?? t('common.noData')}</td>
                     <td className="p-3">{project.endDate ?? t('common.noData')}</td>
                     <td className="p-3">${Number(project.budget).toLocaleString()}</td>
+                    <td className="p-3 text-sm text-muted-foreground">
+                      {project.programId ? programMap.get(project.programId) ?? '—' : '—'}
+                    </td>
                   </tr>
                 ))}
               </tbody>
