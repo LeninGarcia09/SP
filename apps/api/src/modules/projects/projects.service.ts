@@ -55,9 +55,9 @@ export class ProjectsService {
   }
 
   async create(dto: CreateProjectDto, createdBy: string): Promise<ProjectEntity> {
-    // Sequential code: PROJ-YYYY-NNN
+    // Sequential code: PROJ-YYYY-NNN (include soft-deleted to avoid code collisions)
     const year = new Date().getFullYear();
-    const count = await this.projectRepo.count();
+    const count = await this.projectRepo.count({ withDeleted: true });
     const code = `PROJ-${year}-${String(count + 1).padStart(3, '0')}`;
     const projectLeadId = dto.projectLeadId ?? createdBy;
     const entity = this.projectRepo.create({ ...dto, code, createdBy, projectLeadId });

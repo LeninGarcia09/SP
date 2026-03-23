@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -88,20 +89,29 @@ export function ProjectFormDialog({ open, onOpenChange, project }: ProjectFormDi
   });
 
   const isPending = createMutation.isPending || updateMutation.isPending;
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   async function onSubmit(values: ProjectFormValues) {
-    const body = {
-      ...values,
-      projectLeadId: values.projectLeadId || undefined,
-      programId: values.programId || undefined,
-    };
-    if (isEdit && project) {
-      await updateMutation.mutateAsync({ id: project.id, ...body });
-    } else {
-      await createMutation.mutateAsync(body);
+    setSubmitError(null);
+    try {
+      const body = {
+        ...values,
+        projectLeadId: values.projectLeadId || undefined,
+        programId: values.programId || undefined,
+      };
+      if (isEdit && project) {
+        await updateMutation.mutateAsync({ id: project.id, ...body });
+      } else {
+        await createMutation.mutateAsync(body);
+      }
+      form.reset();
+      onOpenChange(false);
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message
+        ?? (err instanceof Error ? err.message : 'Unknown error');
+      setSubmitError(msg);
     }
-    form.reset();
-    onOpenChange(false);
   }
 
   // Build lead options from users + personnel
@@ -244,6 +254,12 @@ export function ProjectFormDialog({ open, onOpenChange, project }: ProjectFormDi
               </Select>
             </div>
           </div>
+
+          {submitError && (
+            <div className="rounded-md border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
+              {submitError}
+            </div>
+          )}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
