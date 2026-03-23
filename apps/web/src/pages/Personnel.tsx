@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { usePersonnel } from '../hooks/use-personnel';
+import { usePermissions } from '../hooks/use-permissions';
 import { PersonFormDialog } from '../components/personnel/PersonFormDialog';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -12,6 +13,7 @@ export function PersonnelPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { can } = usePermissions();
   const personnel = usePersonnel({ page, limit: 25, search: search || undefined });
 
   function handleNew() {
@@ -35,7 +37,9 @@ export function PersonnelPage() {
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="w-full sm:w-64"
           />
-          <Button onClick={handleNew}>{t('personnel.addPerson')}</Button>
+          {can('personnel.create') && (
+            <Button onClick={handleNew}>{t('personnel.addPerson')}</Button>
+          )}
         </div>
       </div>
 

@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useInventoryItems, useImportInventory } from '../hooks/use-inventory';
+import { usePermissions } from '../hooks/use-permissions';
 import { InventoryItemFormDialog } from '../components/inventory/InventoryItemFormDialog';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -10,6 +11,7 @@ export function InventoryPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const { t } = useTranslation();
+  const { can } = usePermissions();
   const inventory = useInventoryItems({ page, limit: 25, search: search || undefined });
   const [dialogOpen, setDialogOpen] = useState(false);
   const navigate = useNavigate();
@@ -45,7 +47,9 @@ export function InventoryPage() {
           <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={importMutation.isPending}>
             {importMutation.isPending ? t('inventory.importing') : t('inventory.importExcel')}
           </Button>
-          <Button onClick={handleNew}>{t('inventory.addItem')}</Button>
+          {can('inventory.create') && (
+            <Button onClick={handleNew}>{t('inventory.addItem')}</Button>
+          )}
         </div>
       </div>
 

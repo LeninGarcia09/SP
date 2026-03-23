@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { usePrograms } from '../hooks/use-programs';
+import { usePermissions } from '../hooks/use-permissions';
 import { ProgramFormDialog } from '../components/programs/ProgramFormDialog';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -20,6 +21,7 @@ export function ProgramsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { can } = usePermissions();
   const programs = usePrograms({ page, limit: 25, search: search || undefined });
 
   return (
@@ -35,7 +37,9 @@ export function ProgramsPage() {
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="w-full sm:w-64"
           />
-          <Button onClick={() => setDialogOpen(true)}>{t('programs.new')}</Button>
+          {can('programs.create') && (
+            <Button onClick={() => setDialogOpen(true)}>{t('programs.new')}</Button>
+          )}
         </div>
       </div>
 

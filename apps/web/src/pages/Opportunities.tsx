@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useOpportunities } from '../hooks/use-opportunities';
+import { usePermissions } from '../hooks/use-permissions';
 import { OpportunityFormDialog } from '../components/opportunities/OpportunityFormDialog';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -24,6 +25,7 @@ export function OpportunitiesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const { data, isLoading, error } = useOpportunities({ page, limit: 25, search: search || undefined });
+  const { can } = usePermissions();
   const opportunities = data?.data ?? [];
   const meta = data?.meta;
 
@@ -31,7 +33,9 @@ export function OpportunitiesPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold">{t('opportunities.title')}</h1>
-        <Button onClick={() => setDialogOpen(true)}>{t('opportunities.new')}</Button>
+        {can('opportunities.create') && (
+          <Button onClick={() => setDialogOpen(true)}>{t('opportunities.new')}</Button>
+        )}
       </div>
 
       <Input

@@ -5,13 +5,16 @@ import { useTranslation } from 'react-i18next';
 import { useNotifications, useUnreadCount, useMarkNotificationRead, useMarkAllRead } from '../../hooks/use-notifications';
 import { Button } from '../ui/button';
 import { useAuthStore } from '../../store/auth-store';
+import { usePermissions } from '../../hooks/use-permissions';
 import { ActiveTimerBar } from '../projects/TaskTimer';
+import { RoleSwitcher } from './RoleSwitcher';
 import telnubLogo from '../../assets/telnub-logo.svg';
 
 interface NavItem {
   to: string;
   key: string;
   icon: React.ComponentType<{ className?: string }>;
+  permission?: string;
 }
 
 interface NavGroup {
@@ -28,14 +31,14 @@ function isGroup(entry: NavEntry): entry is NavGroup {
 }
 
 const navStructure: NavEntry[] = [
-  { to: '/dashboard', key: 'nav.dashboard', icon: LayoutDashboard },
+  { to: '/dashboard', key: 'nav.dashboard', icon: LayoutDashboard, permission: 'nav.dashboard' },
   {
     labelKey: 'nav.groupPrograms',
     icon: Layers,
     prefixes: ['/programs', '/projects'],
     items: [
-      { to: '/programs', key: 'nav.programs', icon: Layers },
-      { to: '/projects', key: 'nav.projects', icon: FolderKanban },
+      { to: '/programs', key: 'nav.programs', icon: Layers, permission: 'nav.programs' },
+      { to: '/projects', key: 'nav.projects', icon: FolderKanban, permission: 'nav.projects' },
     ],
   },
   {
@@ -43,7 +46,7 @@ const navStructure: NavEntry[] = [
     icon: Briefcase,
     prefixes: ['/opportunities'],
     items: [
-      { to: '/opportunities', key: 'nav.opportunities', icon: Target },
+      { to: '/opportunities', key: 'nav.opportunities', icon: Target, permission: 'nav.opportunities' },
     ],
   },
   {
@@ -51,13 +54,13 @@ const navStructure: NavEntry[] = [
     icon: Users,
     prefixes: ['/personnel', '/skills', '/capacity'],
     items: [
-      { to: '/personnel', key: 'nav.personnel', icon: Users },
-      { to: '/skills', key: 'nav.skills', icon: Lightbulb },
-      { to: '/capacity', key: 'nav.capacity', icon: CalendarRange },
+      { to: '/personnel', key: 'nav.personnel', icon: Users, permission: 'nav.personnel' },
+      { to: '/skills', key: 'nav.skills', icon: Lightbulb, permission: 'nav.skills' },
+      { to: '/capacity', key: 'nav.capacity', icon: CalendarRange, permission: 'nav.capacity' },
     ],
   },
-  { to: '/inventory', key: 'nav.inventory', icon: Package },
-  { to: '/users', key: 'nav.users', icon: Shield },
+  { to: '/inventory', key: 'nav.inventory', icon: Package, permission: 'nav.inventory' },
+  { to: '/users', key: 'nav.users', icon: Shield, permission: 'nav.users' },
 ];
 
 function CollapsibleGroup({
@@ -100,6 +103,7 @@ export function Layout() {
   const { t, i18n } = useTranslation();
   const authUser = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const { can } = usePermissions();
   const [bellOpen, setBellOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
@@ -109,6 +113,19 @@ export function Layout() {
   const markAllRead = useMarkAllRead();
 
   const unreadCount = unread.data?.data?.count ?? 0;
+
+  // Filter nav items by current user's permissions
+  const filteredNav = navStructure
+    .map((entry) => {
+      if (!isGroup(entry)) {
+        if (entry.permission && !can(entry.permission)) return null;
+        return entry;
+      }
+      const visibleItems = entry.items.filter((item) => !item.permission || can(item.permission));
+      if (visibleItems.length === 0) return null;
+      return { ...entry, items: visibleItems };
+    })
+    .filter(Boolean) as NavEntry[];
 
   const toggleLang = () => {
     const next = i18n.language === 'es' ? 'en' : 'es';
@@ -153,7 +170,7 @@ export function Layout() {
         </button>
       </div>
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {navStructure.map((entry, idx) => {
+        {filteredNav.map((entry, idx) => {
           if (!isGroup(entry)) {
             const isActive = location.pathname.startsWith(entry.to);
             const Icon = entry.icon;
@@ -243,9 +260,9 @@ export function Layout() {
             <div className="hidden sm:flex items-center gap-2 mr-auto pl-2 text-sm text-muted-foreground">
               <User className="h-4 w-4" />
               <span className="font-medium text-foreground">{authUser.displayName}</span>
-              <span className="text-xs">({authUser.role})</span>
             </div>
           )}
+          <RoleSwitcher />
           <ActiveTimerBar />
           <Button variant="ghost" size="sm" onClick={toggleLang} className="gap-1.5 text-xs">
             <Globe className="h-4 w-4" />

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useProjects } from '../hooks/use-projects';
+import { usePermissions } from '../hooks/use-permissions';
 import { ProjectFormDialog } from '../components/projects/ProjectFormDialog';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -12,6 +13,7 @@ export function ProjectsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { can } = usePermissions();
   const projects = useProjects({ page, limit: 25, search: search || undefined });
 
   function handleNew() {
@@ -35,7 +37,9 @@ export function ProjectsPage() {
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="w-full sm:w-64"
           />
-          <Button onClick={handleNew}>{t('projects.new')}</Button>
+          {can('projects.create') && (
+            <Button onClick={handleNew}>{t('projects.new')}</Button>
+          )}
         </div>
       </div>
 

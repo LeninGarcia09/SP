@@ -19,7 +19,7 @@ const queryClient = new QueryClient({
 });
 
 function Root() {
-  const ready = useDevAuth();
+  const { ready } = useDevAuth();
   const { t } = useTranslation();
   if (!ready) {
     return (

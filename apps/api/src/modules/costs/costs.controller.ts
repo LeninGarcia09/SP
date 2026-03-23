@@ -40,6 +40,7 @@ export class CostsController {
   }
 
   @Post('projects/:projectId/costs')
+  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.PROJECT_LEAD, UserRole.PROJECT_PERSONNEL)
   async create(
     @Param('projectId', ParseUUIDPipe) projectId: string,
     @Body() dto: CreateCostEntryDto,
@@ -59,6 +60,7 @@ export class CostsController {
   }
 
   @Patch('projects/:projectId/costs/:id')
+  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.PROJECT_LEAD)
   async update(
     @Param('projectId', ParseUUIDPipe) _projectId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -69,6 +71,7 @@ export class CostsController {
   }
 
   @Delete('projects/:projectId/costs/:id')
+  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.PROJECT_LEAD)
   async delete(
     @Param('projectId', ParseUUIDPipe) _projectId: string,
     @Param('id', ParseUUIDPipe) id: string,
