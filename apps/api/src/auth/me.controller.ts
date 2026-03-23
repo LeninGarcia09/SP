@@ -1,5 +1,6 @@
-import { Controller, Get, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, UseGuards, Req, ForbiddenException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity } from '../modules/users/user.entity';
@@ -31,10 +32,19 @@ type AuthenticatedUser = AzureAdUser | DevUser;
  */
 @Controller('auth')
 export class MeController {
+  private readonly allowedDomains: string[];
+
   constructor(
     @InjectRepository(UserEntity)
     private readonly userRepo: Repository<UserEntity>,
-  ) {}
+    private readonly config: ConfigService,
+  ) {
+    const raw = this.config.get<string>('ALLOWED_EMAIL_DOMAINS') ?? '';
+    this.allowedDomains = raw
+      .split(',')
+      .map((d) => d.trim().toLowerCase())
+      .filter(Boolean);
+  }
 
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
@@ -42,6 +52,7 @@ export class MeController {
     const payload = req.user;
 
     if ('isAzureAd' in payload && payload.isAzureAd) {
+      this.assertAllowedDomain(payload.email);
       return { data: await this.resolveAzureAdUser(payload) };
     }
 
@@ -131,5 +142,19 @@ export class MeController {
       }
     }
     return UserRole.PROJECT_PERSONNEL;
+  }
+
+  /**
+   * Rejects login if the user's email domain is not in the allowed list.
+   * When ALLOWED_EMAIL_DOMAINS is empty, all domains are allowed.
+   */
+  private assertAllowedDomain(email: string) {
+    if (this.allowedDomains.length === 0) return;
+    const domain = email.split('@')[1]?.toLowerCase();
+    if (!domain || !this.allowedDomains.includes(domain)) {
+      throw new ForbiddenException(
+        `Access denied. Email domain "${domain ?? ''}" is not authorized. Contact your administrator.`,
+      );
+    }
   }
 }
