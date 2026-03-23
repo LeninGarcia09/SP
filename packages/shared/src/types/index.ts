@@ -56,6 +56,7 @@ export interface Project {
   metadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string | null;
 }
 
 export enum ProjectMemberRole {
@@ -393,6 +394,7 @@ export interface Program {
   metadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string | null;
   projects?: Project[];
   totalBudget?: number;
   totalActualCost?: number;

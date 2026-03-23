@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, FolderKanban, Users, Package, Shield, Bell, Check, X, Layers, Target, Lightbulb, CalendarRange, Globe, ChevronDown, Briefcase, LogOut, User, Menu } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, Users, Package, Shield, Bell, Check, X, Layers, Target, Lightbulb, CalendarRange, Globe, ChevronDown, Briefcase, LogOut, User, Menu, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNotifications, useUnreadCount, useMarkNotificationRead, useMarkAllRead } from '../../hooks/use-notifications';
 import { Button } from '../ui/button';
@@ -61,6 +61,7 @@ const navStructure: NavEntry[] = [
   },
   { to: '/inventory', key: 'nav.inventory', icon: Package, permission: 'nav.inventory' },
   { to: '/users', key: 'nav.users', icon: Shield, permission: 'nav.users' },
+  { to: '/trash', key: 'nav.trash', icon: Trash2, permission: 'nav.trash' },
 ];
 
 function CollapsibleGroup({

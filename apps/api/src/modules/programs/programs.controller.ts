@@ -32,6 +32,20 @@ export class ProgramsController {
     return this.programsService.findAll(query);
   }
 
+  @Get('deleted')
+  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER)
+  async findDeleted() {
+    const data = await this.programsService.findDeleted();
+    return { data };
+  }
+
+  @Patch('deleted/:id/restore')
+  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER)
+  async restore(@Param('id', ParseUUIDPipe) id: string) {
+    const data = await this.programsService.restore(id);
+    return { data };
+  }
+
   @Get(':id')
   async findOne(@Param('id', ParseUUIDPipe) id: string) {
     const data = await this.programsService.findById(id);

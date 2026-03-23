@@ -36,6 +36,20 @@ export class ProjectsController {
     return this.projectsService.findAll(query);
   }
 
+  @Get('deleted')
+  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER)
+  async findDeleted() {
+    const data = await this.projectsService.findDeleted();
+    return { data };
+  }
+
+  @Patch('deleted/:id/restore')
+  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER)
+  async restore(@Param('id', ParseUUIDPipe) id: string) {
+    const data = await this.projectsService.restore(id);
+    return { data };
+  }
+
   @Get(':id')
   async findOne(@Param('id', ParseUUIDPipe) id: string) {
     const data = await this.projectsService.findById(id);

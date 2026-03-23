@@ -5,6 +5,8 @@ import {
   createProject,
   updateProject,
   deleteProject,
+  fetchDeletedProjects,
+  restoreProject,
   fetchProjectMembers,
   addProjectMember,
   removeProjectMember,
@@ -57,6 +59,23 @@ export function useDeleteProject() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: deleteProject,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['projects'] });
+    },
+  });
+}
+
+export function useDeletedProjects() {
+  return useQuery({
+    queryKey: ['projects', 'deleted'],
+    queryFn: () => fetchDeletedProjects(),
+  });
+}
+
+export function useRestoreProject() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: restoreProject,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['projects'] });
     },

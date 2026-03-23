@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, Repository } from 'typeorm';
+import { ILike, IsNull, Not, Repository } from 'typeorm';
 import { ProgramEntity } from './program.entity';
 import { CreateProgramDto, UpdateProgramDto } from './dto/program.dto';
 import { PaginationDto, PaginatedResult } from '../../common/dto/pagination.dto';
@@ -67,5 +67,24 @@ export class ProgramsService {
   async softDelete(id: string): Promise<ProgramEntity> {
     const program = await this.findById(id);
     return this.programRepo.softRemove(program);
+  }
+
+  async findDeleted(): Promise<ProgramEntity[]> {
+    return this.programRepo.find({
+      withDeleted: true,
+      where: { deletedAt: Not(IsNull()) },
+      order: { deletedAt: 'DESC' },
+    });
+  }
+
+  async restore(id: string): Promise<ProgramEntity> {
+    const program = await this.programRepo.findOne({
+      where: { id },
+      withDeleted: true,
+    });
+    if (!program || !program.deletedAt) {
+      throw new NotFoundException(`Deleted program ${id} not found`);
+    }
+    return this.programRepo.recover(program);
   }
 }

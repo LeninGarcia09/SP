@@ -19,7 +19,8 @@
     "groupPrograms": "Programs",
     "groupPersonnel": "Personnel",
     "groupSales": "Sales",
-    "groupAdmin": "Administration"
+    "groupAdmin": "Administration",
+    "trash": "Trash"
   },
   "common": {
     "loading": "Loading…",
@@ -670,5 +671,15 @@
     "allocated": "Allocated",
     "available": "Available",
     "assign": "Assign"
+  },
+  "trash": {
+    "title": "Trash",
+    "deletedProjects": "Deleted Projects",
+    "deletedPrograms": "Deleted Programs",
+    "noProjectsInTrash": "No deleted projects.",
+    "noProgramsInTrash": "No deleted programs.",
+    "restore": "Restore",
+    "deletedAt": "Deleted On",
+    "actions": "Actions"
   }
 }

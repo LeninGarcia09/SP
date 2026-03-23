@@ -19,7 +19,8 @@
     "groupPrograms": "Programas",
     "groupPersonnel": "Personal",
     "groupSales": "Ventas",
-    "groupAdmin": "Administración"
+    "groupAdmin": "Administración",
+    "trash": "Papelera"
   },
   "common": {
     "loading": "Cargando…",
@@ -670,5 +671,15 @@
     "allocated": "Asignado",
     "available": "Disponible",
     "assign": "Asignar"
+  },
+  "trash": {
+    "title": "Papelera",
+    "deletedProjects": "Proyectos Eliminados",
+    "deletedPrograms": "Programas Eliminados",
+    "noProjectsInTrash": "No hay proyectos eliminados.",
+    "noProgramsInTrash": "No hay programas eliminados.",
+    "restore": "Restaurar",
+    "deletedAt": "Eliminado El",
+    "actions": "Acciones"
   }
 }

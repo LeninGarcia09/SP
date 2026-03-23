@@ -81,6 +81,16 @@ export async function deleteProject(id: string) {
   await api.delete(`/projects/${id}`);
 }
 
+export async function fetchDeletedProjects() {
+  const { data } = await api.get<{ data: Project[] }>('/projects/deleted');
+  return data;
+}
+
+export async function restoreProject(id: string) {
+  const { data } = await api.patch<ApiResponse<Project>>(`/projects/deleted/${id}/restore`);
+  return data;
+}
+
 // ─── Project Members ───
 
 export async function fetchProjectMembers(projectId: string) {
@@ -367,6 +377,16 @@ export async function updateProgram(id: string, body: Record<string, unknown>) {
 
 export async function deleteProgram(id: string) {
   await api.delete(`/programs/${id}`);
+}
+
+export async function fetchDeletedPrograms() {
+  const { data } = await api.get<{ data: Program[] }>('/programs/deleted');
+  return data;
+}
+
+export async function restoreProgram(id: string) {
+  const { data } = await api.patch<ApiResponse<Program>>(`/programs/deleted/${id}/restore`);
+  return data;
 }
 
 // ─── Opportunities ───

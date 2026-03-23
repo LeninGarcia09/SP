@@ -5,6 +5,8 @@ import {
   createProgram,
   updateProgram,
   deleteProgram,
+  fetchDeletedPrograms,
+  restoreProgram,
 } from '../lib/api';
 import type { PaginationParams } from '../lib/api';
 
@@ -49,6 +51,23 @@ export function useDeleteProgram() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: deleteProgram,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['programs'] });
+    },
+  });
+}
+
+export function useDeletedPrograms() {
+  return useQuery({
+    queryKey: ['programs', 'deleted'],
+    queryFn: () => fetchDeletedPrograms(),
+  });
+}
+
+export function useRestoreProgram() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: restoreProgram,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['programs'] });
     },

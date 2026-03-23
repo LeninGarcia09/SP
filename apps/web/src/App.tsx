@@ -14,6 +14,7 @@ import { OpportunitiesPage } from './pages/Opportunities';
 import { OpportunityDetailPage } from './pages/OpportunityDetail';
 import { SkillsPage } from './pages/Skills';
 import { CapacityPlanningPage } from './pages/CapacityPlanning';
+import { TrashPage } from './pages/Trash';
 
 export function App() {
   return (
@@ -34,6 +35,7 @@ export function App() {
         <Route path="/inventory" element={<InventoryPage />} />
         <Route path="/inventory/:id" element={<InventoryDetailPage />} />
         <Route path="/users" element={<UsersPage />} />
+        <Route path="/trash" element={<TrashPage />} />
       </Route>
     </Routes>
   );

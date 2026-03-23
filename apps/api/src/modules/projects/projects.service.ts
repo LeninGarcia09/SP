@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, Repository } from 'typeorm';
+import { ILike, IsNull, Not, Repository } from 'typeorm';
 import { ProjectEntity } from './project.entity';
 import { ProjectMemberEntity } from './project-member.entity';
 import { ProjectNoteEntity } from './project-note.entity';
@@ -73,6 +73,25 @@ export class ProjectsService {
   async softDelete(id: string): Promise<ProjectEntity> {
     const project = await this.findById(id);
     return this.projectRepo.softRemove(project);
+  }
+
+  async findDeleted(): Promise<ProjectEntity[]> {
+    return this.projectRepo.find({
+      withDeleted: true,
+      where: { deletedAt: Not(IsNull()) },
+      order: { deletedAt: 'DESC' },
+    });
+  }
+
+  async restore(id: string): Promise<ProjectEntity> {
+    const project = await this.projectRepo.findOne({
+      where: { id },
+      withDeleted: true,
+    });
+    if (!project || !project.deletedAt) {
+      throw new NotFoundException(`Deleted project ${id} not found`);
+    }
+    return this.projectRepo.recover(project);
   }
 
   // ─── Members ───

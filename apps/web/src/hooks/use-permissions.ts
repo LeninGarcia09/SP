@@ -76,6 +76,7 @@ const PERMISSION_MAP: Record<string, UserRole[]> = {
   'nav.capacity': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.RESOURCE_MANAGER],
   'nav.inventory': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.RESOURCE_MANAGER, UserRole.PROGRAM_MANAGER, UserRole.PROJECT_LEAD, UserRole.PROJECT_PERSONNEL, UserRole.INVENTORY_MANAGER],
   'nav.users': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER],
+  'nav.trash': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER],
 };
 
 export type Permission = keyof typeof PERMISSION_MAP;
