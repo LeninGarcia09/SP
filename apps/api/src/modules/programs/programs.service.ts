@@ -54,7 +54,7 @@ export class ProgramsService {
     const year = new Date().getFullYear();
     const count = await this.programRepo.count();
     const code = `PROG-${year}-${String(count + 1).padStart(3, '0')}`;
-    const entity = this.programRepo.create({ ...dto, code, createdBy });
+    const entity = this.programRepo.create({ ...dto, code, createdBy, managerId: dto.managerId ?? createdBy });
     return this.programRepo.save(entity);
   }
 

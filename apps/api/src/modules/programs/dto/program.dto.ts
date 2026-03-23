@@ -46,9 +46,10 @@ export class CreateProgramDto {
   @IsOptional()
   budget?: number;
 
-  @ApiProperty({ format: 'uuid' })
+  @ApiPropertyOptional({ format: 'uuid' })
   @IsUUID()
-  managerId: string;
+  @IsOptional()
+  managerId?: string;
 
   @ApiPropertyOptional({ default: {} })
   @IsObject()

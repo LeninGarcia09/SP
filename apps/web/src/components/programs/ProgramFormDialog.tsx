@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -5,6 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { ProgramStatus } from '@bizops/shared';
 import type { Program } from '@bizops/shared';
 import { useCreateProgram, useUpdateProgram } from '../../hooks/use-programs';
+import { useUsers } from '../../hooks/use-users';
+import { usePersonnel } from '../../hooks/use-personnel';
 import {
   Dialog,
   DialogContent,
@@ -32,6 +35,7 @@ const programFormSchema = z.object({
   startDate: z.string().min(1, 'Start date is required'),
   endDate: z.string(),
   budget: z.coerce.number().nonnegative('Budget must be non-negative'),
+  managerId: z.string().optional(),
 });
 
 type ProgramFormValues = z.infer<typeof programFormSchema>;
@@ -47,6 +51,8 @@ export function ProgramFormDialog({ open, onOpenChange, program }: ProgramFormDi
   const { t } = useTranslation();
   const createMutation = useCreateProgram();
   const updateMutation = useUpdateProgram();
+  const usersQuery = useUsers({ limit: 100 });
+  const personnelQuery = usePersonnel({ limit: 100 });
 
   const form = useForm<ProgramFormValues>({
     resolver: zodResolver(programFormSchema),
@@ -58,6 +64,7 @@ export function ProgramFormDialog({ open, onOpenChange, program }: ProgramFormDi
           startDate: program.startDate,
           endDate: program.endDate ?? '',
           budget: Number(program.budget),
+          managerId: program.managerId ?? '',
         }
       : {
           name: '',
@@ -66,23 +73,52 @@ export function ProgramFormDialog({ open, onOpenChange, program }: ProgramFormDi
           startDate: '',
           endDate: '',
           budget: 0,
+          managerId: '',
         },
   });
 
   const isPending = createMutation.isPending || updateMutation.isPending;
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Build manager options from users + personnel (same pattern as ProjectFormDialog)
+  const managerOptions = (() => {
+    const opts: { value: string; label: string }[] = [];
+    const seen = new Set<string>();
+    const personnelByUserId = new Map<string, { firstName: string; lastName: string }>();
+    for (const p of personnelQuery.data?.data ?? []) {
+      if (p.userId) personnelByUserId.set(p.userId, p);
+    }
+    for (const u of usersQuery.data?.data ?? []) {
+      if (!seen.has(u.id)) {
+        seen.add(u.id);
+        const person = personnelByUserId.get(u.id);
+        opts.push({ value: u.id, label: person ? `${person.firstName} ${person.lastName}` : u.displayName });
+      }
+    }
+    return opts;
+  })();
 
   async function onSubmit(values: ProgramFormValues) {
-    const payload = {
-      ...values,
-      endDate: values.endDate || null,
-    };
-    if (isEdit && program) {
-      await updateMutation.mutateAsync({ id: program.id, ...payload });
-    } else {
-      await createMutation.mutateAsync(payload);
+    setSubmitError(null);
+    try {
+      const payload = {
+        ...values,
+        endDate: values.endDate || null,
+        managerId: values.managerId || undefined,
+      };
+      if (isEdit && program) {
+        await updateMutation.mutateAsync({ id: program.id, ...payload });
+      } else {
+        await createMutation.mutateAsync(payload);
+      }
+      form.reset();
+      onOpenChange(false);
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message
+        ?? (err instanceof Error ? err.message : 'Unknown error');
+      setSubmitError(msg);
     }
-    form.reset();
-    onOpenChange(false);
   }
 
   return (
@@ -94,6 +130,12 @@ export function ProgramFormDialog({ open, onOpenChange, program }: ProgramFormDi
             {isEdit ? t('programForm.editDesc') : t('programForm.newDesc')}
           </DialogDescription>
         </DialogHeader>
+
+        {submitError && (
+          <div className="rounded-md border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
+            {submitError}
+          </div>
+        )}
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
@@ -107,6 +149,24 @@ export function ProgramFormDialog({ open, onOpenChange, program }: ProgramFormDi
           <div className="space-y-2">
             <Label htmlFor="description">{t('programForm.descLabel')}</Label>
             <Textarea id="description" {...form.register('description')} placeholder={t('programForm.descPlaceholder')} rows={3} />
+          </div>
+
+          <div className="space-y-2">
+            <Label>{t('programForm.managerLabel')}</Label>
+            <Select
+              value={form.watch('managerId') || '__none__'}
+              onValueChange={(v) => form.setValue('managerId', v === '__none__' ? '' : v)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={t('programForm.managerPlaceholder')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">{t('common.none')}</SelectItem>
+                {managerOptions.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">

@@ -272,7 +272,8 @@
     "timeline": "Timeline",
     "noTimeline": "No projects with date ranges to display.",
     "totalBudget": "Total Budget (Projects)",
-    "totalActualCost": "Total Actual Cost"
+    "totalActualCost": "Total Actual Cost",
+    "manager": "Manager"
   },
   "programForm": {
     "editTitle": "Edit Program",
@@ -287,6 +288,8 @@
     "startDateLabel": "Start Date",
     "endDateLabel": "End Date",
     "budgetLabel": "Budget",
+    "managerLabel": "Manager",
+    "managerPlaceholder": "Select manager",
     "createBtn": "Create Program",
     "saveBtn": "Save Changes"
   },

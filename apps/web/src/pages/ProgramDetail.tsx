@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Trash2 } from 'lucide-react';
 import { useProgram, useDeleteProgram } from '../hooks/use-programs';
+import { useUsers } from '../hooks/use-users';
+import { usePermissions } from '../hooks/use-permissions';
 import { ProgramFormDialog } from '../components/programs/ProgramFormDialog';
 import { ProgramTimeline } from '../components/shared/ProjectGantt';
 import { Button } from '../components/ui/button';
@@ -21,6 +23,8 @@ export function ProgramDetailPage() {
   const { t } = useTranslation();
   const program = useProgram(id!);
   const deleteProgram = useDeleteProgram();
+  const usersQuery = useUsers({ limit: 100 });
+  const { can } = usePermissions();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   if (program.isLoading) {
@@ -41,6 +45,12 @@ export function ProgramDetailPage() {
   }
 
   const p = program.data.data;
+
+  const managerName = (() => {
+    const users = usersQuery.data?.data ?? [];
+    const user = users.find((u) => u.id === p.managerId);
+    return user?.displayName ?? null;
+  })();
 
   async function handleDelete() {
     if (!confirm('Are you sure you want to delete this program?')) return;
@@ -65,14 +75,22 @@ export function ProgramDetailPage() {
             </span>
           </div>
         </div>
-        <Button variant="outline" onClick={() => setEditDialogOpen(true)}>{t('common.edit')}</Button>
-        <Button variant="destructive" size="icon" onClick={handleDelete}>
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        {can('programs.update') && (
+          <Button variant="outline" onClick={() => setEditDialogOpen(true)}>{t('common.edit')}</Button>
+        )}
+        {can('programs.delete') && (
+          <Button variant="destructive" size="icon" onClick={handleDelete}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       {/* Details grid */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+        <div className="rounded-lg border p-4">
+          <p className="text-xs text-muted-foreground mb-1">{t('programs.manager')}</p>
+          <p className="text-lg font-semibold">{managerName ?? t('common.noData')}</p>
+        </div>
         <div className="rounded-lg border p-4">
           <p className="text-xs text-muted-foreground mb-1">{t('common.budget')}</p>
           <p className="text-lg font-semibold">${Number(p.budget).toLocaleString()}</p>

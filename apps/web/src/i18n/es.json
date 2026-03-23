@@ -272,7 +272,8 @@
     "timeline": "Línea de Tiempo",
     "noTimeline": "No hay proyectos con rangos de fechas para mostrar.",
     "totalBudget": "Presupuesto Total (Proyectos)",
-    "totalActualCost": "Costo Real Total"
+    "totalActualCost": "Costo Real Total",
+    "manager": "Gerente"
   },
   "programForm": {
     "editTitle": "Editar Programa",
@@ -287,6 +288,8 @@
     "startDateLabel": "Fecha Inicio",
     "endDateLabel": "Fecha Fin",
     "budgetLabel": "Presupuesto",
+    "managerLabel": "Gerente",
+    "managerPlaceholder": "Seleccionar gerente",
     "createBtn": "Crear Programa",
     "saveBtn": "Guardar Cambios"
   },
