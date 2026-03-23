@@ -66,7 +66,6 @@ export class ProgramsService {
 
   async softDelete(id: string): Promise<ProgramEntity> {
     const program = await this.findById(id);
-    program.status = 'CANCELLED' as never;
-    return this.programRepo.save(program);
+    return this.programRepo.softRemove(program);
   }
 }

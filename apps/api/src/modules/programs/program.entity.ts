@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
   Index,
   OneToMany,
 } from 'typeorm';
@@ -51,6 +52,9 @@ export class ProgramEntity {
 
   @UpdateDateColumn()
   updatedAt!: Date;
+
+  @DeleteDateColumn()
+  deletedAt!: Date | null;
 
   @OneToMany(() => ProjectEntity, (p) => p.program)
   projects!: ProjectEntity[];
