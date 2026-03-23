@@ -73,7 +73,7 @@ export class ProgramsController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER)
+  @Roles(UserRole.GLOBAL_LEAD)
   async remove(@Param('id', ParseUUIDPipe) id: string) {
     const data = await this.programsService.softDelete(id);
     return { data };

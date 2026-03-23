@@ -9,7 +9,7 @@ const PERMISSION_MAP: Record<string, UserRole[]> = {
   // Projects
   'projects.create': [UserRole.GLOBAL_LEAD, UserRole.PROJECT_LEAD],
   'projects.update': [UserRole.GLOBAL_LEAD, UserRole.PROJECT_LEAD],
-  'projects.delete': [UserRole.GLOBAL_LEAD, UserRole.PROJECT_LEAD],
+  'projects.delete': [UserRole.GLOBAL_LEAD],
   'projects.read': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.RESOURCE_MANAGER, UserRole.PROGRAM_MANAGER, UserRole.PROJECT_LEAD, UserRole.PROJECT_PERSONNEL, UserRole.INVENTORY_MANAGER],
 
   // Tasks
@@ -43,7 +43,7 @@ const PERMISSION_MAP: Record<string, UserRole[]> = {
   // Programs
   'programs.create': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.PROGRAM_MANAGER],
   'programs.update': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.PROGRAM_MANAGER],
-  'programs.delete': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER],
+  'programs.delete': [UserRole.GLOBAL_LEAD],
   'programs.read': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.RESOURCE_MANAGER, UserRole.PROGRAM_MANAGER, UserRole.PROJECT_LEAD, UserRole.PROJECT_PERSONNEL],
 
   // Opportunities

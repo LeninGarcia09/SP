@@ -77,7 +77,7 @@ export class ProjectsController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.PROJECT_LEAD)
+  @Roles(UserRole.GLOBAL_LEAD)
   async remove(@Param('id', ParseUUIDPipe) id: string) {
     const data = await this.projectsService.softDelete(id);
     return { data };
