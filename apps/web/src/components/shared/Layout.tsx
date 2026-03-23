@@ -8,6 +8,7 @@ import { useAuthStore } from '../../store/auth-store';
 import { usePermissions } from '../../hooks/use-permissions';
 import { ActiveTimerBar } from '../projects/TaskTimer';
 import { RoleSwitcher } from './RoleSwitcher';
+import { isMsalEnabled, msalInstance } from '../../lib/msal';
 import telnubLogo from '../../assets/telnub-logo.svg';
 
 interface NavItem {
@@ -103,8 +104,18 @@ export function Layout() {
   const location = useLocation();
   const { t, i18n } = useTranslation();
   const authUser = useAuthStore((s) => s.user);
-  const logout = useAuthStore((s) => s.logout);
+  const authMode = useAuthStore((s) => s.mode);
+  const storeLogout = useAuthStore((s) => s.logout);
   const { can } = usePermissions();
+
+  const handleLogout = useCallback(() => {
+    storeLogout();
+    if (isMsalEnabled) {
+      msalInstance.logoutRedirect();
+    } else {
+      window.location.href = '/';
+    }
+  }, [storeLogout]);
   const [bellOpen, setBellOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
@@ -263,13 +274,13 @@ export function Layout() {
               <span className="font-medium text-foreground">{authUser.displayName}</span>
             </div>
           )}
-          <RoleSwitcher />
+          {authMode === 'dev' && <RoleSwitcher />}
           <ActiveTimerBar />
           <Button variant="ghost" size="sm" onClick={toggleLang} className="gap-1.5 text-xs">
             <Globe className="h-4 w-4" />
             <span className="hidden sm:inline">{i18n.language === 'es' ? 'EN' : 'ES'}</span>
           </Button>
-          <Button variant="ghost" size="sm" onClick={logout} className="gap-1.5 text-xs text-destructive hover:text-destructive">
+          <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-1.5 text-xs text-destructive hover:text-destructive">
             <LogOut className="h-4 w-4" />
             <span className="hidden sm:inline">{t('auth.logout')}</span>
           </Button>

@@ -3,6 +3,7 @@ import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtStrategy } from './jwt.strategy';
 import { DevAuthController } from './dev-auth.controller';
+import { MeController } from './me.controller';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { UserEntity } from '../modules/users/user.entity';
 
@@ -11,7 +12,7 @@ import { UserEntity } from '../modules/users/user.entity';
     PassportModule.register({ defaultStrategy: 'jwt' }),
     TypeOrmModule.forFeature([UserEntity]),
   ],
-  controllers: [DevAuthController],
+  controllers: [DevAuthController, MeController],
   providers: [JwtStrategy, RolesGuard],
   exports: [PassportModule, RolesGuard],
 })
