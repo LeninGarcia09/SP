@@ -6,6 +6,8 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
   Index,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { ProjectStatus } from '@bizops/shared';
 
@@ -43,6 +45,10 @@ export class ProjectEntity {
 
   @Column({ type: 'uuid', nullable: true })
   programId!: string | null;
+
+  @ManyToOne('ProgramEntity', 'projects', { nullable: true })
+  @JoinColumn({ name: 'programId' })
+  program?: import('../programs/program.entity').ProgramEntity;
 
   @Column({ type: 'uuid' })
   projectLeadId!: string;

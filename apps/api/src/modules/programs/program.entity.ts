@@ -52,6 +52,6 @@ export class ProgramEntity {
   @UpdateDateColumn()
   updatedAt!: Date;
 
-  @OneToMany(() => ProjectEntity, (p) => p.programId)
+  @OneToMany(() => ProjectEntity, (p) => p.program)
   projects!: ProjectEntity[];
 }
