@@ -38,6 +38,7 @@ import { SystemController } from './common/system.controller';
         ssl: config.get<string>('DATABASE_SSL') === 'true' ? { rejectUnauthorized: false } : false,
         autoLoadEntities: true,
         synchronize: false, // NEVER true in production — use migrations
+        migrationsRun: true, // Auto-run pending migrations on app startup
         migrations: [path.join(__dirname, 'database', 'migrations', '*{.ts,.js}')],
         migrationsTableName: 'migrations',
         logging: config.get<string>('NODE_ENV') === 'development' ? ['query', 'error'] : ['error'],

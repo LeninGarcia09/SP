@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-# BizOps Platform — Deploy Frontend to Azure Static Web Apps
+# Telnub CRM — Deploy Frontend to Azure Static Web Apps
 # Triggers on push to main when web-app or shared changes
 # ─────────────────────────────────────────────────────────────
 name: Deploy Web
