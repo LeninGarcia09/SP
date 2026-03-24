@@ -6,8 +6,8 @@ import { TaskEntity } from '../tasks/task.entity';
 import { CostEntryEntity } from '../costs/cost-entry.entity';
 import { ProjectEntity } from '../projects/project.entity';
 import { CreateDeliverableDto, UpdateDeliverableDto } from './dto/deliverable.dto';
-import { CostEntryStatus, TaskStatus } from '@bizops/shared';
-import type { DeliverableSummary, TaskCostBreakdown } from '@bizops/shared';
+import { CostEntryStatus, TaskStatus } from '@telnub/shared';
+import type { DeliverableSummary, TaskCostBreakdown } from '@telnub/shared';
 
 @Injectable()
 export class DeliverablesService {
@@ -147,7 +147,7 @@ export class DeliverablesService {
       projectId: entity.projectId,
       title: entity.title,
       description: entity.description,
-      status: entity.status as import('@bizops/shared').DeliverableStatus,
+      status: entity.status as import('@telnub/shared').DeliverableStatus,
       budget: Number(entity.budget),
       startDate: entity.startDate,
       dueDate: entity.dueDate,

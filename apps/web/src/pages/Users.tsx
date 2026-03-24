@@ -19,17 +19,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select';
-import { UserRole } from '@bizops/shared';
+import { UserRole } from '@telnub/shared';
 
 const roleColors: Record<string, string> = {
-  GLOBAL_LEAD: 'bg-purple-100 text-purple-700',
-  BIZ_OPS_MANAGER: 'bg-blue-100 text-blue-700',
-  RESOURCE_MANAGER: 'bg-cyan-100 text-cyan-700',
+  ADMIN: 'bg-purple-100 text-purple-700',
+  OPERATIONS_DIRECTOR: 'bg-blue-100 text-blue-700',
+  DEPARTMENT_MANAGER: 'bg-cyan-100 text-cyan-700',
   PROGRAM_MANAGER: 'bg-indigo-100 text-indigo-700',
-  PROJECT_LEAD: 'bg-green-100 text-green-700',
-  PROJECT_PERSONNEL: 'bg-gray-100 text-gray-700',
+  PROJECT_MANAGER: 'bg-green-100 text-green-700',
+  TEAM_MEMBER: 'bg-gray-100 text-gray-700',
   INVENTORY_MANAGER: 'bg-orange-100 text-orange-700',
-  HR_ADMIN: 'bg-red-100 text-red-700',
+  HR_MANAGER: 'bg-red-100 text-red-700',
+  SALES_EXECUTIVE: 'bg-emerald-100 text-emerald-700',
 };
 
 export function UsersPage() {

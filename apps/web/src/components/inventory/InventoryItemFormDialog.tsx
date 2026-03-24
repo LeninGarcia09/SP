@@ -2,8 +2,8 @@ import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { AssetCategory } from '@bizops/shared';
-import type { InventoryItem } from '@bizops/shared';
+import { AssetCategory } from '@telnub/shared';
+import type { InventoryItem } from '@telnub/shared';
 import { useCreateInventoryItem, useUpdateInventoryItem } from '../../hooks/use-inventory';
 import {
   Dialog,

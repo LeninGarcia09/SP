@@ -1,8 +1,8 @@
 {
-  "name": "bizops-platform",
+  "name": "telnub-crm",
   "version": "0.0.1",
   "private": true,
-  "description": "Business Operations Platform — internal tool",
+  "description": "Telnub CRM — internal tool",
   "workspaces": [
     "packages/*",
     "apps/*"

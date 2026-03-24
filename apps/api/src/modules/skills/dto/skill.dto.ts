@@ -6,7 +6,7 @@ import {
   IsEnum,
   IsOptional,
 } from 'class-validator';
-import { SkillCategory } from '@bizops/shared';
+import { SkillCategory } from '@telnub/shared';
 
 export class CreateSkillDto {
   @ApiProperty({ maxLength: 100 })

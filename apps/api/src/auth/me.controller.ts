@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity } from '../modules/users/user.entity';
-import { UserRole } from '@bizops/shared';
+import { UserRole } from '@telnub/shared';
 
 interface AzureAdUser {
   sub: string;
@@ -65,7 +65,7 @@ export class MeController {
           id: devPayload.id,
           email: devPayload.email,
           displayName: devPayload.email,
-          role: devPayload.role ?? UserRole.PROJECT_PERSONNEL,
+          role: devPayload.role ?? UserRole.TEAM_MEMBER,
         },
       };
     }
@@ -128,11 +128,11 @@ export class MeController {
 
   /**
    * Maps Azure AD app roles to internal UserRole.
-   * If no recognized role is assigned, defaults to PROJECT_PERSONNEL.
+   * If no recognized role is assigned, defaults to TEAM_MEMBER.
    *
    * To configure: In Azure AD > Enterprise Application > App Roles,
    * create roles matching the UserRole enum values:
-   * GLOBAL_LEAD, BIZ_OPS_MANAGER, RESOURCE_MANAGER, etc.
+   * ADMIN, OPERATIONS_DIRECTOR, DEPARTMENT_MANAGER, etc.
    */
   private mapAzureAdRoles(roles: string[]): UserRole {
     const roleValues = Object.values(UserRole) as string[];
@@ -141,7 +141,7 @@ export class MeController {
         return r as UserRole;
       }
     }
-    return UserRole.PROJECT_PERSONNEL;
+    return UserRole.TEAM_MEMBER;
   }
 
   /**

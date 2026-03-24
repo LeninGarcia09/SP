@@ -10,7 +10,7 @@ import {
   IsDateString,
   Min,
 } from 'class-validator';
-import { TaskStatus, Priority } from '@bizops/shared';
+import { TaskStatus, Priority } from '@telnub/shared';
 
 export class CreateTaskDto {
   @ApiProperty({ maxLength: 300 })

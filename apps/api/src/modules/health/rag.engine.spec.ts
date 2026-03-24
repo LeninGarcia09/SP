@@ -1,7 +1,7 @@
 import { RagEngine } from './rag.engine';
 import { ProjectEntity } from '../projects/project.entity';
 import { TaskEntity } from '../tasks/task.entity';
-import { ProjectStatus } from '@bizops/shared';
+import { ProjectStatus } from '@telnub/shared';
 
 function makeProject(overrides: Partial<ProjectEntity> = {}): ProjectEntity {
   return {

@@ -500,14 +500,15 @@
     "changeRole": "Cambiar Rol de Usuario",
     "changeRoleDesc": "Actualizar el rol de {{name}}",
     "roles": {
-      "GLOBAL_LEAD": "Líder Global",
-      "BIZ_OPS_MANAGER": "Gerente de Operaciones",
-      "RESOURCE_MANAGER": "Gerente de Recursos",
+      "ADMIN": "Administrador",
+      "OPERATIONS_DIRECTOR": "Director de Operaciones",
+      "DEPARTMENT_MANAGER": "Gerente de Departamento",
       "PROGRAM_MANAGER": "Gerente de Programa",
-      "PROJECT_LEAD": "Líder de Proyecto",
-      "PROJECT_PERSONNEL": "Personal de Proyecto",
+      "PROJECT_MANAGER": "Gerente de Proyecto",
+      "TEAM_MEMBER": "Miembro del Equipo",
       "INVENTORY_MANAGER": "Gerente de Inventario",
-      "HR_ADMIN": "Admin de RRHH"
+      "HR_MANAGER": "Gerente de RRHH",
+      "SALES_EXECUTIVE": "Ejecutivo de Ventas"
     }
   },
   "gantt": {

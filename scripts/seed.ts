@@ -1,5 +1,5 @@
 /**
- * Seed script for BizOps Platform
+ * Seed script for Telnub CRM
  * Seeds all modules with realistic demo data via the REST API.
  *
  * Usage:
@@ -54,7 +54,7 @@ async function get(path: string) {
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log(`🌱 Seeding BizOps Platform at ${API}\n`);
+  console.log(`🌱 Seeding Telnub CRM at ${API}\n`);
 
   // 1. Authenticate via dev-login
   console.log('1️⃣  Authenticating via dev-login…');
@@ -337,14 +337,14 @@ async function main() {
   const DEPT_DESIGN      = 'e3d4e5f6-a7b8-4c9d-ae1f-2a3b4c5d6e7f';
   const DEPT_SECURITY    = 'f4e5f6a7-b8c9-4d0e-8f2a-3b4c5d6e7f8a';
   const personnelData = [
-    { firstName: 'Carlos', lastName: 'Rodriguez', email: 'carlos.rodriguez@bizops.local', employeeId: 'EMP-001', jobTitle: 'Senior Software Engineer', departmentId: DEPT_ENGINEERING, assignmentStatus: 'ON_PROJECT', startDate: '2023-03-15', skills: ['JavaScript', 'React', 'Azure'] },
-    { firstName: 'Maria', lastName: 'Santos', email: 'maria.santos@bizops.local', employeeId: 'EMP-002', jobTitle: 'Project Manager', departmentId: DEPT_OPERATIONS, assignmentStatus: 'ON_PROJECT', startDate: '2022-07-01', skills: ['Project Management', 'Leadership'] },
-    { firstName: 'Ana', lastName: 'Gomez', email: 'ana.gomez@bizops.local', employeeId: 'EMP-003', jobTitle: 'Business Analyst', departmentId: DEPT_OPERATIONS, assignmentStatus: 'ON_PROJECT', startDate: '2024-01-10', skills: ['Business Analysis', 'SQL'] },
-    { firstName: 'Diego', lastName: 'Martinez', email: 'diego.martinez@bizops.local', employeeId: 'EMP-004', jobTitle: 'DevOps Engineer', departmentId: DEPT_ENGINEERING, assignmentStatus: 'ON_BENCH', startDate: '2023-11-20', skills: ['DevOps / CI-CD', 'Azure', 'Python'] },
-    { firstName: 'Laura', lastName: 'Hernandez', email: 'laura.hernandez@bizops.local', employeeId: 'EMP-005', jobTitle: 'UX Designer', departmentId: DEPT_DESIGN, assignmentStatus: 'ON_PROJECT', startDate: '2024-06-01', skills: ['Communication'] },
-    { firstName: 'Ricardo', lastName: 'Vargas', email: 'ricardo.vargas@bizops.local', employeeId: 'EMP-006', jobTitle: 'Data Engineer', departmentId: DEPT_ENGINEERING, assignmentStatus: 'ON_BENCH', startDate: '2024-09-15', skills: ['Python', 'SQL'] },
-    { firstName: 'Sofia', lastName: 'Reyes', email: 'sofia.reyes@bizops.local', employeeId: 'EMP-007', jobTitle: 'Security Analyst', departmentId: DEPT_SECURITY, assignmentStatus: 'ON_OPERATIONS', startDate: '2023-05-01', skills: ['Azure'] },
-    { firstName: 'Pedro', lastName: 'Castillo', email: 'pedro.castillo@bizops.local', employeeId: 'EMP-008', jobTitle: 'Full Stack Developer', departmentId: DEPT_ENGINEERING, assignmentStatus: 'ON_PROJECT', startDate: '2024-02-20', skills: ['JavaScript', 'React', 'Python'] },
+    { firstName: 'Carlos', lastName: 'Rodriguez', email: 'carlos.rodriguez@telnub.local', employeeId: 'EMP-001', jobTitle: 'Senior Software Engineer', departmentId: DEPT_ENGINEERING, assignmentStatus: 'ON_PROJECT', startDate: '2023-03-15', skills: ['JavaScript', 'React', 'Azure'] },
+    { firstName: 'Maria', lastName: 'Santos', email: 'maria.santos@telnub.local', employeeId: 'EMP-002', jobTitle: 'Project Manager', departmentId: DEPT_OPERATIONS, assignmentStatus: 'ON_PROJECT', startDate: '2022-07-01', skills: ['Project Management', 'Leadership'] },
+    { firstName: 'Ana', lastName: 'Gomez', email: 'ana.gomez@telnub.local', employeeId: 'EMP-003', jobTitle: 'Business Analyst', departmentId: DEPT_OPERATIONS, assignmentStatus: 'ON_PROJECT', startDate: '2024-01-10', skills: ['Business Analysis', 'SQL'] },
+    { firstName: 'Diego', lastName: 'Martinez', email: 'diego.martinez@telnub.local', employeeId: 'EMP-004', jobTitle: 'DevOps Engineer', departmentId: DEPT_ENGINEERING, assignmentStatus: 'ON_BENCH', startDate: '2023-11-20', skills: ['DevOps / CI-CD', 'Azure', 'Python'] },
+    { firstName: 'Laura', lastName: 'Hernandez', email: 'laura.hernandez@telnub.local', employeeId: 'EMP-005', jobTitle: 'UX Designer', departmentId: DEPT_DESIGN, assignmentStatus: 'ON_PROJECT', startDate: '2024-06-01', skills: ['Communication'] },
+    { firstName: 'Ricardo', lastName: 'Vargas', email: 'ricardo.vargas@telnub.local', employeeId: 'EMP-006', jobTitle: 'Data Engineer', departmentId: DEPT_ENGINEERING, assignmentStatus: 'ON_BENCH', startDate: '2024-09-15', skills: ['Python', 'SQL'] },
+    { firstName: 'Sofia', lastName: 'Reyes', email: 'sofia.reyes@telnub.local', employeeId: 'EMP-007', jobTitle: 'Security Analyst', departmentId: DEPT_SECURITY, assignmentStatus: 'ON_OPERATIONS', startDate: '2023-05-01', skills: ['Azure'] },
+    { firstName: 'Pedro', lastName: 'Castillo', email: 'pedro.castillo@telnub.local', employeeId: 'EMP-008', jobTitle: 'Full Stack Developer', departmentId: DEPT_ENGINEERING, assignmentStatus: 'ON_PROJECT', startDate: '2024-02-20', skills: ['JavaScript', 'React', 'Python'] },
   ];
   const existingPersonnelRes = await get('/personnel?limit=100');
   const existingPersonnel: Array<{ id: string; email: string; firstName: string; lastName: string }> =
@@ -591,7 +591,7 @@ async function main() {
     { type: 'GENERAL', title: 'System maintenance scheduled', message: 'Planned maintenance window: Saturday 3:00 AM - 5:00 AM UTC. Some services will be unavailable.' },
     { type: 'TASK_STATUS_CHANGED', title: 'Task overdue', message: 'Task "Control remediation" on Security Compliance Audit is past its due date.', relatedEntityType: 'TASK', relatedEntityId: allTasks.find((t) => t.title === 'Control remediation')?.id },
     { type: 'PROJECT_STATUS_CHANGED', title: 'Project status changed', message: 'Security Compliance Audit has been placed ON HOLD pending budget reallocation.', relatedEntityType: 'PROJECT', relatedEntityId: projects[4]?.id },
-    { type: 'GENERAL', title: 'Welcome to BizOps!', message: 'Welcome to the Business Operations Platform. Explore your dashboard to see project health, tasks, and team assignments.' },
+    { type: 'GENERAL', title: 'Welcome to Telnub CRM!', message: 'Welcome to Telnub CRM. Explore your dashboard to see project health, tasks, and team assignments.' },
   ];
   for (const n of notificationsData) {
     try {

@@ -18,7 +18,7 @@ import { CreateTaskDto, UpdateTaskDto, CreateTaskCommentDto } from './dto/task.d
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
-import { UserRole } from '@bizops/shared';
+import { UserRole } from '@telnub/shared';
 
 @ApiTags('Tasks')
 @ApiBearerAuth()
@@ -48,7 +48,7 @@ export class TasksController {
   }
 
   @Post()
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.PROJECT_LEAD)
+  @Roles(UserRole.ADMIN, UserRole.PROJECT_MANAGER)
   async create(
     @Param('projectId', ParseUUIDPipe) projectId: string,
     @Body() dto: CreateTaskDto,
@@ -59,7 +59,7 @@ export class TasksController {
   }
 
   @Post(':id/comments')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.PROJECT_LEAD, UserRole.PROJECT_PERSONNEL)
+  @Roles(UserRole.ADMIN, UserRole.PROJECT_MANAGER, UserRole.TEAM_MEMBER)
   async addComment(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: CreateTaskCommentDto,
@@ -70,7 +70,7 @@ export class TasksController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.PROJECT_LEAD, UserRole.PROJECT_PERSONNEL)
+  @Roles(UserRole.ADMIN, UserRole.PROJECT_MANAGER, UserRole.TEAM_MEMBER)
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateTaskDto,
@@ -81,7 +81,7 @@ export class TasksController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.GLOBAL_LEAD)
+  @Roles(UserRole.ADMIN)
   async remove(
     @Param('id', ParseUUIDPipe) id: string,
     @Request() req: { user: { sub: string } },

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import type { BurnChartData } from '@bizops/shared';
+import type { BurnChartData } from '@telnub/shared';
 
 interface BurnChartProps {
   data: BurnChartData;

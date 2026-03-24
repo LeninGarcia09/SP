@@ -21,7 +21,7 @@ import {
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
-import { UserRole } from '@bizops/shared';
+import { UserRole } from '@telnub/shared';
 
 @ApiTags('Personnel')
 @ApiBearerAuth()
@@ -58,14 +58,14 @@ export class PersonnelController {
   }
 
   @Post('personnel')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.RESOURCE_MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.DEPARTMENT_MANAGER)
   async createPerson(@Body() dto: CreatePersonDto) {
     const data = await this.personnelService.createPerson(dto);
     return { data };
   }
 
   @Patch('personnel/:id')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.RESOURCE_MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.DEPARTMENT_MANAGER)
   async updatePerson(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdatePersonDto,
@@ -99,14 +99,14 @@ export class PersonnelController {
   }
 
   @Post('assignments')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.RESOURCE_MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.DEPARTMENT_MANAGER)
   async createAssignment(@Body() dto: CreateAssignmentDto) {
     const data = await this.personnelService.createAssignment(dto);
     return { data };
   }
 
   @Patch('assignments/:id')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.RESOURCE_MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.DEPARTMENT_MANAGER)
   async updateAssignment(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateAssignmentDto,

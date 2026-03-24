@@ -500,14 +500,15 @@
     "changeRole": "Change User Role",
     "changeRoleDesc": "Update the role for {{name}}",
     "roles": {
-      "GLOBAL_LEAD": "Global Lead",
-      "BIZ_OPS_MANAGER": "Biz Ops Manager",
-      "RESOURCE_MANAGER": "Resource Manager",
+      "ADMIN": "Admin",
+      "OPERATIONS_DIRECTOR": "Operations Director",
+      "DEPARTMENT_MANAGER": "Department Manager",
       "PROGRAM_MANAGER": "Program Manager",
-      "PROJECT_LEAD": "Project Lead",
-      "PROJECT_PERSONNEL": "Project Personnel",
+      "PROJECT_MANAGER": "Project Manager",
+      "TEAM_MEMBER": "Team Member",
       "INVENTORY_MANAGER": "Inventory Manager",
-      "HR_ADMIN": "HR Admin"
+      "HR_MANAGER": "HR Manager",
+      "SALES_EXECUTIVE": "Sales Executive"
     }
   },
   "gantt": {

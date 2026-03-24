@@ -4,7 +4,7 @@ import {
   Column,
   CreateDateColumn,
 } from 'typeorm';
-import { NotificationType } from '@bizops/shared';
+import { NotificationType } from '@telnub/shared';
 
 @Entity('notifications')
 export class NotificationEntity {

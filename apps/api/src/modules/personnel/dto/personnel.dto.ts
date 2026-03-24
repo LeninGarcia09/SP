@@ -13,7 +13,7 @@ import {
   Min,
   Max,
 } from 'class-validator';
-import { AssignmentStatus } from '@bizops/shared';
+import { AssignmentStatus } from '@telnub/shared';
 
 // ─── Person DTOs ───
 

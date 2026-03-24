@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { UserRole } from '@bizops/shared';
+import { UserRole } from '@telnub/shared';
 import { api } from '../lib/axios';
 import { useAuthStore } from '../store/auth-store';
 

@@ -6,7 +6,7 @@ import {
   UpdateDateColumn,
   Index,
 } from 'typeorm';
-import { OpportunityStatus, OpportunityStage } from '@bizops/shared';
+import { OpportunityStatus, OpportunityStage } from '@telnub/shared';
 
 @Entity('opportunities')
 export class OpportunityEntity {

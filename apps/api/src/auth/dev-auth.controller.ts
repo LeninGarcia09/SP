@@ -5,18 +5,19 @@ import { Repository } from 'typeorm';
 import { IsEnum, IsOptional } from 'class-validator';
 import * as jwt from 'jsonwebtoken';
 import { UserEntity } from '../modules/users/user.entity';
-import { UserRole } from '@bizops/shared';
+import { UserRole } from '@telnub/shared';
 
 /** One test user per role, seeded on first use. */
 const DEV_USERS: { email: string; displayName: string; oid: string; role: UserRole }[] = [
-  { email: 'dev@bizops.local', displayName: 'Dev Admin (Global Lead)', oid: 'dev-local-oid-00000', role: UserRole.GLOBAL_LEAD },
-  { email: 'dev-bizops@bizops.local', displayName: 'Dev BizOps Manager', oid: 'dev-local-oid-00001', role: UserRole.BIZ_OPS_MANAGER },
-  { email: 'dev-resource@bizops.local', displayName: 'Dev Resource Manager', oid: 'dev-local-oid-00002', role: UserRole.RESOURCE_MANAGER },
-  { email: 'dev-program@bizops.local', displayName: 'Dev Program Manager', oid: 'dev-local-oid-00003', role: UserRole.PROGRAM_MANAGER },
-  { email: 'dev-projlead@bizops.local', displayName: 'Dev Project Lead', oid: 'dev-local-oid-00004', role: UserRole.PROJECT_LEAD },
-  { email: 'dev-personnel@bizops.local', displayName: 'Dev Personnel', oid: 'dev-local-oid-00005', role: UserRole.PROJECT_PERSONNEL },
-  { email: 'dev-inventory@bizops.local', displayName: 'Dev Inventory Manager', oid: 'dev-local-oid-00006', role: UserRole.INVENTORY_MANAGER },
-  { email: 'dev-hr@bizops.local', displayName: 'Dev HR Admin', oid: 'dev-local-oid-00007', role: UserRole.HR_ADMIN },
+  { email: 'dev@telnub.local', displayName: 'Dev Admin', oid: 'dev-local-oid-00000', role: UserRole.ADMIN },
+  { email: 'dev-opsdir@telnub.local', displayName: 'Dev Operations Director', oid: 'dev-local-oid-00001', role: UserRole.OPERATIONS_DIRECTOR },
+  { email: 'dev-deptmgr@telnub.local', displayName: 'Dev Department Manager', oid: 'dev-local-oid-00002', role: UserRole.DEPARTMENT_MANAGER },
+  { email: 'dev-program@telnub.local', displayName: 'Dev Program Manager', oid: 'dev-local-oid-00003', role: UserRole.PROGRAM_MANAGER },
+  { email: 'dev-projmgr@telnub.local', displayName: 'Dev Project Manager', oid: 'dev-local-oid-00004', role: UserRole.PROJECT_MANAGER },
+  { email: 'dev-member@telnub.local', displayName: 'Dev Team Member', oid: 'dev-local-oid-00005', role: UserRole.TEAM_MEMBER },
+  { email: 'dev-inventory@telnub.local', displayName: 'Dev Inventory Manager', oid: 'dev-local-oid-00006', role: UserRole.INVENTORY_MANAGER },
+  { email: 'dev-hr@telnub.local', displayName: 'Dev HR Manager', oid: 'dev-local-oid-00007', role: UserRole.HR_MANAGER },
+  { email: 'dev-sales@telnub.local', displayName: 'Dev Sales Executive', oid: 'dev-local-oid-00008', role: UserRole.SALES_EXECUTIVE },
 ];
 
 class DevLoginDto {
@@ -28,7 +29,7 @@ class DevLoginDto {
 /**
  * Dev-only controller that issues JWT tokens for local testing.
  * Returns 403 if NODE_ENV is not 'development'.
- * Supports role selection via body { role: "PROJECT_LEAD" }.
+ * Supports role selection via body { role: "PROJECT_MANAGER" }.
  */
 @Controller('auth')
 export class DevAuthController {
@@ -44,7 +45,7 @@ export class DevAuthController {
   async devLogin(@Body() dto?: DevLoginDto) {
     this.assertDev();
 
-    const targetRole = dto?.role ?? UserRole.GLOBAL_LEAD;
+    const targetRole = dto?.role ?? UserRole.ADMIN;
     const template = DEV_USERS.find((u) => u.role === targetRole) ?? DEV_USERS[0]!;
 
     let user = await this.userRepo.findOne({ where: { email: template.email } });

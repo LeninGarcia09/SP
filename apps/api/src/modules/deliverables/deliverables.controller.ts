@@ -15,7 +15,7 @@ import { DeliverablesService } from './deliverables.service';
 import { CreateDeliverableDto, UpdateDeliverableDto } from './dto/deliverable.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
-import { UserRole } from '@bizops/shared';
+import { UserRole } from '@telnub/shared';
 
 @ApiTags('Deliverables')
 @ApiBearerAuth()
@@ -43,7 +43,7 @@ export class DeliverablesController {
   }
 
   @Post()
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.PROJECT_LEAD)
+  @Roles(UserRole.ADMIN, UserRole.PROJECT_MANAGER)
   async create(
     @Param('projectId', ParseUUIDPipe) projectId: string,
     @Body() dto: CreateDeliverableDto,
@@ -53,7 +53,7 @@ export class DeliverablesController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.PROJECT_LEAD)
+  @Roles(UserRole.ADMIN, UserRole.PROJECT_MANAGER)
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateDeliverableDto,
@@ -63,7 +63,7 @@ export class DeliverablesController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.GLOBAL_LEAD)
+  @Roles(UserRole.ADMIN)
   async remove(@Param('id', ParseUUIDPipe) id: string) {
     await this.deliverablesService.remove(id);
     return { data: null };

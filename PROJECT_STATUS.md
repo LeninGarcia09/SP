@@ -1,7 +1,7 @@
 # BizOps Platform — Project Status & Context
 
 > **Purpose:** Quick-reference for AI agents resuming work on this project.
-> **Last updated:** 2026-03-18
+> **Last updated:** 2026-03-23
 > **Full spec:** See `CLAUDE.md` in this same directory for complete data model, RBAC, API conventions.
 
 ---
@@ -37,8 +37,8 @@
 ### Phase 3 — Deployment Infrastructure ✅
 - [x] API Dockerfile (multi-stage, node:20-alpine, non-root user)
 - [x] .dockerignore
-- [x] Azure Bicep IaC templates (8 modules: ACR, PostgreSQL, Key Vault, Log Analytics, App Insights, Container App Env, Container App, Static Web App)
-- [x] Bicep parameter files (dev, prod)
+- [x] Azure Bicep IaC templates (8 modules: ACR, PostgreSQL Flexible Server, Key Vault, Log Analytics, App Insights, Container App Env, Container App, Static Web App)
+- [x] Bicep parameter files (dev, prod) — dev-deploy.json gitignored (secrets cleared)
 - [x] GitHub Actions CI/CD (4 workflows: CI, Deploy API, Deploy Web, Deploy Infrastructure)
 - [x] Static Web App config (SPA routing, security headers)
 - [x] Vite production build (basicSsl conditional on dev only)
@@ -72,6 +72,21 @@
 - [x] Deploy Infrastructure workflow available (Bicep validate + deploy)
 - [x] `workflow_dispatch` trigger added to CI for manual runs
 - [x] `VITE_API_BASE_URL` env var added to CI web build step
+
+### Phase 5.5 — Deployment Hardening ✅ (2026-03-23)
+- [x] Migrated PostgreSQL from Container App (EmptyDir, non-persistent) to **Flexible Server** (pg-flex-bizops-dev, Burstable B1ms, 32GB, PG 16)
+- [x] Created `bizops_dev` database on Flexible Server with UTF-8/en_US.utf8 collation
+- [x] Enabled `uuid-ossp` extension (allowlisted via `azure.extensions` param + CREATE EXTENSION)
+- [x] Added health probes to API Container App (Startup 5s/10 retries, Liveness 30s/3 retries, Readiness 10s/3 retries) on `/api/v1/system/health`
+- [x] Rotated DB password (32-char alphanumeric) — updated in Flexible Server, Key Vault, Container App, GitHub Secrets
+- [x] Rotated JWT secret (48-char) — updated in Key Vault, Container App, GitHub Secrets
+- [x] Cleared plaintext credentials from `dev-deploy.json`, added to `.gitignore`
+- [x] Updated Bicep IaC: `main.bicep` now uses `postgres.bicep` module (Flexible Server), removed PG Container App resource, added `healthProbePath` param, `DATABASE_SSL=true`, `sslmode=require`
+- [x] Deleted old `pg-bizops-dev` Container App
+- [x] Deleted unused `storage.bicep` module
+- [x] Removed temporary `AllowMyIP` firewall rule
+- [x] Verified: API healthy (database=ok, cache=ok), single revision 0000033 running
+- [x] Committed + pushed: `12b95ee` → `main`
 
 ### Enhancement Waves — Hours, Cost & Resource Management
 
@@ -118,9 +133,9 @@
 |---|---|
 | `apps/api/Dockerfile` | Multi-stage Docker build for API |
 | `.dockerignore` | Docker build exclusions |
-| `infrastructure/bicep/main.bicep` | Main Bicep orchestrator |
-| `infrastructure/bicep/modules/` | 8 Bicep modules (ACR, PostgreSQL, etc.) |
-| `infrastructure/bicep/parameters/` | dev.bicepparam, prod.bicepparam |
+| `infrastructure/bicep/main.bicep` | Main Bicep orchestrator (Flexible Server, Container App w/ probes, Redis, SWA) |
+| `infrastructure/bicep/modules/` | 7 Bicep modules (ACR, PostgreSQL Flexible Server, Key Vault, Log Analytics, App Insights, Container App Env, Container App) |
+| `infrastructure/bicep/parameters/` | dev.bicepparam, prod.bicepparam (dev-deploy.json gitignored) |
 | `infrastructure/scripts/deploy-infra.sh` | CLI deployment script |
 | `infrastructure/DEPLOYMENT.md` | Full deployment guide with secrets reference |
 | `.github/workflows/ci.yml` | Build & check on every PR/push |

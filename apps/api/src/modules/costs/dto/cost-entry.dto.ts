@@ -11,7 +11,7 @@ import {
   IsObject,
   Min,
 } from 'class-validator';
-import { CostCategory, CostEntryStatus } from '@bizops/shared';
+import { CostCategory, CostEntryStatus } from '@telnub/shared';
 
 export class CreateCostEntryDto {
   @ApiProperty({ enum: CostCategory })

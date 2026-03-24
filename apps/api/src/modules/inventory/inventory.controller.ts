@@ -25,7 +25,7 @@ import {
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
-import { UserRole } from '@bizops/shared';
+import { UserRole } from '@telnub/shared';
 
 @ApiTags('Inventory')
 @ApiBearerAuth()
@@ -46,14 +46,14 @@ export class InventoryController {
   }
 
   @Post()
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.INVENTORY_MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.INVENTORY_MANAGER)
   async createItem(@Body() dto: CreateInventoryItemDto) {
     const data = await this.inventoryService.createItem(dto);
     return { data };
   }
 
   @Patch(':id')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.INVENTORY_MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.INVENTORY_MANAGER)
   async updateItem(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateInventoryItemDto,
@@ -69,7 +69,7 @@ export class InventoryController {
   }
 
   @Post(':id/transactions')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.INVENTORY_MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.INVENTORY_MANAGER)
   async createTransaction(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: CreateInventoryTransactionDto,
@@ -82,7 +82,7 @@ export class InventoryController {
   // No PATCH/DELETE for transactions — append-only audit log
 
   @Post('import')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.INVENTORY_MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.INVENTORY_MANAGER)
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
   @ApiBody({

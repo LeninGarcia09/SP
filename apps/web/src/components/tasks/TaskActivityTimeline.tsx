@@ -4,8 +4,8 @@ import { MessageSquare, Send } from 'lucide-react';
 import { useTaskActivities, useAddTaskComment } from '../../hooks/use-tasks';
 import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
-import type { TaskActivity } from '@bizops/shared';
-import { TaskActivityType } from '@bizops/shared';
+import type { TaskActivity } from '@telnub/shared';
+import { TaskActivityType } from '@telnub/shared';
 
 const activityIcons: Record<TaskActivityType, string> = {
   [TaskActivityType.CREATED]: '🆕',

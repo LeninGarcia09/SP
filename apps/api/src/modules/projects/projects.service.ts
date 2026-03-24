@@ -9,7 +9,7 @@ import { CreateProjectDto, UpdateProjectDto } from './dto/project.dto';
 import { AddProjectMemberDto, UpdateProjectMemberDto } from './dto/project-member.dto';
 import { CreateProjectNoteDto, UpdateProjectNoteDto } from './dto/project-note.dto';
 import { PaginationDto, PaginatedResult } from '../../common/dto/pagination.dto';
-import type { ProjectHoursSummary } from '@bizops/shared';
+import type { ProjectHoursSummary } from '@telnub/shared';
 
 @Injectable()
 export class ProjectsService {

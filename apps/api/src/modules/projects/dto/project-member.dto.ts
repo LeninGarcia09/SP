@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsUUID, IsEnum, IsOptional } from 'class-validator';
-import { ProjectMemberRole } from '@bizops/shared';
+import { ProjectMemberRole } from '@telnub/shared';
 
 export class AddProjectMemberDto {
   @ApiProperty({ format: 'uuid' })

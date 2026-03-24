@@ -22,7 +22,7 @@ import { CreateProjectNoteDto, UpdateProjectNoteDto } from './dto/project-note.d
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
-import { UserRole } from '@bizops/shared';
+import { UserRole } from '@telnub/shared';
 
 @ApiTags('Projects')
 @ApiBearerAuth()
@@ -37,14 +37,14 @@ export class ProjectsController {
   }
 
   @Get('deleted')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR)
   async findDeleted() {
     const data = await this.projectsService.findDeleted();
     return { data };
   }
 
   @Patch('deleted/:id/restore')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR)
   async restore(@Param('id', ParseUUIDPipe) id: string) {
     const data = await this.projectsService.restore(id);
     return { data };
@@ -57,7 +57,7 @@ export class ProjectsController {
   }
 
   @Post()
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.PROJECT_LEAD)
+  @Roles(UserRole.ADMIN, UserRole.PROJECT_MANAGER)
   async create(
     @Body() dto: CreateProjectDto,
     @Request() req: { user: { sub: string } },
@@ -67,7 +67,7 @@ export class ProjectsController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.PROJECT_LEAD)
+  @Roles(UserRole.ADMIN, UserRole.PROJECT_MANAGER)
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateProjectDto,
@@ -77,7 +77,7 @@ export class ProjectsController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.GLOBAL_LEAD)
+  @Roles(UserRole.ADMIN)
   async remove(@Param('id', ParseUUIDPipe) id: string) {
     const data = await this.projectsService.softDelete(id);
     return { data };
@@ -92,7 +92,7 @@ export class ProjectsController {
   }
 
   @Post(':id/members')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.PROJECT_LEAD)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.PROJECT_MANAGER)
   async addMember(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: AddProjectMemberDto,
@@ -102,7 +102,7 @@ export class ProjectsController {
   }
 
   @Patch('members/:memberId')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.PROJECT_LEAD)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.PROJECT_MANAGER)
   async updateMember(
     @Param('memberId', ParseUUIDPipe) memberId: string,
     @Body() dto: UpdateProjectMemberDto,
@@ -113,7 +113,7 @@ export class ProjectsController {
 
   @Delete('members/:memberId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.PROJECT_LEAD)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.PROJECT_MANAGER)
   async removeMember(@Param('memberId', ParseUUIDPipe) memberId: string) {
     await this.projectsService.removeMember(memberId);
   }
@@ -127,7 +127,7 @@ export class ProjectsController {
   }
 
   @Post(':id/notes')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.PROJECT_LEAD, UserRole.PROJECT_PERSONNEL)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.PROJECT_MANAGER, UserRole.TEAM_MEMBER)
   async createNote(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: CreateProjectNoteDto,
@@ -138,7 +138,7 @@ export class ProjectsController {
   }
 
   @Patch('notes/:noteId')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.PROJECT_LEAD, UserRole.PROJECT_PERSONNEL)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.PROJECT_MANAGER, UserRole.TEAM_MEMBER)
   async updateNote(
     @Param('noteId', ParseUUIDPipe) noteId: string,
     @Body() dto: UpdateProjectNoteDto,
@@ -149,7 +149,7 @@ export class ProjectsController {
 
   @Delete('notes/:noteId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.PROJECT_LEAD)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.PROJECT_MANAGER)
   async deleteNote(@Param('noteId', ParseUUIDPipe) noteId: string) {
     await this.projectsService.deleteNote(noteId);
   }

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { UserRole } from '@bizops/shared';
+import { UserRole } from '@telnub/shared';
 
 export interface AuthUser {
   id: string;

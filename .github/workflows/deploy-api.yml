@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-# BizOps Platform — Deploy API to Azure Container Apps
+# Telnub CRM — Deploy API to Azure Container Apps
 # Triggers on push to main when api-app or shared changes
 # ─────────────────────────────────────────────────────────────
 name: Deploy API

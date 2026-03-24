@@ -10,7 +10,7 @@ import {
   IsDateString,
   Min,
 } from 'class-validator';
-import { AssetCategory, TransactionType } from '@bizops/shared';
+import { AssetCategory, TransactionType } from '@telnub/shared';
 
 // ─── Inventory Item DTOs ───
 

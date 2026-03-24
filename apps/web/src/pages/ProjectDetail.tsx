@@ -38,8 +38,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select';
-import type { Task, CostEntry } from '@bizops/shared';
-import { TaskStatus, Priority, RagStatus, ProjectMemberRole, CostCategory, CostEntryStatus, DeliverableStatus } from '@bizops/shared';
+import type { Task, CostEntry } from '@telnub/shared';
+import { TaskStatus, Priority, RagStatus, ProjectMemberRole, CostCategory, CostEntryStatus, DeliverableStatus } from '@telnub/shared';
 
 const ragColors: Record<RagStatus, string> = {
   [RagStatus.GREEN]: 'bg-green-100 text-green-700',
@@ -219,7 +219,7 @@ export function ProjectDetailPage() {
 
   // Deliverable state
   const [deliverableDialogOpen, setDeliverableDialogOpen] = useState(false);
-  const [editingDeliverable, setEditingDeliverable] = useState<import('@bizops/shared').DeliverableSummary | null>(null);
+  const [editingDeliverable, setEditingDeliverable] = useState<import('@telnub/shared').DeliverableSummary | null>(null);
   const [deliverableForm, setDeliverableForm] = useState({
     title: '',
     description: '',
@@ -369,7 +369,7 @@ export function ProjectDetailPage() {
     setDeliverableDialogOpen(true);
   }
 
-  function openEditDeliverable(d: import('@bizops/shared').DeliverableSummary) {
+  function openEditDeliverable(d: import('@telnub/shared').DeliverableSummary) {
     setEditingDeliverable(d);
     setDeliverableForm({
       title: d.title,

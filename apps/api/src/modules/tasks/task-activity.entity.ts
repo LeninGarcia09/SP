@@ -7,7 +7,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { TaskEntity } from './task.entity';
-import { TaskActivityType } from '@bizops/shared';
+import { TaskActivityType } from '@telnub/shared';
 
 @Entity('task_activities')
 export class TaskActivityEntity {

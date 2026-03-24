@@ -18,7 +18,7 @@ import { CreateOpportunityDto, UpdateOpportunityDto, ConvertOpportunityDto } fro
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
-import { UserRole } from '@bizops/shared';
+import { UserRole } from '@telnub/shared';
 
 @ApiTags('Opportunities')
 @ApiBearerAuth()
@@ -39,7 +39,7 @@ export class OpportunitiesController {
   }
 
   @Post()
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.SALES_EXECUTIVE)
   async create(
     @Body() dto: CreateOpportunityDto,
     @Request() req: { user: { sub: string } },
@@ -49,7 +49,7 @@ export class OpportunitiesController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.SALES_EXECUTIVE)
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateOpportunityDto,
@@ -59,14 +59,14 @@ export class OpportunitiesController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR)
   async remove(@Param('id', ParseUUIDPipe) id: string) {
     const data = await this.opportunitiesService.softDelete(id);
     return { data };
   }
 
   @Post(':id/convert')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR)
   async convert(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ConvertOpportunityDto,

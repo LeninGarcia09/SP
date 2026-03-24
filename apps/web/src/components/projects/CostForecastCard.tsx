@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react';
-import type { CostForecast } from '@bizops/shared';
+import type { CostForecast } from '@telnub/shared';
 
 interface CostForecastCardProps {
   forecast: CostForecast;

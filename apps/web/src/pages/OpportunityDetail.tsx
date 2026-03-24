@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
-import { OpportunityStatus } from '@bizops/shared';
+import { OpportunityStatus } from '@telnub/shared';
 import { useOpportunity, useDeleteOpportunity } from '../hooks/use-opportunities';
 import { OpportunityFormDialog } from '../components/opportunities/OpportunityFormDialog';
 import { ConvertOpportunityDialog } from '../components/opportunities/ConvertOpportunityDialog';

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import type { Person, Project, ProjectAssignment } from '@bizops/shared';
+import type { Person, Project, ProjectAssignment } from '@telnub/shared';
 import { usePersonnel } from '../hooks/use-personnel';
 import { useAllActiveAssignments } from '../hooks/use-personnel';
 import { useProjects } from '../hooks/use-projects';

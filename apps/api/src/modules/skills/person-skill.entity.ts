@@ -6,7 +6,7 @@ import {
   JoinColumn,
   Index,
 } from 'typeorm';
-import { ProficiencyLevel } from '@bizops/shared';
+import { ProficiencyLevel } from '@telnub/shared';
 import { PersonEntity } from '../personnel/person.entity';
 import { SkillEntity } from './skill.entity';
 

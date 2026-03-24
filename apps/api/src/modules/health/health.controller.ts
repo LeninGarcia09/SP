@@ -14,7 +14,7 @@ import { HealthService } from './health.service';
 import { RagOverrideDto } from './dto/rag-override.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
-import { UserRole } from '@bizops/shared';
+import { UserRole } from '@telnub/shared';
 
 @ApiTags('Project Health')
 @ApiBearerAuth()
@@ -36,7 +36,7 @@ export class HealthController {
   }
 
   @Post('override')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR)
   async override(
     @Param('projectId', ParseUUIDPipe) projectId: string,
     @Body() dto: RagOverrideDto,

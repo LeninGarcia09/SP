@@ -1,5 +1,5 @@
 {
-  "name": "@bizops/web",
+  "name": "@telnub/web",
   "private": true,
   "version": "0.0.1",
   "type": "module",
@@ -14,7 +14,7 @@
   "dependencies": {
     "@azure/msal-browser": "^5.6.1",
     "@azure/msal-react": "^5.1.0",
-    "@bizops/shared": "*",
+    "@telnub/shared": "*",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-dialog": "^1.1.6",
     "@radix-ui/react-dropdown-menu": "^2.1.6",

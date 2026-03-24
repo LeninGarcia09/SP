@@ -11,7 +11,7 @@ import {
   IsObject,
   Min,
 } from 'class-validator';
-import { ProjectStatus } from '@bizops/shared';
+import { ProjectStatus } from '@telnub/shared';
 
 export class CreateProjectDto {
   @ApiProperty({ maxLength: 200 })

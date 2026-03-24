@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Play, Square, Clock } from 'lucide-react';
 
-const TIMER_STORAGE_KEY = 'bizops-task-timer';
+const TIMER_STORAGE_KEY = 'telnub-task-timer';
 
 interface TimerState {
   taskId: string;

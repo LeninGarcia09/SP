@@ -20,7 +20,7 @@ import { AssignSkillDto, UpdatePersonSkillDto } from './dto/person-skill.dto';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
-import { UserRole } from '@bizops/shared';
+import { UserRole } from '@telnub/shared';
 
 @ApiTags('Skills')
 @ApiBearerAuth()
@@ -43,14 +43,14 @@ export class SkillsController {
   }
 
   @Post()
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.HR_ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.HR_MANAGER)
   async create(@Body() dto: CreateSkillDto) {
     const data = await this.skillsService.create(dto);
     return { data };
   }
 
   @Patch(':id')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.HR_ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.HR_MANAGER)
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateSkillDto,
@@ -61,7 +61,7 @@ export class SkillsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.HR_ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.HR_MANAGER)
   async remove(@Param('id', ParseUUIDPipe) id: string) {
     await this.skillsService.remove(id);
   }
@@ -84,7 +84,7 @@ export class PersonnelSkillsController {
   }
 
   @Post()
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.HR_ADMIN, UserRole.RESOURCE_MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.HR_MANAGER, UserRole.DEPARTMENT_MANAGER)
   async assignSkill(
     @Param('personId', ParseUUIDPipe) personId: string,
     @Body() dto: AssignSkillDto,
@@ -94,7 +94,7 @@ export class PersonnelSkillsController {
   }
 
   @Patch(':personSkillId')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.HR_ADMIN, UserRole.RESOURCE_MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.HR_MANAGER, UserRole.DEPARTMENT_MANAGER)
   async updatePersonSkill(
     @Param('personSkillId', ParseUUIDPipe) personSkillId: string,
     @Body() dto: UpdatePersonSkillDto,
@@ -105,7 +105,7 @@ export class PersonnelSkillsController {
 
   @Delete(':personSkillId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.HR_ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.HR_MANAGER)
   async removePersonSkill(@Param('personSkillId', ParseUUIDPipe) personSkillId: string) {
     await this.skillsService.removePersonSkill(personSkillId);
   }

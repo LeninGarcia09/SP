@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select';
-import { TransactionType } from '@bizops/shared';
+import { TransactionType } from '@telnub/shared';
 
 const statusColors: Record<string, string> = {
   AVAILABLE: 'bg-green-100 text-green-700',

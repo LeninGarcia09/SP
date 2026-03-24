@@ -1,4 +1,4 @@
-import { UserRole } from '@bizops/shared';
+import { UserRole } from '@telnub/shared';
 import { useAuthStore } from '../store/auth-store';
 
 /**
@@ -7,76 +7,76 @@ import { useAuthStore } from '../store/auth-store';
  */
 const PERMISSION_MAP: Record<string, UserRole[]> = {
   // Projects
-  'projects.create': [UserRole.GLOBAL_LEAD, UserRole.PROJECT_LEAD],
-  'projects.update': [UserRole.GLOBAL_LEAD, UserRole.PROJECT_LEAD],
-  'projects.delete': [UserRole.GLOBAL_LEAD],
-  'projects.read': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.RESOURCE_MANAGER, UserRole.PROGRAM_MANAGER, UserRole.PROJECT_LEAD, UserRole.PROJECT_PERSONNEL, UserRole.INVENTORY_MANAGER],
+  'projects.create': [UserRole.ADMIN, UserRole.PROJECT_MANAGER],
+  'projects.update': [UserRole.ADMIN, UserRole.PROJECT_MANAGER],
+  'projects.delete': [UserRole.ADMIN],
+  'projects.read': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.DEPARTMENT_MANAGER, UserRole.PROGRAM_MANAGER, UserRole.PROJECT_MANAGER, UserRole.TEAM_MEMBER, UserRole.INVENTORY_MANAGER, UserRole.SALES_EXECUTIVE],
 
   // Tasks
-  'tasks.create': [UserRole.GLOBAL_LEAD, UserRole.PROJECT_LEAD],
-  'tasks.update': [UserRole.GLOBAL_LEAD, UserRole.PROJECT_LEAD, UserRole.PROJECT_PERSONNEL],
-  'tasks.delete': [UserRole.GLOBAL_LEAD],
-  'tasks.read': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.RESOURCE_MANAGER, UserRole.PROGRAM_MANAGER, UserRole.PROJECT_LEAD, UserRole.PROJECT_PERSONNEL],
+  'tasks.create': [UserRole.ADMIN, UserRole.PROJECT_MANAGER],
+  'tasks.update': [UserRole.ADMIN, UserRole.PROJECT_MANAGER, UserRole.TEAM_MEMBER],
+  'tasks.delete': [UserRole.ADMIN],
+  'tasks.read': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.DEPARTMENT_MANAGER, UserRole.PROGRAM_MANAGER, UserRole.PROJECT_MANAGER, UserRole.TEAM_MEMBER],
 
   // RAG override
-  'health.override': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER],
+  'health.override': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR],
 
   // Personnel
-  'personnel.create': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.RESOURCE_MANAGER],
-  'personnel.update': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.RESOURCE_MANAGER],
-  'personnel.read': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.RESOURCE_MANAGER, UserRole.PROGRAM_MANAGER, UserRole.PROJECT_LEAD, UserRole.PROJECT_PERSONNEL],
+  'personnel.create': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.DEPARTMENT_MANAGER],
+  'personnel.update': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.DEPARTMENT_MANAGER],
+  'personnel.read': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.DEPARTMENT_MANAGER, UserRole.PROGRAM_MANAGER, UserRole.PROJECT_MANAGER, UserRole.TEAM_MEMBER],
 
   // Assignments
-  'assignments.create': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.RESOURCE_MANAGER],
-  'assignments.update': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.RESOURCE_MANAGER],
-  'assignments.read': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.RESOURCE_MANAGER, UserRole.PROGRAM_MANAGER],
+  'assignments.create': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.DEPARTMENT_MANAGER],
+  'assignments.update': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.DEPARTMENT_MANAGER],
+  'assignments.read': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.DEPARTMENT_MANAGER, UserRole.PROGRAM_MANAGER],
 
   // Inventory
-  'inventory.create': [UserRole.GLOBAL_LEAD, UserRole.INVENTORY_MANAGER],
-  'inventory.update': [UserRole.GLOBAL_LEAD, UserRole.INVENTORY_MANAGER],
-  'inventory.read': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.RESOURCE_MANAGER, UserRole.PROGRAM_MANAGER, UserRole.PROJECT_LEAD, UserRole.PROJECT_PERSONNEL, UserRole.INVENTORY_MANAGER],
+  'inventory.create': [UserRole.ADMIN, UserRole.INVENTORY_MANAGER],
+  'inventory.update': [UserRole.ADMIN, UserRole.INVENTORY_MANAGER],
+  'inventory.read': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.DEPARTMENT_MANAGER, UserRole.PROGRAM_MANAGER, UserRole.PROJECT_MANAGER, UserRole.TEAM_MEMBER, UserRole.INVENTORY_MANAGER, UserRole.SALES_EXECUTIVE],
 
   // Users
-  'users.read': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER],
-  'users.updateRole': [UserRole.GLOBAL_LEAD],
+  'users.read': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR],
+  'users.updateRole': [UserRole.ADMIN],
 
   // Programs
-  'programs.create': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.PROGRAM_MANAGER],
-  'programs.update': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.PROGRAM_MANAGER],
-  'programs.delete': [UserRole.GLOBAL_LEAD],
-  'programs.read': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.RESOURCE_MANAGER, UserRole.PROGRAM_MANAGER, UserRole.PROJECT_LEAD, UserRole.PROJECT_PERSONNEL],
+  'programs.create': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.PROGRAM_MANAGER],
+  'programs.update': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.PROGRAM_MANAGER],
+  'programs.delete': [UserRole.ADMIN],
+  'programs.read': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.DEPARTMENT_MANAGER, UserRole.PROGRAM_MANAGER, UserRole.PROJECT_MANAGER, UserRole.TEAM_MEMBER, UserRole.SALES_EXECUTIVE],
 
   // Opportunities
-  'opportunities.create': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER],
-  'opportunities.update': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER],
-  'opportunities.delete': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER],
-  'opportunities.read': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER],
+  'opportunities.create': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.SALES_EXECUTIVE],
+  'opportunities.update': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.SALES_EXECUTIVE],
+  'opportunities.delete': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR],
+  'opportunities.read': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.SALES_EXECUTIVE],
 
   // Skills
-  'skills.create': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.HR_ADMIN],
-  'skills.update': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.HR_ADMIN],
-  'skills.delete': [UserRole.GLOBAL_LEAD, UserRole.HR_ADMIN],
-  'skills.read': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.HR_ADMIN, UserRole.RESOURCE_MANAGER],
+  'skills.create': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.HR_MANAGER],
+  'skills.update': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.HR_MANAGER],
+  'skills.delete': [UserRole.ADMIN, UserRole.HR_MANAGER],
+  'skills.read': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.HR_MANAGER, UserRole.DEPARTMENT_MANAGER],
 
   // Costs
-  'costs.create': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.PROJECT_LEAD, UserRole.PROJECT_PERSONNEL],
-  'costs.approve': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.PROJECT_LEAD],
-  'costs.transfer': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER],
+  'costs.create': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.PROJECT_MANAGER, UserRole.TEAM_MEMBER],
+  'costs.approve': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.PROJECT_MANAGER],
+  'costs.transfer': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR],
 
   // Notifications
-  'notifications.create': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER],
+  'notifications.create': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR],
 
   // Navigation sections visible per role
   'nav.dashboard': Object.values(UserRole) as UserRole[],
-  'nav.programs': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.RESOURCE_MANAGER, UserRole.PROGRAM_MANAGER, UserRole.PROJECT_LEAD, UserRole.PROJECT_PERSONNEL],
-  'nav.projects': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.RESOURCE_MANAGER, UserRole.PROGRAM_MANAGER, UserRole.PROJECT_LEAD, UserRole.PROJECT_PERSONNEL, UserRole.INVENTORY_MANAGER],
-  'nav.opportunities': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER],
-  'nav.personnel': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.RESOURCE_MANAGER, UserRole.PROGRAM_MANAGER, UserRole.PROJECT_LEAD, UserRole.PROJECT_PERSONNEL],
-  'nav.skills': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.HR_ADMIN, UserRole.RESOURCE_MANAGER],
-  'nav.capacity': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.RESOURCE_MANAGER],
-  'nav.inventory': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.RESOURCE_MANAGER, UserRole.PROGRAM_MANAGER, UserRole.PROJECT_LEAD, UserRole.PROJECT_PERSONNEL, UserRole.INVENTORY_MANAGER],
-  'nav.users': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER],
-  'nav.trash': [UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER],
+  'nav.programs': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.DEPARTMENT_MANAGER, UserRole.PROGRAM_MANAGER, UserRole.PROJECT_MANAGER, UserRole.TEAM_MEMBER, UserRole.SALES_EXECUTIVE],
+  'nav.projects': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.DEPARTMENT_MANAGER, UserRole.PROGRAM_MANAGER, UserRole.PROJECT_MANAGER, UserRole.TEAM_MEMBER, UserRole.INVENTORY_MANAGER, UserRole.SALES_EXECUTIVE],
+  'nav.opportunities': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.SALES_EXECUTIVE],
+  'nav.personnel': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.DEPARTMENT_MANAGER, UserRole.PROGRAM_MANAGER, UserRole.PROJECT_MANAGER, UserRole.TEAM_MEMBER],
+  'nav.skills': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.HR_MANAGER, UserRole.DEPARTMENT_MANAGER],
+  'nav.capacity': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.DEPARTMENT_MANAGER],
+  'nav.inventory': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.DEPARTMENT_MANAGER, UserRole.PROGRAM_MANAGER, UserRole.PROJECT_MANAGER, UserRole.TEAM_MEMBER, UserRole.INVENTORY_MANAGER, UserRole.SALES_EXECUTIVE],
+  'nav.users': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR],
+  'nav.trash': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR],
 };
 
 export type Permission = keyof typeof PERMISSION_MAP;

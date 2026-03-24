@@ -17,7 +17,7 @@ import { NotificationsService } from './notifications.service';
 import { CreateNotificationDto, MarkReadDto } from './dto/notification.dto';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
-import { UserRole } from '@bizops/shared';
+import { UserRole } from '@telnub/shared';
 
 @ApiTags('notifications')
 @ApiBearerAuth()
@@ -41,7 +41,7 @@ export class NotificationsController {
   }
 
   @Post()
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR)
   async create(@Body() dto: CreateNotificationDto) {
     const notification = await this.service.create(dto);
     return { data: notification };

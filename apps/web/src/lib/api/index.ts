@@ -26,7 +26,7 @@ import type {
   Program,
   Opportunity,
   DeliverableSummary,
-} from '@bizops/shared';
+} from '@telnub/shared';
 
 // ─── Query Params ───
 

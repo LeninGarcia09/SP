@@ -5,7 +5,7 @@ import { OpportunityEntity } from './opportunity.entity';
 import { ProjectEntity } from '../projects/project.entity';
 import { CreateOpportunityDto, UpdateOpportunityDto, ConvertOpportunityDto } from './dto/opportunity.dto';
 import { PaginationDto, PaginatedResult } from '../../common/dto/pagination.dto';
-import { OpportunityStatus } from '@bizops/shared';
+import { OpportunityStatus } from '@telnub/shared';
 
 @Injectable()
 export class OpportunitiesService {

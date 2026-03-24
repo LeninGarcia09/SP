@@ -5,7 +5,7 @@ import {
   CreateDateColumn,
   Index,
 } from 'typeorm';
-import { SkillCategory } from '@bizops/shared';
+import { SkillCategory } from '@telnub/shared';
 
 @Entity('skills')
 export class SkillEntity {

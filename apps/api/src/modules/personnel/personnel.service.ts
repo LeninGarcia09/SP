@@ -11,7 +11,7 @@ import {
   UpdateAssignmentDto,
 } from './dto/personnel.dto';
 import { PaginationDto, PaginatedResult } from '../../common/dto/pagination.dto';
-import type { ResourceMatch, Person } from '@bizops/shared';
+import type { ResourceMatch, Person } from '@telnub/shared';
 
 @Injectable()
 export class PersonnelService {

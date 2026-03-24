@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsString, MaxLength, MinLength } from 'class-validator';
-import { RagStatus } from '@bizops/shared';
+import { RagStatus } from '@telnub/shared';
 
 export class RagOverrideDto {
   @ApiProperty({ enum: [RagStatus.GREEN, RagStatus.AMBER, RagStatus.RED] })

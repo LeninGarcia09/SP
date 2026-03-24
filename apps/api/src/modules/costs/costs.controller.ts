@@ -22,7 +22,7 @@ import {
 } from './dto/cost-entry.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
-import { UserRole } from '@bizops/shared';
+import { UserRole } from '@telnub/shared';
 
 @ApiTags('Costs')
 @ApiBearerAuth()
@@ -40,7 +40,7 @@ export class CostsController {
   }
 
   @Post('projects/:projectId/costs')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.PROJECT_LEAD, UserRole.PROJECT_PERSONNEL)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.PROJECT_MANAGER, UserRole.TEAM_MEMBER)
   async create(
     @Param('projectId', ParseUUIDPipe) projectId: string,
     @Body() dto: CreateCostEntryDto,
@@ -60,7 +60,7 @@ export class CostsController {
   }
 
   @Patch('projects/:projectId/costs/:id')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.PROJECT_LEAD)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.PROJECT_MANAGER)
   async update(
     @Param('projectId', ParseUUIDPipe) _projectId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -71,7 +71,7 @@ export class CostsController {
   }
 
   @Delete('projects/:projectId/costs/:id')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.PROJECT_LEAD)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.PROJECT_MANAGER)
   async delete(
     @Param('projectId', ParseUUIDPipe) _projectId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -89,7 +89,7 @@ export class CostsController {
   }
 
   @Post('costs/:id/approve')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.PROJECT_LEAD)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.PROJECT_MANAGER)
   async approve(
     @Param('id', ParseUUIDPipe) id: string,
     @Request() req: { user: { sub: string } },
@@ -99,7 +99,7 @@ export class CostsController {
   }
 
   @Post('costs/:id/reject')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.PROJECT_LEAD)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.PROJECT_MANAGER)
   async reject(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: RejectCostEntryDto,
@@ -110,7 +110,7 @@ export class CostsController {
   }
 
   @Post('costs/:id/transfer')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR)
   async transfer(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: TransferCostEntryDto,

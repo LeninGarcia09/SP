@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-# BizOps Platform — CI Pipeline
+# Telnub CRM — CI Pipeline
 # Runs on every PR and push to main
 # ─────────────────────────────────────────────────────────────
 name: CI

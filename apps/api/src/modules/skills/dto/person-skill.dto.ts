@@ -9,7 +9,7 @@ import {
   Min,
   Max,
 } from 'class-validator';
-import { ProficiencyLevel } from '@bizops/shared';
+import { ProficiencyLevel } from '@telnub/shared';
 
 export class AssignSkillDto {
   @ApiProperty({ format: 'uuid' })

@@ -18,7 +18,7 @@ import { CreateProgramDto, UpdateProgramDto } from './dto/program.dto';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
-import { UserRole } from '@bizops/shared';
+import { UserRole } from '@telnub/shared';
 
 @ApiTags('Programs')
 @ApiBearerAuth()
@@ -33,14 +33,14 @@ export class ProgramsController {
   }
 
   @Get('deleted')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR)
   async findDeleted() {
     const data = await this.programsService.findDeleted();
     return { data };
   }
 
   @Patch('deleted/:id/restore')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR)
   async restore(@Param('id', ParseUUIDPipe) id: string) {
     const data = await this.programsService.restore(id);
     return { data };
@@ -53,7 +53,7 @@ export class ProgramsController {
   }
 
   @Post()
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.PROGRAM_MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.PROGRAM_MANAGER)
   async create(
     @Body() dto: CreateProgramDto,
     @Request() req: { user: { sub: string } },
@@ -63,7 +63,7 @@ export class ProgramsController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER, UserRole.PROGRAM_MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.PROGRAM_MANAGER)
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateProgramDto,
@@ -73,7 +73,7 @@ export class ProgramsController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.GLOBAL_LEAD)
+  @Roles(UserRole.ADMIN)
   async remove(@Param('id', ParseUUIDPipe) id: string) {
     const data = await this.programsService.softDelete(id);
     return { data };

@@ -14,9 +14,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'BizOps Platform',
-        short_name: 'BizOps',
-        description: 'Business Operations Platform',
+        name: 'Telnub CRM',
+        short_name: 'Telnub',
+        description: 'Telnub CRM — Business Operations Platform',
         theme_color: '#0f172a',
         background_color: '#ffffff',
         display: 'standalone',
@@ -50,7 +50,7 @@ export default defineConfig({
     preserveSymlinks: true,
   },
   optimizeDeps: {
-    include: ['@bizops/shared'],
+    include: ['@telnub/shared'],
   },
   build: {
     commonjsOptions: {

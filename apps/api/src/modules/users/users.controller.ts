@@ -15,7 +15,7 @@ import { UpdateUserRoleDto } from './dto/user.dto';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
-import { UserRole } from '@bizops/shared';
+import { UserRole } from '@telnub/shared';
 
 @ApiTags('Users')
 @ApiBearerAuth()
@@ -25,20 +25,20 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR)
   async findAll(@Query() query: PaginationDto) {
     return this.usersService.findAll(query);
   }
 
   @Get(':id')
-  @Roles(UserRole.GLOBAL_LEAD, UserRole.BIZ_OPS_MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR)
   async findOne(@Param('id', ParseUUIDPipe) id: string) {
     const data = await this.usersService.findById(id);
     return { data };
   }
 
   @Patch(':id/role')
-  @Roles(UserRole.GLOBAL_LEAD)
+  @Roles(UserRole.ADMIN)
   async updateRole(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUserRoleDto,

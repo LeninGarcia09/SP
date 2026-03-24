@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsBoolean, IsEnum, IsOptional, IsUUID, MinLength, MaxLength } from 'class-validator';
-import { NotificationType } from '@bizops/shared';
+import { NotificationType } from '@telnub/shared';
 
 export class CreateNotificationDto {
   @ApiProperty()

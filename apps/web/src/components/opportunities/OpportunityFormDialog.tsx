@@ -2,8 +2,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
-import { OpportunityStatus, OpportunityStage } from '@bizops/shared';
-import type { Opportunity } from '@bizops/shared';
+import { OpportunityStatus, OpportunityStage } from '@telnub/shared';
+import type { Opportunity } from '@telnub/shared';
 import { useCreateOpportunity, useUpdateOpportunity } from '../../hooks/use-opportunities';
 import { useUsers } from '../../hooks/use-users';
 import {

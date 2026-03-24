@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ILike, Repository } from 'typeorm';
 import { UserEntity } from './user.entity';
 import { PaginationDto, PaginatedResult } from '../../common/dto/pagination.dto';
-import { UserRole } from '@bizops/shared';
+import { UserRole } from '@telnub/shared';
 
 @Injectable()
 export class UsersService {

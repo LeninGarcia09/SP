@@ -10,7 +10,7 @@ import {
   CreateInventoryTransactionDto,
 } from './dto/inventory.dto';
 import { PaginationDto, PaginatedResult } from '../../common/dto/pagination.dto';
-import { AssetCategory } from '@bizops/shared';
+import { AssetCategory } from '@telnub/shared';
 
 @Injectable()
 export class InventoryService {

@@ -4,7 +4,7 @@ import {
   Column,
   CreateDateColumn,
 } from 'typeorm';
-import { ProjectMemberRole } from '@bizops/shared';
+import { ProjectMemberRole } from '@telnub/shared';
 
 @Entity('project_members')
 export class ProjectMemberEntity {

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SkillCategory } from '@bizops/shared';
-import type { Skill } from '@bizops/shared';
+import { SkillCategory } from '@telnub/shared';
+import type { Skill } from '@telnub/shared';
 import { useSkills, useCreateSkill, useUpdateSkill, useDeleteSkill } from '../hooks/use-skills';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';

@@ -11,8 +11,8 @@ import {
   TransferCostEntryDto,
   RejectCostEntryDto,
 } from './dto/cost-entry.dto';
-import { CostEntryStatus, NotificationType, TaskStatus } from '@bizops/shared';
-import type { CostSummary, CostForecast, BurnChartData, TaskCostBreakdown } from '@bizops/shared';
+import { CostEntryStatus, NotificationType, TaskStatus } from '@telnub/shared';
+import type { CostSummary, CostForecast, BurnChartData, TaskCostBreakdown } from '@telnub/shared';
 
 @Injectable()
 export class CostsService {
@@ -207,7 +207,7 @@ export class CostsService {
       categoryMap.set(e.category, existing);
     }
     const byCategory = Array.from(categoryMap.entries()).map(([category, data]) => ({
-      category: category as import('@bizops/shared').CostCategory,
+      category: category as import('@telnub/shared').CostCategory,
       count: data.count,
       total: data.total,
       percentage: totalCostEntries > 0 ? Math.round((data.total / totalCostEntries) * 100) : 0,

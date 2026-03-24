@@ -3,7 +3,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 
-describe('BizOps API (E2E)', () => {
+describe('Telnub CRM API (E2E)', () => {
   let app: INestApplication;
   let token: string;
   let userId: string;
@@ -48,7 +48,7 @@ describe('BizOps API (E2E)', () => {
         .expect(201);
 
       expect(res.body.data).toHaveProperty('access_token');
-      expect(res.body.data.user).toHaveProperty('email', 'dev@bizops.local');
+      expect(res.body.data.user).toHaveProperty('email', 'dev@telnub.local');
       expect(res.body.data.user).toHaveProperty('role');
     });
 
@@ -212,7 +212,7 @@ describe('BizOps API (E2E)', () => {
         .expect(200);
 
       expect(res.body.data).toBeInstanceOf(Array);
-      const devUser = res.body.data.find((u: { email: string }) => u.email === 'dev@bizops.local');
+      const devUser = res.body.data.find((u: { email: string }) => u.email === 'dev@telnub.local');
       expect(devUser).toBeDefined();
     });
   });

@@ -10,7 +10,7 @@ import {
   IsInt,
   Min,
 } from 'class-validator';
-import { DeliverableStatus } from '@bizops/shared';
+import { DeliverableStatus } from '@telnub/shared';
 
 export class CreateDeliverableDto {
   @ApiProperty({ maxLength: 255 })

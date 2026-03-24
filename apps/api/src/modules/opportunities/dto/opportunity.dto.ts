@@ -12,7 +12,7 @@ import {
   Min,
   Max,
 } from 'class-validator';
-import { OpportunityStatus, OpportunityStage } from '@bizops/shared';
+import { OpportunityStatus, OpportunityStage } from '@telnub/shared';
 
 export class CreateOpportunityDto {
   @ApiProperty({ maxLength: 200 })

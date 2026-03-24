@@ -7,7 +7,7 @@ import { CreateTaskDto, UpdateTaskDto } from './dto/task.dto';
 import { PaginationDto, PaginatedResult } from '../../common/dto/pagination.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ProjectsService } from '../projects/projects.service';
-import { NotificationType, ProjectMemberRole, TaskActivityType, TaskStatus } from '@bizops/shared';
+import { NotificationType, ProjectMemberRole, TaskActivityType, TaskStatus } from '@telnub/shared';
 
 @Injectable()
 export class TasksService {

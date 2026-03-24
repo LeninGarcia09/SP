@@ -8,7 +8,7 @@ import {
   Index,
   OneToMany,
 } from 'typeorm';
-import { ProgramStatus } from '@bizops/shared';
+import { ProgramStatus } from '@telnub/shared';
 import { ProjectEntity } from '../projects/project.entity';
 
 @Entity('programs')

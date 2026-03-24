@@ -51,10 +51,10 @@ export class HealthService {
     overrideBy: string,
     userRole: string,
   ): Promise<ProjectHealthSnapshotEntity> {
-    // Only GLOBAL_LEAD and BIZ_OPS_MANAGER can override
-    const allowedRoles = ['GLOBAL_LEAD', 'BIZ_OPS_MANAGER'];
+    // Only ADMIN and OPERATIONS_DIRECTOR can override
+    const allowedRoles = ['ADMIN', 'OPERATIONS_DIRECTOR'];
     if (!allowedRoles.includes(userRole)) {
-      throw new ForbiddenException('Only GLOBAL_LEAD and BIZ_OPS_MANAGER can override RAG');
+      throw new ForbiddenException('Only ADMIN and OPERATIONS_DIRECTOR can override RAG');
     }
 
     if (!overrideReason || overrideReason.length < 20) {

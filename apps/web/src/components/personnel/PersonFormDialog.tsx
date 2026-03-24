@@ -2,8 +2,8 @@ import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { AssignmentStatus } from '@bizops/shared';
-import type { Person } from '@bizops/shared';
+import { AssignmentStatus } from '@telnub/shared';
+import type { Person } from '@telnub/shared';
 import { useCreatePerson, useUpdatePerson } from '../../hooks/use-personnel';
 import {
   Dialog,

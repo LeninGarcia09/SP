@@ -5,7 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { UserRole } from '@bizops/shared';
+import { UserRole } from '@telnub/shared';
 
 @Entity('users')
 export class UserEntity {
@@ -21,7 +21,7 @@ export class UserEntity {
   @Column()
   displayName!: string;
 
-  @Column({ type: 'enum', enum: UserRole, default: UserRole.PROJECT_PERSONNEL })
+  @Column({ type: 'enum', enum: UserRole, default: UserRole.TEAM_MEMBER })
   role!: UserRole;
 
   @Column({ type: 'uuid', nullable: true })

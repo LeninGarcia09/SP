@@ -9,7 +9,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { ProjectStatus } from '@bizops/shared';
+import { ProjectStatus } from '@telnub/shared';
 
 @Entity('projects')
 export class ProjectEntity {

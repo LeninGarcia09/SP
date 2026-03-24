@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import type { Task } from '@bizops/shared';
-import type { Project } from '@bizops/shared';
-import { ProjectStatus } from '@bizops/shared';
+import type { Task } from '@telnub/shared';
+import type { Project } from '@telnub/shared';
+import { ProjectStatus } from '@telnub/shared';
 
 // ─── Shared constants ─────────────────────────────────────
 const ROW_HEIGHT = 36;

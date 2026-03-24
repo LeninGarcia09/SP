@@ -43,3 +43,6 @@ docker-compose.override.yml
 # Misc
 *.tgz
 .cache/
+
+# Azure CLI local config (per-project tenant/subscription isolation)
+.azure/

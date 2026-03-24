@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Plus, Pencil, Trash2 } from 'lucide-react';
-import { ProficiencyLevel } from '@bizops/shared';
+import { ProficiencyLevel } from '@telnub/shared';
 import { usePerson, useAssignmentsByPerson, useCreateAssignment } from '../hooks/use-personnel';
 import { usePersonSkills, useSkills, useAssignPersonSkill, useUpdatePersonSkill, useRemovePersonSkill } from '../hooks/use-skills';
 import { PersonFormDialog } from '../components/personnel/PersonFormDialog';
