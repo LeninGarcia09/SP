@@ -41,6 +41,42 @@ param cpu string = '0.5'
 @description('Memory allocation')
 param memory string = '1Gi'
 
+@description('Health probe path (e.g. /api/v1/system/health). Empty to disable probes.')
+param healthProbePath string = ''
+
+var probes = !empty(healthProbePath) ? [
+  {
+    type: 'Liveness'
+    httpGet: {
+      path: healthProbePath
+      port: targetPort
+    }
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    failureThreshold: 3
+  }
+  {
+    type: 'Readiness'
+    httpGet: {
+      path: healthProbePath
+      port: targetPort
+    }
+    initialDelaySeconds: 10
+    periodSeconds: 15
+    failureThreshold: 3
+  }
+  {
+    type: 'Startup'
+    httpGet: {
+      path: healthProbePath
+      port: targetPort
+    }
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    failureThreshold: 10
+  }
+] : []
+
 resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
   name: name
   location: location
@@ -77,6 +113,7 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
             memory: memory
           }
           env: envVars
+          probes: probes
         }
       ]
       scale: {

@@ -13,6 +13,9 @@ build/
 .env.local
 .env.*.local
 
+# Deployment parameter files with secrets
+infrastructure/bicep/parameters/dev-deploy.json
+
 # IDE
 .idea/
 *.sw?

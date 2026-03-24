@@ -62,54 +62,15 @@ module keyVault 'modules/key-vault.bicep' = {
   }
 }
 
-// ── PostgreSQL Container App ──────────────────────────────────
-// Using a Container App instead of Flexible Server due to subscription restrictions
-resource postgresApp 'Microsoft.App/containerApps@2024-03-01' = {
+// ── PostgreSQL Flexible Server ────────────────────────────────
+module postgres 'modules/postgres.bicep' = {
   name: 'pg-${suffix}'
-  location: location
-  properties: {
-    managedEnvironmentId: containerEnv.outputs.environmentId
-    configuration: {
-      ingress: {
-        external: false
-        targetPort: 5432
-        transport: 'tcp'
-      }
-      secrets: [
-        { name: 'pg-password', value: dbAdminPassword }
-      ]
-    }
-    template: {
-      containers: [
-        {
-          name: 'postgres'
-          image: 'docker.io/library/postgres:16-alpine'
-          resources: {
-            cpu: json('0.5')
-            memory: '1Gi'
-          }
-          env: [
-            { name: 'POSTGRES_USER', value: dbAdminLogin }
-            { name: 'POSTGRES_PASSWORD', secretRef: 'pg-password' }
-            { name: 'POSTGRES_DB', value: '${baseName}_${environment}' }
-            { name: 'PGDATA', value: '/var/lib/postgresql/data/pgdata' }
-          ]
-          volumeMounts: [
-            { volumeName: 'pgdata', mountPath: '/var/lib/postgresql/data' }
-          ]
-        }
-      ]
-      scale: {
-        minReplicas: 1
-        maxReplicas: 1
-      }
-      volumes: [
-        {
-          name: 'pgdata'
-          storageType: 'EmptyDir'
-        }
-      ]
-    }
+  params: {
+    name: 'pg-flex-${suffix}'
+    location: location
+    administratorLogin: dbAdminLogin
+    administratorPassword: dbAdminPassword
+    databaseName: '${baseName}_${environment}'
   }
 }
 
@@ -172,12 +133,13 @@ module apiApp 'modules/container-app.bicep' = {
     containerRegistryPassword: acr.outputs.adminPassword
     containerImage: '${acr.outputs.loginServer}/bizops-api:${apiImageTag}'
     targetPort: 3000
+    healthProbePath: '/api/v1/system/health'
     envVars: [
       { name: 'NODE_ENV', value: 'production' }
       { name: 'PORT', value: '3000' }
       { name: 'API_PREFIX', value: 'api/v1' }
-      { name: 'DATABASE_URL', value: 'postgresql://${dbAdminLogin}:${dbAdminPassword}@pg-${suffix}:5432/${baseName}_${environment}' }
-      { name: 'DATABASE_SSL', value: 'false' }
+      { name: 'DATABASE_URL', value: 'postgresql://${dbAdminLogin}:${dbAdminPassword}@${postgres.outputs.fqdn}:5432/${baseName}_${environment}?sslmode=require' }
+      { name: 'DATABASE_SSL', value: 'true' }
       { name: 'JWT_SECRET', secretRef: 'jwt-secret' }
       { name: 'REDIS_URL', value: 'rediss://:${redis.outputs.primaryKey}@${redis.outputs.hostname}:${redis.outputs.port}' }
       { name: 'CORS_ORIGIN', value: 'https://${staticWebApp.outputs.hostname}' }
@@ -196,6 +158,7 @@ output acrName string = acr.outputs.name
 output apiUrl string = apiApp.outputs.fqdn
 output staticWebAppHostname string = staticWebApp.outputs.hostname
 output staticWebAppId string = staticWebApp.outputs.id
-output postgresAppName string = postgresApp.name
+output postgresHost string = postgres.outputs.fqdn
+output postgresName string = postgres.outputs.name
 output redisHostname string = redis.outputs.hostname
 output appInsightsKey string = appInsights.outputs.instrumentationKey

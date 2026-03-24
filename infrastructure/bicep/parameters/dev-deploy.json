@@ -15,10 +15,10 @@
       "value": "bizopsadmin"
     },
     "dbAdminPassword": {
-      "value": "BizOps2026xDev9Pwd"
+      "value": ""
     },
     "jwtSecret": {
-      "value": "xK9mR4tL7vB2wQ5nE8pY1cJ6aU3hG0fD9sZ2kN5oT8rW1yM"
+      "value": ""
     },
     "apiImageTag": {
       "value": "latest"
