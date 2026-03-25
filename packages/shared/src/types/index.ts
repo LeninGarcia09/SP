@@ -20,6 +20,9 @@ export interface User {
   role: UserRole;
   departmentId: string | null;
   isActive: boolean;
+  jobTitle: string | null;
+  phone: string | null;
+  m365SyncedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -28,6 +31,49 @@ export interface Department {
   id: string;
   name: string;
   managerId: string | null;
+}
+
+// ─── Admin / M365 Integration ───
+
+/** M365 tenant user (from Microsoft Graph) */
+export interface TenantUser {
+  id: string;
+  displayName: string;
+  mail: string | null;
+  userPrincipalName: string;
+  jobTitle: string | null;
+  department: string | null;
+  mobilePhone: string | null;
+  accountEnabled: boolean;
+}
+
+/** App role assignment on the Enterprise Application */
+export interface AppRoleAssignment {
+  id: string;
+  principalId: string;
+  principalDisplayName: string;
+  appRoleId: string;
+  appRoleName: string | null;
+  createdDateTime: string | null;
+}
+
+/** Available app role definition */
+export interface AppRoleDefinition {
+  id: string;
+  displayName: string;
+  value: string;
+  description: string;
+}
+
+/** Request to assign a role to a user */
+export interface AssignRoleRequest {
+  userId: string;
+  appRoleValue: string;
+}
+
+/** Request to sync one or more M365 users into the CRM */
+export interface SyncUsersRequest {
+  userIds: string[];
 }
 
 // ─── Projects ───

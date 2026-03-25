@@ -76,6 +76,7 @@ const PERMISSION_MAP: Record<string, UserRole[]> = {
   'nav.capacity': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.DEPARTMENT_MANAGER],
   'nav.inventory': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.DEPARTMENT_MANAGER, UserRole.PROGRAM_MANAGER, UserRole.PROJECT_MANAGER, UserRole.TEAM_MEMBER, UserRole.INVENTORY_MANAGER, UserRole.SALES_EXECUTIVE],
   'nav.users': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR],
+  'nav.admin': [UserRole.ADMIN],
   'nav.trash': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR],
 };
 

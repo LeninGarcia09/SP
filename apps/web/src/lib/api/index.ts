@@ -26,6 +26,9 @@ import type {
   Program,
   Opportunity,
   DeliverableSummary,
+  TenantUser,
+  AppRoleAssignment,
+  AppRoleDefinition,
 } from '@telnub/shared';
 
 // ─── Query Params ───
@@ -518,5 +521,42 @@ export async function fetchDeliverableTaskCosts(projectId: string, deliverableId
 
 export async function fetchTaskCostBreakdowns(projectId: string) {
   const { data } = await api.get<ApiResponse<TaskCostBreakdown[]>>(`/projects/${projectId}/task-costs`);
+  return data;
+}
+
+// ─── Admin / M365 Integration ───
+
+export async function fetchTenantUsers() {
+  const { data } = await api.get<ApiResponse<TenantUser[]>>('/admin/tenant-users');
+  return data;
+}
+
+export async function fetchAppRoles() {
+  const { data } = await api.get<ApiResponse<AppRoleDefinition[]>>('/admin/app-roles');
+  return data;
+}
+
+export async function fetchRoleAssignments() {
+  const { data } = await api.get<ApiResponse<AppRoleAssignment[]>>('/admin/role-assignments');
+  return data;
+}
+
+export async function assignAppRole(userId: string, appRoleValue: string) {
+  const { data } = await api.post<ApiResponse<AppRoleAssignment>>('/admin/role-assignments', { userId, appRoleValue });
+  return data;
+}
+
+export async function removeAppRoleAssignment(assignmentId: string) {
+  const { data } = await api.delete<ApiResponse<{ removed: boolean }>>(`/admin/role-assignments/${assignmentId}`);
+  return data;
+}
+
+export async function syncUsers(userIds: string[]) {
+  const { data } = await api.post<ApiResponse<{ synced: number; failed: number; errors?: { userId: string; error: string }[] }>>('/admin/sync-users', { userIds });
+  return data;
+}
+
+export async function fetchCrmUsers() {
+  const { data } = await api.get<ApiResponse<User[]>>('/admin/crm-users');
   return data;
 }

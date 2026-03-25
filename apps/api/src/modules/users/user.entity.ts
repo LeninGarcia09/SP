@@ -30,6 +30,15 @@ export class UserEntity {
   @Column({ default: true })
   isActive!: boolean;
 
+  @Column({ type: 'varchar', length: 200, nullable: true })
+  jobTitle!: string | null;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  phone!: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  m365SyncedAt!: Date | null;
+
   @CreateDateColumn()
   createdAt!: Date;
 
