@@ -9,12 +9,11 @@ import type {
 } from '@telnub/shared';
 
 /**
- * Microsoft Graph service using the On-Behalf-Of (OBO) flow with certificate credentials.
+ * Microsoft Graph service using the Client Credentials flow with certificate credentials.
  *
  * Flow:
- * 1. Frontend acquires a user token via MSAL (delegated)
- * 2. Backend exchanges that token for a Graph token using OBO
- * 3. Graph calls run with the user's delegated permissions
+ * 1. Backend acquires an app-only token using client credentials (certificate or secret)
+ * 2. Graph calls run with Application permissions (no user context needed)
  *
  * Certificate-based credential — no shared secrets to rotate.
  *
@@ -98,17 +97,17 @@ export class GraphService implements OnModuleInit {
   }
 
   /**
-   * Exchange a user's access token for a Graph-scoped token via OBO.
+   * Acquire an app-only token via client credentials and return a Graph client.
    */
-  private async getGraphClient(userAccessToken: string): Promise<Client> {
-    const oboRequest = {
-      oboAssertion: userAccessToken,
+  private async getGraphClient(): Promise<Client> {
+    const result = await this.cca.acquireTokenByClientCredential({
       scopes: ['https://graph.microsoft.com/.default'],
-    };
+    });
 
-    const result = await this.cca.acquireTokenOnBehalfOf(oboRequest);
     if (!result?.accessToken) {
-      throw new Error('OBO token exchange failed — no access token returned');
+      throw new Error(
+        'Client credentials token acquisition failed — no access token returned',
+      );
     }
 
     return Client.init({
@@ -120,8 +119,8 @@ export class GraphService implements OnModuleInit {
 
   // ─── Tenant Users ───
 
-  async listTenantUsers(userAccessToken: string): Promise<TenantUser[]> {
-    const client = await this.getGraphClient(userAccessToken);
+  async listTenantUsers(): Promise<TenantUser[]> {
+    const client = await this.getGraphClient();
 
     const response = await client
       .api('/users')
@@ -143,11 +142,8 @@ export class GraphService implements OnModuleInit {
     }));
   }
 
-  async getTenantUser(
-    userAccessToken: string,
-    userId: string,
-  ): Promise<TenantUser> {
-    const client = await this.getGraphClient(userAccessToken);
+  async getTenantUser(userId: string): Promise<TenantUser> {
+    const client = await this.getGraphClient();
 
     const u = await client
       .api(`/users/${userId}`)
@@ -170,8 +166,8 @@ export class GraphService implements OnModuleInit {
 
   // ─── App Role Definitions ───
 
-  async listAppRoles(userAccessToken: string): Promise<AppRoleDefinition[]> {
-    const client = await this.getGraphClient(userAccessToken);
+  async listAppRoles(): Promise<AppRoleDefinition[]> {
+    const client = await this.getGraphClient();
 
     const sp = await client
       .api(`/servicePrincipals/${this.servicePrincipalId}`)
@@ -190,10 +186,8 @@ export class GraphService implements OnModuleInit {
 
   // ─── App Role Assignments ───
 
-  async listRoleAssignments(
-    userAccessToken: string,
-  ): Promise<AppRoleAssignment[]> {
-    const client = await this.getGraphClient(userAccessToken);
+  async listRoleAssignments(): Promise<AppRoleAssignment[]> {
+    const client = await this.getGraphClient();
 
     const response = await client
       .api(`/servicePrincipals/${this.servicePrincipalId}/appRoleAssignedTo`)
@@ -201,7 +195,7 @@ export class GraphService implements OnModuleInit {
       .get();
 
     // Fetch role definitions to map appRoleId → value
-    const roles = await this.listAppRoles(userAccessToken);
+    const roles = await this.listAppRoles();
     const roleMap = new Map(roles.map((r) => [r.id, r.value]));
 
     return (response.value ?? []).map((a: Record<string, unknown>) => ({
@@ -215,11 +209,10 @@ export class GraphService implements OnModuleInit {
   }
 
   async assignRole(
-    userAccessToken: string,
     userId: string,
     appRoleId: string,
   ): Promise<AppRoleAssignment> {
-    const client = await this.getGraphClient(userAccessToken);
+    const client = await this.getGraphClient();
 
     const result = await client
       .api(`/servicePrincipals/${this.servicePrincipalId}/appRoleAssignedTo`)
@@ -239,11 +232,8 @@ export class GraphService implements OnModuleInit {
     };
   }
 
-  async removeRoleAssignment(
-    userAccessToken: string,
-    assignmentId: string,
-  ): Promise<void> {
-    const client = await this.getGraphClient(userAccessToken);
+  async removeRoleAssignment(assignmentId: string): Promise<void> {
+    const client = await this.getGraphClient();
 
     await client
       .api(

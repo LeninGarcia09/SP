@@ -13,6 +13,7 @@ interface AzureAdUser {
   email: string;
   displayName: string;
   roles: string[];
+  tenantId: string | null;
   isAzureAd: true;
 }
 
@@ -95,25 +96,35 @@ export class MeController {
       user = await this.userRepo.findOne({ where: { email: payload.email } });
 
       if (user) {
-        // Link OID to existing email-matched user
+        // Link OID + tenant to existing email-matched user
         user.azureAdOid = payload.oid;
         if (payload.displayName) user.displayName = payload.displayName;
+        if (payload.tenantId) user.tenantId = payload.tenantId;
         user = await this.userRepo.save(user);
       } else {
-        // First-time login — provision new user
+        // First-time login — provision new user with tenant info
         user = this.userRepo.create({
           azureAdOid: payload.oid,
           email: payload.email,
           displayName: payload.displayName || payload.email,
           role,
+          tenantId: payload.tenantId,
           isActive: true,
         });
         user = await this.userRepo.save(user);
       }
     } else {
-      // Update display name on every login (keeps in sync with AD)
+      // Update display name + tenant on every login (keeps in sync with AD)
+      let needsSave = false;
       if (payload.displayName && user.displayName !== payload.displayName) {
         user.displayName = payload.displayName;
+        needsSave = true;
+      }
+      if (payload.tenantId && user.tenantId !== payload.tenantId) {
+        user.tenantId = payload.tenantId;
+        needsSave = true;
+      }
+      if (needsSave) {
         user = await this.userRepo.save(user);
       }
     }
@@ -123,6 +134,7 @@ export class MeController {
       email: user.email,
       displayName: user.displayName,
       role: user.role,
+      tenantId: user.tenantId,
     };
   }
 

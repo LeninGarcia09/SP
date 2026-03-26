@@ -46,3 +46,6 @@ docker-compose.override.yml
 
 # Azure CLI local config (per-project tenant/subscription isolation)
 .azure/
+
+# Certificates (private keys — NEVER commit)
+.certs/

@@ -22,6 +22,7 @@ export interface User {
   isActive: boolean;
   jobTitle: string | null;
   phone: string | null;
+  tenantId: string | null;
   m365SyncedAt: string | null;
   createdAt: string;
   updatedAt: string;

@@ -48,7 +48,10 @@ export class DevAuthController {
     const targetRole = dto?.role ?? UserRole.ADMIN;
     const template = DEV_USERS.find((u) => u.role === targetRole) ?? DEV_USERS[0]!;
 
-    let user = await this.userRepo.findOne({ where: { email: template.email } });
+    let user = await this.userRepo.findOne({ where: { azureAdOid: template.oid } });
+    if (!user) {
+      user = await this.userRepo.findOne({ where: { email: template.email } });
+    }
     if (!user) {
       user = this.userRepo.create({
         email: template.email,
@@ -81,7 +84,10 @@ export class DevAuthController {
     this.assertDev();
     const results: { email: string; role: UserRole; created: boolean }[] = [];
     for (const template of DEV_USERS) {
-      let existing = await this.userRepo.findOne({ where: { email: template.email } });
+      let existing = await this.userRepo.findOne({ where: { azureAdOid: template.oid } });
+      if (!existing) {
+        existing = await this.userRepo.findOne({ where: { email: template.email } });
+      }
       if (!existing) {
         existing = this.userRepo.create({
           email: template.email,

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy, StrategyOptionsWithoutRequest } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
@@ -7,10 +7,12 @@ import * as jwksRsa from 'jwks-rsa';
 interface JwtPayload {
   sub: string;
   oid?: string;        // Azure AD Object ID
+  tid?: string;        // Tenant ID (multi-tenant)
   preferred_username?: string;
   email?: string;
   name?: string;
   roles?: string[];    // App roles assigned in Azure AD
+  iss?: string;        // Issuer — contains tenant ID
   // Dev-mode fields (local JWT)
   role?: string;
 }
@@ -18,8 +20,9 @@ interface JwtPayload {
 /**
  * JWT Strategy — dual-mode:
  *
- * 1. **Azure AD mode** (when AZURE_AD_TENANT_ID + AZURE_AD_CLIENT_ID are set):
- *    Validates tokens issued by Microsoft identity platform using JWKS discovery.
+ * 1. **Azure AD mode** (when AZURE_AD_CLIENT_ID is set):
+ *    Multi-tenant: validates tokens from ANY Azure AD org tenant using the
+ *    `common` JWKS endpoint. Tenant allow-list enforced in validate().
  *
  * 2. **Dev mode** (fallback):
  *    Validates JWTs signed with the local JWT_SECRET for local testing.
@@ -27,23 +30,26 @@ interface JwtPayload {
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   private readonly isAzureAd: boolean;
+  private readonly allowedTenantIds: string[];
+  private readonly logger = new Logger('JwtStrategy');
 
   constructor(private readonly configService: ConfigService) {
-    const tenantId = configService.get<string>('AZURE_AD_TENANT_ID');
     const clientId = configService.get<string>('AZURE_AD_CLIENT_ID');
-    const useAzureAd = Boolean(tenantId && clientId);
+    const useAzureAd = Boolean(clientId);
 
     const options: StrategyOptionsWithoutRequest = useAzureAd
       ? {
           jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
           audience: clientId!,
-          issuer: `https://login.microsoftonline.com/${tenantId}/v2.0`,
+          // Multi-tenant: don't validate issuer statically — we check tid in validate()
+          issuer: undefined,
           algorithms: ['RS256'],
           secretOrKeyProvider: jwksRsa.passportJwtSecret({
             cache: true,
             rateLimit: true,
             jwksRequestsPerMinute: 10,
-            jwksUri: `https://login.microsoftonline.com/${tenantId}/discovery/v2.0/keys`,
+            // Use 'common' endpoint to accept tokens from any org tenant
+            jwksUri: 'https://login.microsoftonline.com/common/discovery/v2.0/keys',
           }),
         }
       : {
@@ -54,19 +60,41 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     super(options);
     this.isAzureAd = useAzureAd;
+
+    // Parse tenant allow-list from env
+    const raw = configService.get<string>('ALLOWED_TENANT_IDS') ?? '';
+    this.allowedTenantIds = raw
+      .split(',')
+      .map((t) => t.trim().toLowerCase())
+      .filter(Boolean);
+
+    if (useAzureAd && this.allowedTenantIds.length > 0) {
+      this.logger.log(`Multi-tenant mode: ${this.allowedTenantIds.length} tenant(s) allowed`);
+    } else if (useAzureAd) {
+      this.logger.warn('Azure AD mode active but ALLOWED_TENANT_IDS is empty — all tenants allowed');
+    }
   }
 
   validate(payload: JwtPayload) {
     if (this.isAzureAd) {
-      // Azure AD token — extract identity fields
+      const tid = payload.tid ?? this.extractTidFromIssuer(payload.iss);
+
+      // Enforce tenant allow-list
+      if (this.allowedTenantIds.length > 0 && tid) {
+        if (!this.allowedTenantIds.includes(tid.toLowerCase())) {
+          this.logger.warn(`Rejected login from unauthorized tenant: ${tid}`);
+          return null; // Passport treats null as unauthorized
+        }
+      }
+
       return {
         sub: payload.sub,
         id: payload.oid ?? payload.sub,
         oid: payload.oid ?? payload.sub,
         email: payload.preferred_username ?? payload.email ?? '',
         displayName: payload.name ?? payload.preferred_username ?? '',
-        // App roles come from Azure AD Enterprise Application role assignments
         roles: payload.roles ?? [],
+        tenantId: tid ?? null,
         isAzureAd: true,
       };
     }
@@ -79,5 +107,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       role: payload.role,
       azureAdOid: payload.oid ?? null,
     };
+  }
+
+  /** Extract tenant ID from issuer URL: https://login.microsoftonline.com/{tid}/v2.0 */
+  private extractTidFromIssuer(iss?: string): string | undefined {
+    if (!iss) return undefined;
+    const match = iss.match(/login\.microsoftonline\.com\/([^/]+)/);
+    return match?.[1];
   }
 }

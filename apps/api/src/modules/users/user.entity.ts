@@ -36,6 +36,9 @@ export class UserEntity {
   @Column({ type: 'varchar', length: 50, nullable: true })
   phone!: string | null;
 
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  tenantId!: string | null;
+
   @Column({ type: 'timestamptz', nullable: true })
   m365SyncedAt!: Date | null;
 

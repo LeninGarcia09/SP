@@ -1,16 +1,16 @@
 import { PublicClientApplication, Configuration, LogLevel } from '@azure/msal-browser';
 
-const tenantId = import.meta.env.VITE_AZURE_AD_TENANT_ID;
 const clientId = import.meta.env.VITE_AZURE_AD_CLIENT_ID;
 const redirectUri = import.meta.env.VITE_AZURE_AD_REDIRECT_URI || window.location.origin;
 
 /** True when Azure AD env vars are configured */
-export const isMsalEnabled = Boolean(tenantId && clientId);
+export const isMsalEnabled = Boolean(clientId);
 
 const msalConfig: Configuration = {
   auth: {
     clientId: clientId || 'not-configured',
-    authority: `https://login.microsoftonline.com/${tenantId || 'common'}`,
+    // Multi-tenant: use 'organizations' to accept any M365 org tenant
+    authority: 'https://login.microsoftonline.com/organizations',
     redirectUri,
     postLogoutRedirectUri: redirectUri,
   },

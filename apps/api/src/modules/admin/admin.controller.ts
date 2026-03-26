@@ -5,7 +5,6 @@ import {
   Delete,
   Body,
   Param,
-  Req,
   UseGuards,
   BadRequestException,
   ServiceUnavailableException,
@@ -44,22 +43,13 @@ export class AdminController {
     }
   }
 
-  private extractToken(req: { headers: { authorization?: string } }): string {
-    const auth = req.headers.authorization;
-    if (!auth?.startsWith('Bearer ')) {
-      throw new BadRequestException('Missing Bearer token');
-    }
-    return auth.slice(7);
-  }
-
   // ─── Tenant Users ───
 
   @Get('tenant-users')
   @ApiOperation({ summary: 'List all users in the M365 tenant' })
-  async listTenantUsers(@Req() req: { headers: { authorization?: string } }) {
+  async listTenantUsers() {
     this.assertGraphEnabled();
-    const token = this.extractToken(req);
-    const users = await this.graphService.listTenantUsers(token);
+    const users = await this.graphService.listTenantUsers();
     return { data: users };
   }
 
@@ -67,10 +57,9 @@ export class AdminController {
 
   @Get('app-roles')
   @ApiOperation({ summary: 'List available app role definitions' })
-  async listAppRoles(@Req() req: { headers: { authorization?: string } }) {
+  async listAppRoles() {
     this.assertGraphEnabled();
-    const token = this.extractToken(req);
-    const roles = await this.graphService.listAppRoles(token);
+    const roles = await this.graphService.listAppRoles();
     return { data: roles };
   }
 
@@ -78,26 +67,19 @@ export class AdminController {
 
   @Get('role-assignments')
   @ApiOperation({ summary: 'List current app role assignments' })
-  async listRoleAssignments(
-    @Req() req: { headers: { authorization?: string } },
-  ) {
+  async listRoleAssignments() {
     this.assertGraphEnabled();
-    const token = this.extractToken(req);
-    const assignments = await this.graphService.listRoleAssignments(token);
+    const assignments = await this.graphService.listRoleAssignments();
     return { data: assignments };
   }
 
   @Post('role-assignments')
   @ApiOperation({ summary: 'Assign an app role to a tenant user' })
-  async assignRole(
-    @Req() req: { headers: { authorization?: string } },
-    @Body() dto: AssignRoleDto,
-  ) {
+  async assignRole(@Body() dto: AssignRoleDto) {
     this.assertGraphEnabled();
-    const token = this.extractToken(req);
 
     // Resolve appRoleValue → appRoleId
-    const roles = await this.graphService.listAppRoles(token);
+    const roles = await this.graphService.listAppRoles();
     const role = roles.find((r) => r.value === dto.appRoleValue);
     if (!role) {
       throw new BadRequestException(
@@ -106,7 +88,6 @@ export class AdminController {
     }
 
     const assignment = await this.graphService.assignRole(
-      token,
       dto.userId,
       role.id,
     );
@@ -118,13 +99,9 @@ export class AdminController {
 
   @Delete('role-assignments/:id')
   @ApiOperation({ summary: 'Remove an app role assignment' })
-  async removeRoleAssignment(
-    @Req() req: { headers: { authorization?: string } },
-    @Param('id') assignmentId: string,
-  ) {
+  async removeRoleAssignment(@Param('id') assignmentId: string) {
     this.assertGraphEnabled();
-    const token = this.extractToken(req);
-    await this.graphService.removeRoleAssignment(token, assignmentId);
+    await this.graphService.removeRoleAssignment(assignmentId);
     this.logger.log(`Role assignment ${assignmentId} removed`);
     return { data: { removed: true } };
   }
@@ -136,22 +113,15 @@ export class AdminController {
     summary:
       'Sync M365 users into CRM — imports user profile data from Microsoft Graph',
   })
-  async syncUsers(
-    @Req() req: { headers: { authorization?: string } },
-    @Body() dto: SyncUsersDto,
-  ) {
+  async syncUsers(@Body() dto: SyncUsersDto) {
     this.assertGraphEnabled();
-    const token = this.extractToken(req);
 
     const synced: string[] = [];
     const errors: { userId: string; error: string }[] = [];
 
     for (const m365UserId of dto.userIds) {
       try {
-        const tenantUser = await this.graphService.getTenantUser(
-          token,
-          m365UserId,
-        );
+        const tenantUser = await this.graphService.getTenantUser(m365UserId);
 
         const email =
           tenantUser.mail ?? tenantUser.userPrincipalName;
