@@ -6,7 +6,7 @@ import { MsalProvider } from '@azure/msal-react';
 import { App } from './App';
 import { useDevAuth } from './hooks/use-dev-auth';
 import { useMsalAuth } from './hooks/use-msal-auth';
-import { msalInstance, isMsalEnabled } from './lib/msal';
+import { msalInstance, isMsalEnabled, initializeMsal } from './lib/msal';
 import './i18n';
 import './index.css';
 
@@ -76,12 +76,17 @@ function Root() {
   return <DevRoot />;
 }
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Root />
-      </BrowserRouter>
-    </QueryClientProvider>
-  </React.StrictMode>,
-);
+// Initialize MSAL before rendering to process any pending redirect responses
+const bootstrap = isMsalEnabled ? initializeMsal() : Promise.resolve();
+
+bootstrap.then(() => {
+  ReactDOM.createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <Root />
+        </BrowserRouter>
+      </QueryClientProvider>
+    </React.StrictMode>,
+  );
+});

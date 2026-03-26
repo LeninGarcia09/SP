@@ -2,16 +2,14 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useMsal, useIsAuthenticated } from '@azure/msal-react';
 import { InteractionRequiredAuthError, InteractionStatus } from '@azure/msal-browser';
 import { useAuthStore } from '../store/auth-store';
-import { apiScopes } from '../lib/msal';
+import { apiScopes, loginScopes } from '../lib/msal';
 import { api } from '../lib/axios';
-
-const REDIRECT_LOOP_KEY = 'msal_redirect_attempt';
 
 /**
  * Hook that handles the MSAL login flow:
- * 1. Wait for MSAL to initialise and check if user is already logged in.
- * 2. If not, trigger a redirect login.
- * 3. Once authenticated, acquire a token silently and sync user info via backend.
+ * 1. Wait for MSAL to initialise and process any redirect response.
+ * 2. If not logged in, trigger a redirect login with basic scopes.
+ * 3. Once authenticated, acquire an API token silently and sync user via backend.
  */
 export function useMsalAuth() {
   const { instance, inProgress, accounts } = useMsal();
@@ -24,7 +22,6 @@ export function useMsalAuth() {
 
   const syncUser = useCallback(
     async (accessToken: string) => {
-      // Call backend to get/create user from the Azure AD token
       const res = await api.get('/auth/me', {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
@@ -33,39 +30,28 @@ export function useMsalAuth() {
         setAuth(user, accessToken);
         setMode('msal');
       }
-      // Clear redirect loop counter on success
-      sessionStorage.removeItem(REDIRECT_LOOP_KEY);
     },
     [setAuth, setMode],
   );
 
   useEffect(() => {
+    // Wait until MSAL finishes any in-progress interaction (including redirect handling)
     if (inProgress !== InteractionStatus.None) return;
     if (didRun.current) return;
     didRun.current = true;
 
     if (!isAuthenticated || accounts.length === 0) {
-      // Guard against redirect loops — max 2 attempts
-      const attempts = Number(sessionStorage.getItem(REDIRECT_LOOP_KEY) ?? '0');
-      if (attempts >= 2) {
-        console.error('MSAL redirect loop detected — stopping after', attempts, 'attempts');
-        sessionStorage.removeItem(REDIRECT_LOOP_KEY);
-        setError('Authentication failed after multiple attempts. Please clear your browser cache and try again.');
-        setReady(true);
-        return;
-      }
-      sessionStorage.setItem(REDIRECT_LOOP_KEY, String(attempts + 1));
-
-      // Not logged in → redirect to Microsoft login
-      instance.loginRedirect({ scopes: apiScopes }).catch((err) => {
-        console.error('MSAL login redirect failed:', err);
+      // Not logged in — redirect to Microsoft login with basic scopes only.
+      // API scopes are acquired separately via acquireTokenSilent after login.
+      instance.loginRedirect({ scopes: loginScopes }).catch((err) => {
+        console.error('MSAL loginRedirect failed:', err);
         setError(String(err));
         setReady(true);
       });
       return;
     }
 
-    // We have an account — acquire token silently
+    // User is authenticated — acquire API token silently
     const account = accounts[0]!;
     instance
       .acquireTokenSilent({ scopes: apiScopes, account })
@@ -73,22 +59,14 @@ export function useMsalAuth() {
       .then(() => setReady(true))
       .catch(async (err) => {
         if (err instanceof InteractionRequiredAuthError) {
-          // Guard against consent redirect loops
-          const attempts = Number(sessionStorage.getItem(REDIRECT_LOOP_KEY) ?? '0');
-          if (attempts >= 2) {
-            console.error('MSAL consent redirect loop detected');
-            sessionStorage.removeItem(REDIRECT_LOOP_KEY);
-            setError('Consent required but failed. An admin may need to grant consent for this application.');
-            setReady(true);
-            return;
-          }
-          sessionStorage.setItem(REDIRECT_LOOP_KEY, String(attempts + 1));
+          // API scope needs consent — use popup to avoid another full redirect
           try {
-            await instance.acquireTokenRedirect({ scopes: apiScopes, account });
-            // After redirect we'll come back and re-run this effect
+            const response = await instance.acquireTokenPopup({ scopes: apiScopes, account });
+            await syncUser(response.accessToken);
+            setReady(true);
           } catch (e) {
-            console.error('MSAL interactive auth failed:', e);
-            setError(String(e));
+            console.error('MSAL consent popup failed:', e);
+            setError(`API access consent failed: ${e}`);
             setReady(true);
           }
         } else {
@@ -101,7 +79,6 @@ export function useMsalAuth() {
 
   const logout = useCallback(() => {
     useAuthStore.getState().logout();
-    sessionStorage.removeItem(REDIRECT_LOOP_KEY);
     instance.logoutRedirect();
   }, [instance]);
 
