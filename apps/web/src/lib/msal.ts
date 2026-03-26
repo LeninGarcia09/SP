@@ -29,6 +29,6 @@ export const msalInstance = new PublicClientApplication(msalConfig);
 
 /**
  * Scopes requested when acquiring tokens for the backend API.
- * Uses the backend's client ID as the audience with the default /.default scope.
+ * Uses the api:// identifier URI to ensure the token audience matches the backend.
  */
-export const apiScopes = clientId ? [`${clientId}/.default`] : [];
+export const apiScopes = clientId ? [`api://${clientId}/.default`] : [];
