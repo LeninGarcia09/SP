@@ -40,8 +40,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const options: StrategyOptionsWithoutRequest = useAzureAd
       ? {
           jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-          // Accept api://{clientId} as audience (v2.0 tokens with identifier URI)
-          audience: `api://${clientId}`,
+          // Accept both api://{clientId} and raw {clientId} as audience
+          // (cross-tenant tokens may use raw GUID instead of identifier URI)
+          audience: [`api://${clientId}`, clientId!],
           // Multi-tenant: don't validate issuer statically — we check tid in validate()
           issuer: undefined,
           algorithms: ['RS256'],
