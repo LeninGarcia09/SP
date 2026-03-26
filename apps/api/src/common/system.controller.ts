@@ -1,4 +1,4 @@
-import { Controller, Get, Inject } from '@nestjs/common';
+import { Controller, Get, Inject, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { DataSource } from 'typeorm';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
@@ -41,5 +41,43 @@ export class SystemController {
       timestamp: new Date().toISOString(),
       checks,
     };
+  }
+
+  /** Temporary debug endpoint — decodes JWT without verification to inspect claims */
+  @Get('debug-token')
+  @ApiOperation({ summary: 'Debug: decode JWT claims (no verification)' })
+  debugToken(@Req() req: { headers: { authorization?: string } }) {
+    const auth = req.headers.authorization;
+    if (!auth?.startsWith('Bearer ')) {
+      return { error: 'No Bearer token found' };
+    }
+    const token = auth.slice(7);
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      return { error: 'Invalid JWT format' };
+    }
+    try {
+      const header = JSON.parse(Buffer.from(parts[0], 'base64url').toString());
+      const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
+      return {
+        header,
+        claims: {
+          aud: payload.aud,
+          iss: payload.iss,
+          tid: payload.tid,
+          sub: payload.sub,
+          oid: payload.oid,
+          preferred_username: payload.preferred_username,
+          name: payload.name,
+          scp: payload.scp,
+          exp: payload.exp,
+          iat: payload.iat,
+          ver: payload.ver,
+        },
+        expectedAudience: `api://${process.env.AZURE_AD_CLIENT_ID}`,
+      };
+    } catch {
+      return { error: 'Failed to decode token' };
+    }
   }
 }
