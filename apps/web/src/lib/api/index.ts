@@ -526,8 +526,14 @@ export async function fetchTaskCostBreakdowns(projectId: string) {
 
 // ─── Admin / M365 Integration ───
 
-export async function fetchTenantUsers() {
-  const { data } = await api.get<ApiResponse<TenantUser[]>>('/admin/tenant-users');
+export async function fetchAllowedTenants() {
+  const { data } = await api.get<ApiResponse<{ id: string; displayName: string }[]>>('/admin/tenants');
+  return data;
+}
+
+export async function fetchTenantUsers(tenantId?: string) {
+  const params = tenantId ? { tenantId } : {};
+  const { data } = await api.get<ApiResponse<TenantUser[]>>('/admin/tenant-users', { params });
   return data;
 }
 
@@ -551,8 +557,8 @@ export async function removeAppRoleAssignment(assignmentId: string) {
   return data;
 }
 
-export async function syncUsers(userIds: string[]) {
-  const { data } = await api.post<ApiResponse<{ synced: number; failed: number; errors?: { userId: string; error: string }[] }>>('/admin/sync-users', { userIds });
+export async function syncUsers(userIds: string[], tenantId?: string) {
+  const { data } = await api.post<ApiResponse<{ synced: number; failed: number; errors?: { userId: string; error: string }[] }>>('/admin/sync-users', { userIds, tenantId });
   return data;
 }
 

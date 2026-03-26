@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsString, IsUUID, ArrayMinSize } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsArray, IsString, IsUUID, IsOptional, ArrayMinSize } from 'class-validator';
 
 export class AssignRoleDto {
   @ApiProperty({ description: 'M365 user Object ID' })
@@ -17,4 +17,9 @@ export class SyncUsersDto {
   @IsString({ each: true })
   @ArrayMinSize(1)
   userIds: string[];
+
+  @ApiPropertyOptional({ description: 'Tenant ID to sync users from (defaults to primary tenant)' })
+  @IsOptional()
+  @IsString()
+  tenantId?: string;
 }

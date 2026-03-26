@@ -5,6 +5,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   UseGuards,
   BadRequestException,
   ServiceUnavailableException,
@@ -43,13 +44,23 @@ export class AdminController {
     }
   }
 
+  // ─── Tenants ───
+
+  @Get('tenants')
+  @ApiOperation({ summary: 'List allowed tenants with display names' })
+  async listTenants() {
+    this.assertGraphEnabled();
+    const tenants = await this.graphService.listAllowedTenants();
+    return { data: tenants };
+  }
+
   // ─── Tenant Users ───
 
   @Get('tenant-users')
-  @ApiOperation({ summary: 'List all users in the M365 tenant' })
-  async listTenantUsers() {
+  @ApiOperation({ summary: 'List all users in an M365 tenant' })
+  async listTenantUsers(@Query('tenantId') tenantId?: string) {
     this.assertGraphEnabled();
-    const users = await this.graphService.listTenantUsers();
+    const users = await this.graphService.listTenantUsers(tenantId || undefined);
     return { data: users };
   }
 
@@ -121,7 +132,7 @@ export class AdminController {
 
     for (const m365UserId of dto.userIds) {
       try {
-        const tenantUser = await this.graphService.getTenantUser(m365UserId);
+        const tenantUser = await this.graphService.getTenantUser(m365UserId, dto.tenantId);
 
         const email =
           tenantUser.mail ?? tenantUser.userPrincipalName;

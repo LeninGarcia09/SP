@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
+  fetchAllowedTenants,
   fetchTenantUsers,
   fetchAppRoles,
   fetchRoleAssignments,
@@ -9,10 +10,18 @@ import {
   fetchCrmUsers,
 } from '../lib/api';
 
-export function useTenantUsers() {
+export function useAllowedTenants() {
   return useQuery({
-    queryKey: ['admin', 'tenant-users'],
-    queryFn: fetchTenantUsers,
+    queryKey: ['admin', 'tenants'],
+    queryFn: fetchAllowedTenants,
+  });
+}
+
+export function useTenantUsers(tenantId?: string) {
+  return useQuery({
+    queryKey: ['admin', 'tenant-users', tenantId],
+    queryFn: () => fetchTenantUsers(tenantId),
+    enabled: !!tenantId,
   });
 }
 
@@ -54,7 +63,8 @@ export function useRemoveAppRoleAssignment() {
 export function useSyncUsers() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (userIds: string[]) => syncUsers(userIds),
+    mutationFn: ({ userIds, tenantId }: { userIds: string[]; tenantId?: string }) =>
+      syncUsers(userIds, tenantId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin', 'crm-users'] });
       qc.invalidateQueries({ queryKey: ['users'] });

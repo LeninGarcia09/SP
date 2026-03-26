@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Shield, Users, RefreshCw, UserPlus, Trash2, Search, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '../components/ui/select';
 import {
+  useAllowedTenants,
   useTenantUsers,
   useAppRoles,
   useRoleAssignments,
@@ -28,6 +29,16 @@ type Tab = 'users' | 'roles' | 'sync';
 export function AdminPage() {
   const { isRole } = usePermissions();
   const [activeTab, setActiveTab] = useState<Tab>('users');
+  const [selectedTenantId, setSelectedTenantId] = useState<string>('');
+  const { data: tenantsData, isLoading: loadingTenants } = useAllowedTenants();
+  const tenants = tenantsData?.data ?? [];
+
+  // Auto-select first tenant when loaded
+  useEffect(() => {
+    if (!selectedTenantId && tenants.length > 0 && tenants[0]) {
+      setSelectedTenantId(tenants[0].id);
+    }
+  }, [tenants, selectedTenantId]);
 
   if (!isRole(UserRole.ADMIN)) {
     return (
@@ -47,6 +58,27 @@ export function AdminPage() {
         <p className="text-muted-foreground mt-1">
           Manage tenant users, app role assignments, and sync M365 profiles into the CRM.
         </p>
+      </div>
+
+      {/* Tenant selector */}
+      <div className="flex items-center gap-3">
+        <label className="text-sm font-medium">Tenant:</label>
+        {loadingTenants ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Select value={selectedTenantId} onValueChange={setSelectedTenantId}>
+            <SelectTrigger className="w-80">
+              <SelectValue placeholder="Select a tenant" />
+            </SelectTrigger>
+            <SelectContent>
+              {tenants.map((t) => (
+                <SelectItem key={t.id} value={t.id}>
+                  {t.displayName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       {/* Tab navigation */}
@@ -74,17 +106,17 @@ export function AdminPage() {
         </Button>
       </div>
 
-      {activeTab === 'users' && <TenantUsersTab />}
-      {activeTab === 'roles' && <RoleAssignmentsTab />}
-      {activeTab === 'sync' && <UserSyncTab />}
+      {activeTab === 'users' && <TenantUsersTab tenantId={selectedTenantId} />}
+      {activeTab === 'roles' && <RoleAssignmentsTab tenantId={selectedTenantId} />}
+      {activeTab === 'sync' && <UserSyncTab tenantId={selectedTenantId} />}
     </div>
   );
 }
 
 // ─── Tenant Users Tab ───
 
-function TenantUsersTab() {
-  const { data, isLoading, error } = useTenantUsers();
+function TenantUsersTab({ tenantId }: { tenantId: string }) {
+  const { data, isLoading, error } = useTenantUsers(tenantId);
   const [search, setSearch] = useState('');
 
   const users = data?.data ?? [];
@@ -181,10 +213,10 @@ function TenantUsersTab() {
 
 // ─── Role Assignments Tab ───
 
-function RoleAssignmentsTab() {
+function RoleAssignmentsTab({ tenantId }: { tenantId: string }) {
   const { data: assignmentsData, isLoading: loadingAssignments } = useRoleAssignments();
   const { data: rolesData } = useAppRoles();
-  const { data: usersData } = useTenantUsers();
+  const { data: usersData } = useTenantUsers(tenantId);
   const assignRole = useAssignAppRole();
   const removeRole = useRemoveAppRoleAssignment();
 
@@ -328,8 +360,8 @@ function RoleAssignmentsTab() {
 
 // ─── User Sync Tab ───
 
-function UserSyncTab() {
-  const { data: tenantData, isLoading: loadingTenant } = useTenantUsers();
+function UserSyncTab({ tenantId }: { tenantId: string }) {
+  const { data: tenantData, isLoading: loadingTenant } = useTenantUsers(tenantId);
   const { data: crmData, isLoading: loadingCrm } = useCrmUsers();
   const syncMutation = useSyncUsers();
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -358,7 +390,7 @@ function UserSyncTab() {
 
   const handleSync = () => {
     if (selected.size === 0) return;
-    syncMutation.mutate(Array.from(selected), {
+    syncMutation.mutate({ userIds: Array.from(selected), tenantId }, {
       onSuccess: () => setSelected(new Set()),
     });
   };

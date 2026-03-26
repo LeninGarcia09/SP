@@ -28,79 +28,136 @@ import type {
 @Injectable()
 export class GraphService implements OnModuleInit {
   private readonly logger = new Logger(GraphService.name);
-  private cca!: ConfidentialClientApplication;
-  private readonly tenantId: string;
+  private defaultCca!: ConfidentialClientApplication;
+  private readonly defaultTenantId: string;
   private readonly clientId: string;
   private readonly servicePrincipalId: string;
   private enabled = false;
 
+  // Credential material — kept for building per-tenant CCAs
+  private certBase64?: string;
+  private certThumbprint?: string;
+  private clientSecret?: string;
+
   constructor(private readonly config: ConfigService) {
-    this.tenantId = this.config.get<string>('AZURE_AD_TENANT_ID') ?? '';
+    this.defaultTenantId = this.config.get<string>('AZURE_AD_TENANT_ID') ?? '';
     this.clientId = this.config.get<string>('AZURE_AD_CLIENT_ID') ?? '';
     this.servicePrincipalId =
       this.config.get<string>('AZURE_AD_SERVICE_PRINCIPAL_ID') ?? '';
   }
 
   onModuleInit() {
-    if (!this.tenantId || !this.clientId) {
+    if (!this.defaultTenantId || !this.clientId) {
       this.logger.warn(
         'Graph service disabled — AZURE_AD_TENANT_ID or AZURE_AD_CLIENT_ID not set',
       );
       return;
     }
 
-    const certBase64 = this.config.get<string>(
+    this.certBase64 = this.config.get<string>(
       'AZURE_AD_CLIENT_CERTIFICATE_BASE64',
     );
-    const certThumbprint = this.config.get<string>(
+    this.certThumbprint = this.config.get<string>(
       'AZURE_AD_CLIENT_CERTIFICATE_THUMBPRINT',
     );
-    const clientSecret = this.config.get<string>('AZURE_AD_CLIENT_SECRET');
+    this.clientSecret = this.config.get<string>('AZURE_AD_CLIENT_SECRET');
 
-    const authority = `https://login.microsoftonline.com/${this.tenantId}`;
+    const cca = this.buildCca(this.defaultTenantId);
+    if (cca) {
+      this.defaultCca = cca;
+      this.enabled = true;
+    }
+  }
 
-    if (certBase64 && certThumbprint) {
-      // Certificate-based credential (preferred)
-      const certBuffer = Buffer.from(certBase64, 'base64');
-      this.cca = new ConfidentialClientApplication({
+  /**
+   * Build a ConfidentialClientApplication for a specific tenant.
+   */
+  private buildCca(tenantId: string): ConfidentialClientApplication | null {
+    const authority = `https://login.microsoftonline.com/${tenantId}`;
+
+    if (this.certBase64 && this.certThumbprint) {
+      const certBuffer = Buffer.from(this.certBase64, 'base64');
+      const cca = new ConfidentialClientApplication({
         auth: {
           clientId: this.clientId,
           authority,
           clientCertificate: {
-            thumbprint: certThumbprint,
+            thumbprint: this.certThumbprint,
             privateKey: certBuffer.toString('utf-8'),
           },
         },
       });
-      this.enabled = true;
-      this.logger.log('Graph service initialized with certificate credential');
-    } else if (clientSecret) {
-      // Fallback to client secret
-      this.cca = new ConfidentialClientApplication({
+      this.logger.log(`Graph CCA built for tenant ${tenantId} (certificate)`);
+      return cca;
+    } else if (this.clientSecret) {
+      const cca = new ConfidentialClientApplication({
         auth: {
           clientId: this.clientId,
           authority,
-          clientSecret,
+          clientSecret: this.clientSecret,
         },
       });
-      this.enabled = true;
-      this.logger.log('Graph service initialized with client secret credential');
-    } else {
-      this.logger.warn(
-        'Graph service disabled — no certificate or client secret configured',
-      );
+      this.logger.log(`Graph CCA built for tenant ${tenantId} (secret)`);
+      return cca;
     }
+
+    this.logger.warn(
+      'Graph service disabled — no certificate or client secret configured',
+    );
+    return null;
   }
 
   get isEnabled(): boolean {
     return this.enabled;
   }
 
+  /** Returns the allowed tenant IDs from ALLOWED_TENANT_IDS env var. */
+  get allowedTenantIds(): string[] {
+    const raw = this.config.get<string>('ALLOWED_TENANT_IDS') ?? '';
+    return raw.split(',').map((t) => t.trim()).filter(Boolean);
+  }
+
+  /**
+   * Fetch display info for each allowed tenant by querying /organization.
+   * Falls back to just the tenant ID if the query fails.
+   */
+  async listAllowedTenants(): Promise<{ id: string; displayName: string }[]> {
+    const results: { id: string; displayName: string }[] = [];
+
+    for (const tid of this.allowedTenantIds) {
+      try {
+        const client = await this.getGraphClient(tid);
+        const org = await client.api('/organization').select('id,displayName').get();
+        const info = org.value?.[0];
+        results.push({
+          id: tid,
+          displayName: info?.displayName ?? tid,
+        });
+      } catch (err) {
+        this.logger.warn(`Could not fetch org info for tenant ${tid}: ${err}`);
+        results.push({ id: tid, displayName: tid });
+      }
+    }
+
+    return results;
+  }
+
   /**
    * Acquire an app-only token via client credentials and return a Graph client.
+   * When tenantId is provided and differs from the default, a new CCA is built on-the-fly.
    */
-  private async getGraphClient(): Promise<Client> {
-    const result = await this.cca.acquireTokenByClientCredential({
+  private async getGraphClient(tenantId?: string): Promise<Client> {
+    let cca = this.defaultCca;
+
+    if (tenantId && tenantId !== this.defaultTenantId) {
+      const tenantCca = this.buildCca(tenantId);
+      if (!tenantCca) {
+        throw new Error(`Cannot build Graph client for tenant ${tenantId}`);
+      }
+      cca = tenantCca;
+    }
+
+    const result = await cca.acquireTokenByClientCredential({
       scopes: ['https://graph.microsoft.com/.default'],
     });
 
@@ -119,8 +176,8 @@ export class GraphService implements OnModuleInit {
 
   // ─── Tenant Users ───
 
-  async listTenantUsers(): Promise<TenantUser[]> {
-    const client = await this.getGraphClient();
+  async listTenantUsers(tenantId?: string): Promise<TenantUser[]> {
+    const client = await this.getGraphClient(tenantId);
 
     const response = await client
       .api('/users')
@@ -142,8 +199,8 @@ export class GraphService implements OnModuleInit {
     }));
   }
 
-  async getTenantUser(userId: string): Promise<TenantUser> {
-    const client = await this.getGraphClient();
+  async getTenantUser(userId: string, tenantId?: string): Promise<TenantUser> {
+    const client = await this.getGraphClient(tenantId);
 
     const u = await client
       .api(`/users/${userId}`)
