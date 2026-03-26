@@ -10,6 +10,7 @@ import {
   CreateInventoryTransactionDto,
 } from './dto/inventory.dto';
 import { PaginationDto, PaginatedResult } from '../../common/dto/pagination.dto';
+import { getTenantFilter, getCurrentTenantId } from '../../common/tenant/tenant.context';
 import { AssetCategory } from '@telnub/shared';
 
 @Injectable()
@@ -26,13 +27,14 @@ export class InventoryService {
   async findAllItems(query: PaginationDto): Promise<PaginatedResult<InventoryItemEntity>> {
     const { page, limit, sortBy, order, search } = query;
     const skip = (page - 1) * limit;
+    const tf = getTenantFilter();
 
     const where = search
       ? [
-          { name: ILike(`%${search}%`) },
-          { sku: ILike(`%${search}%`) },
+          { name: ILike(`%${search}%`), ...tf },
+          { sku: ILike(`%${search}%`), ...tf },
         ]
-      : undefined;
+      : Object.keys(tf).length > 0 ? [tf] : undefined;
 
     const [data, total] = await this.itemRepo.findAndCount({
       where,
@@ -48,13 +50,14 @@ export class InventoryService {
   }
 
   async findItemById(id: string): Promise<InventoryItemEntity> {
-    const item = await this.itemRepo.findOne({ where: { id } });
+    const tf = getTenantFilter();
+    const item = await this.itemRepo.findOne({ where: { id, ...tf } });
     if (!item) throw new NotFoundException(`Inventory item ${id} not found`);
     return item;
   }
 
   async createItem(dto: CreateInventoryItemDto): Promise<InventoryItemEntity> {
-    const item = this.itemRepo.create(dto);
+    const item = this.itemRepo.create({ ...dto, tenantId: getCurrentTenantId() });
     return this.itemRepo.save(item);
   }
 
@@ -67,8 +70,9 @@ export class InventoryService {
   // --- Transactions (append-only) ---
 
   async findTransactionsByItem(itemId: string): Promise<InventoryTransactionEntity[]> {
+    const tf = getTenantFilter();
     return this.transactionRepo.find({
-      where: { itemId },
+      where: { itemId, ...tf },
       order: { transactionDate: 'DESC' },
     });
   }
@@ -78,7 +82,7 @@ export class InventoryService {
     dto: CreateInventoryTransactionDto,
     performedById: string,
   ): Promise<InventoryTransactionEntity> {
-    const transaction = this.transactionRepo.create({ ...dto, itemId, performedById });
+    const transaction = this.transactionRepo.create({ ...dto, itemId, performedById, tenantId: getCurrentTenantId() });
     return this.transactionRepo.save(transaction);
   }
 
@@ -147,7 +151,7 @@ export class InventoryService {
       }
 
       // Check for duplicate SKU in database
-      const exists = await this.itemRepo.findOne({ where: { sku } });
+      const exists = await this.itemRepo.findOne({ where: { sku, ...getTenantFilter() } });
       if (exists) {
         errors.push(`Row ${rowNum}: SKU "${sku}" already exists — skipped`);
         skipped++;
@@ -169,6 +173,7 @@ export class InventoryService {
         purchaseCost: row['purchaseCost'] ?? row['purchase_cost']
           ? Number(row['purchaseCost'] ?? row['purchase_cost'])
           : null,
+        tenantId: getCurrentTenantId(),
       });
       imported.push(item);
     }

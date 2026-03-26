@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
 } from 'typeorm';
 
 @Entity('persons')
@@ -49,4 +50,8 @@ export class PersonEntity {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Index()
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  tenantId: string | null;
 }

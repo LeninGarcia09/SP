@@ -38,4 +38,8 @@ export class PersonSkillEntity {
   @ManyToOne(() => SkillEntity, { onDelete: 'CASCADE', eager: true })
   @JoinColumn({ name: 'skillId' })
   skill!: SkillEntity;
+
+  @Index()
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  tenantId!: string | null;
 }

@@ -11,6 +11,7 @@ import {
   UpdateAssignmentDto,
 } from './dto/personnel.dto';
 import { PaginationDto, PaginatedResult } from '../../common/dto/pagination.dto';
+import { getTenantFilter, getCurrentTenantId } from '../../common/tenant/tenant.context';
 import type { ResourceMatch, Person } from '@telnub/shared';
 
 @Injectable()
@@ -29,14 +30,15 @@ export class PersonnelService {
   async findAllPersons(query: PaginationDto): Promise<PaginatedResult<PersonEntity>> {
     const { page, limit, sortBy, order, search } = query;
     const skip = (page - 1) * limit;
+    const tf = getTenantFilter();
 
     const where = search
       ? [
-          { firstName: ILike(`%${search}%`) },
-          { lastName: ILike(`%${search}%`) },
-          { email: ILike(`%${search}%`) },
+          { firstName: ILike(`%${search}%`), ...tf },
+          { lastName: ILike(`%${search}%`), ...tf },
+          { email: ILike(`%${search}%`), ...tf },
         ]
-      : undefined;
+      : Object.keys(tf).length > 0 ? [tf] : undefined;
 
     const [data, total] = await this.personRepo.findAndCount({
       where,
@@ -52,13 +54,14 @@ export class PersonnelService {
   }
 
   async findPersonById(id: string): Promise<PersonEntity> {
-    const person = await this.personRepo.findOne({ where: { id } });
+    const tf = getTenantFilter();
+    const person = await this.personRepo.findOne({ where: { id, ...tf } });
     if (!person) throw new NotFoundException(`Person ${id} not found`);
     return person;
   }
 
   async createPerson(dto: CreatePersonDto): Promise<PersonEntity> {
-    const person = this.personRepo.create(dto);
+    const person = this.personRepo.create({ ...dto, tenantId: getCurrentTenantId() });
     return this.personRepo.save(person);
   }
 
@@ -71,22 +74,25 @@ export class PersonnelService {
   // --- Assignments ---
 
   async findAssignmentsByPerson(personId: string): Promise<ProjectAssignmentEntity[]> {
-    return this.assignmentRepo.find({ where: { personId }, relations: ['project'] });
+    const tf = getTenantFilter();
+    return this.assignmentRepo.find({ where: { personId, ...tf }, relations: ['project'] });
   }
 
   async findAllActiveAssignments(): Promise<ProjectAssignmentEntity[]> {
+    const tf = getTenantFilter();
     return this.assignmentRepo.find({
-      where: { isActive: true },
+      where: { isActive: true, ...tf },
       relations: ['person', 'project'],
     });
   }
 
   async findAssignmentsByProject(projectId: string): Promise<ProjectAssignmentEntity[]> {
-    return this.assignmentRepo.find({ where: { projectId }, relations: ['person'] });
+    const tf = getTenantFilter();
+    return this.assignmentRepo.find({ where: { projectId, ...tf }, relations: ['person'] });
   }
 
   async createAssignment(dto: CreateAssignmentDto): Promise<ProjectAssignmentEntity> {
-    const assignment = this.assignmentRepo.create(dto);
+    const assignment = this.assignmentRepo.create({ ...dto, tenantId: getCurrentTenantId() });
     return this.assignmentRepo.save(assignment);
   }
 
@@ -94,7 +100,8 @@ export class PersonnelService {
     id: string,
     dto: UpdateAssignmentDto,
   ): Promise<ProjectAssignmentEntity> {
-    const assignment = await this.assignmentRepo.findOne({ where: { id } });
+    const tf = getTenantFilter();
+    const assignment = await this.assignmentRepo.findOne({ where: { id, ...tf } });
     if (!assignment) throw new NotFoundException(`Assignment ${id} not found`);
     Object.assign(assignment, dto);
     return this.assignmentRepo.save(assignment);
@@ -113,6 +120,7 @@ export class PersonnelService {
 
     // Get all person skills with skill info eager-loaded
     const allPersonSkills = await this.personSkillRepo.find({
+      where: { ...getTenantFilter() },
       relations: ['person', 'skill'],
     });
 
@@ -127,7 +135,7 @@ export class PersonnelService {
 
     // Get active assignments for allocation calculation
     const activeAssignments = await this.assignmentRepo.find({
-      where: { isActive: true },
+      where: { isActive: true, ...getTenantFilter() },
     });
     const allocationMap = new Map<string, number>();
     for (const a of activeAssignments) {

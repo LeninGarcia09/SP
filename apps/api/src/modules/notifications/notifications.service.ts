@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { NotificationEntity } from './notification.entity';
 import { CreateNotificationDto } from './dto/notification.dto';
+import { getCurrentTenantId, getTenantFilter } from '../../common/tenant/tenant.context';
 
 @Injectable()
 export class NotificationsService {
@@ -13,39 +14,44 @@ export class NotificationsService {
 
   async findByUser(userId: string) {
     return this.repo.find({
-      where: { userId },
+      where: { userId, ...getTenantFilter() },
       order: { createdAt: 'DESC' },
       take: 50,
     });
   }
 
   async countUnread(userId: string) {
-    return this.repo.count({ where: { userId, isRead: false } });
+    return this.repo.count({ where: { userId, isRead: false, ...getTenantFilter() } });
   }
 
   async create(dto: CreateNotificationDto) {
-    const notification = this.repo.create(dto);
+    const notification = this.repo.create({ ...dto, tenantId: getCurrentTenantId() });
     return this.repo.save(notification);
   }
 
   async markRead(id: string, isRead: boolean) {
-    const notification = await this.repo.findOneBy({ id });
+    const notification = await this.repo.findOneBy({ id, ...getTenantFilter() });
     if (!notification) throw new NotFoundException('Notification not found');
     notification.isRead = isRead;
     return this.repo.save(notification);
   }
 
   async markAllRead(userId: string) {
-    await this.repo
+    const tenantId = getCurrentTenantId();
+    const qb = this.repo
       .createQueryBuilder()
       .update(NotificationEntity)
       .set({ isRead: true })
-      .where('userId = :userId AND isRead = false', { userId })
-      .execute();
+      .where('"userId" = :userId AND "isRead" = false', { userId });
+    if (tenantId) {
+      qb.andWhere('"tenantId" = :tenantId', { tenantId });
+    }
+    await qb.execute();
   }
 
   async delete(id: string) {
-    const result = await this.repo.delete(id);
-    if (result.affected === 0) throw new NotFoundException('Notification not found');
+    const notification = await this.repo.findOneBy({ id, ...getTenantFilter() });
+    if (!notification) throw new NotFoundException('Notification not found');
+    await this.repo.remove(notification);
   }
 }

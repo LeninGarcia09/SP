@@ -58,4 +58,8 @@ export class ProgramEntity {
 
   @OneToMany(() => ProjectEntity, (p) => p.program)
   projects!: ProjectEntity[];
+
+  @Index()
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  tenantId!: string | null;
 }

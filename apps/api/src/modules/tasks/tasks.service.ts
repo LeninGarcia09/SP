@@ -5,6 +5,7 @@ import { TaskEntity } from './task.entity';
 import { TaskActivityEntity } from './task-activity.entity';
 import { CreateTaskDto, UpdateTaskDto } from './dto/task.dto';
 import { PaginationDto, PaginatedResult } from '../../common/dto/pagination.dto';
+import { getTenantFilter, getCurrentTenantId } from '../../common/tenant/tenant.context';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ProjectsService } from '../projects/projects.service';
 import { NotificationType, ProjectMemberRole, TaskActivityType, TaskStatus } from '@telnub/shared';
@@ -26,10 +27,11 @@ export class TasksService {
   ): Promise<PaginatedResult<TaskEntity>> {
     const { page, limit, sortBy, order, search } = query;
     const skip = (page - 1) * limit;
+    const tf = getTenantFilter();
 
     const where: Record<string, unknown>[] = search
-      ? [{ projectId, title: ILike(`%${search}%`) }]
-      : [{ projectId }];
+      ? [{ projectId, title: ILike(`%${search}%`), ...tf }]
+      : [{ projectId, ...tf }];
 
     const [data, total] = await this.taskRepo.findAndCount({
       where,
@@ -45,7 +47,8 @@ export class TasksService {
   }
 
   async findById(id: string): Promise<TaskEntity> {
-    const task = await this.taskRepo.findOne({ where: { id } });
+    const tf = getTenantFilter();
+    const task = await this.taskRepo.findOne({ where: { id, ...tf } });
     if (!task) {
       throw new NotFoundException(`Task ${id} not found`);
     }
@@ -57,7 +60,7 @@ export class TasksService {
     dto: CreateTaskDto,
     userId: string,
   ): Promise<TaskEntity> {
-    const task = this.taskRepo.create({ ...dto, projectId, createdById: userId });
+    const task = this.taskRepo.create({ ...dto, projectId, createdById: userId, tenantId: getCurrentTenantId() });
     const saved = await this.taskRepo.save(task);
 
     // Log creation activity
@@ -114,7 +117,7 @@ export class TasksService {
 
   async getActivities(taskId: string): Promise<TaskActivityEntity[]> {
     return this.activityRepo.find({
-      where: { taskId },
+      where: { taskId, ...getTenantFilter() },
       order: { createdAt: 'DESC' },
       take: 100,
     });
@@ -160,10 +163,12 @@ export class TasksService {
 
   async findOverdueTasks(): Promise<TaskEntity[]> {
     const today = new Date().toISOString().split('T')[0];
+    const tf = getTenantFilter();
     return this.taskRepo.find({
       where: {
         dueDate: And(Not(IsNull()), LessThan(today)),
         status: Not(TaskStatus.DONE),
+        ...tf,
       },
     });
   }
@@ -187,6 +192,7 @@ export class TasksService {
       oldValue,
       newValue,
       comment: comment ?? null,
+      tenantId: getCurrentTenantId(),
     });
     return this.activityRepo.save(activity);
   }

@@ -7,6 +7,7 @@ import { CostEntryEntity } from '../costs/cost-entry.entity';
 import { ProjectEntity } from '../projects/project.entity';
 import { CreateDeliverableDto, UpdateDeliverableDto } from './dto/deliverable.dto';
 import { CostEntryStatus, TaskStatus } from '@telnub/shared';
+import { getTenantFilter, getCurrentTenantId } from '../../common/tenant/tenant.context';
 import type { DeliverableSummary, TaskCostBreakdown } from '@telnub/shared';
 
 @Injectable()
@@ -23,17 +24,18 @@ export class DeliverablesService {
   ) {}
 
   async findByProject(projectId: string): Promise<DeliverableSummary[]> {
+    const tf = getTenantFilter();
     const deliverables = await this.deliverableRepo.find({
-      where: { projectId },
+      where: { projectId, ...tf },
       order: { sortOrder: 'ASC', createdAt: 'ASC' },
     });
 
-    const project = await this.projectRepo.findOneBy({ id: projectId });
+    const project = await this.projectRepo.findOneBy({ id: projectId, ...tf });
     const projectCostRate = Number(project?.costRate || 0);
 
     const summaries: DeliverableSummary[] = [];
     for (const d of deliverables) {
-      const tasks = await this.taskRepo.find({ where: { deliverableId: d.id } });
+      const tasks = await this.taskRepo.find({ where: { deliverableId: d.id, ...tf } });
       const taskIds = tasks.map((t) => t.id);
 
       const taskCount = tasks.length;
@@ -75,16 +77,18 @@ export class DeliverablesService {
   }
 
   async findById(id: string): Promise<DeliverableEntity> {
-    const deliverable = await this.deliverableRepo.findOneBy({ id });
+    const tf = getTenantFilter();
+    const deliverable = await this.deliverableRepo.findOneBy({ id, ...tf });
     if (!deliverable) throw new NotFoundException(`Deliverable ${id} not found`);
     return deliverable;
   }
 
   async create(projectId: string, dto: CreateDeliverableDto): Promise<DeliverableEntity> {
-    const project = await this.projectRepo.findOneBy({ id: projectId });
+    const tf = getTenantFilter();
+    const project = await this.projectRepo.findOneBy({ id: projectId, ...tf });
     if (!project) throw new NotFoundException(`Project ${projectId} not found`);
 
-    const deliverable = this.deliverableRepo.create({ ...dto, projectId });
+    const deliverable = this.deliverableRepo.create({ ...dto, projectId, tenantId: getCurrentTenantId() });
     return this.deliverableRepo.save(deliverable);
   }
 
@@ -97,18 +101,18 @@ export class DeliverablesService {
   async remove(id: string): Promise<void> {
     const deliverable = await this.findById(id);
     // Unlink tasks from this deliverable before removing
-    await this.taskRepo.update({ deliverableId: id }, { deliverableId: null });
+    await this.taskRepo.update({ deliverableId: id, ...getTenantFilter() }, { deliverableId: null });
     await this.deliverableRepo.remove(deliverable);
   }
 
   /** Get per-task cost breakdown for a deliverable */
   async getTaskCosts(deliverableId: string): Promise<TaskCostBreakdown[]> {
     const deliverable = await this.findById(deliverableId);
-    const project = await this.projectRepo.findOneBy({ id: deliverable.projectId });
+    const project = await this.projectRepo.findOneBy({ id: deliverable.projectId, ...getTenantFilter() });
     const projectCostRate = Number(project?.costRate || 0);
 
     const tasks = await this.taskRepo.find({
-      where: { deliverableId },
+      where: { deliverableId, ...getTenantFilter() },
       order: { createdAt: 'ASC' },
     });
 

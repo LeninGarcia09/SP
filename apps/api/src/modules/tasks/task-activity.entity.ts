@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { TaskEntity } from './task.entity';
 import { TaskActivityType } from '@telnub/shared';
@@ -42,4 +43,8 @@ export class TaskActivityEntity {
   @CreateDateColumn()
   createdAt: Date;
   // NO updatedAt — this table is append-only (immutable audit log)
+
+  @Index()
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  tenantId: string | null;
 }

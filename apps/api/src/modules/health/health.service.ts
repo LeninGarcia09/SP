@@ -5,6 +5,7 @@ import { ProjectHealthSnapshotEntity } from './health-snapshot.entity';
 import { ProjectEntity } from '../projects/project.entity';
 import { TaskEntity } from '../tasks/task.entity';
 import { RagEngine } from './rag.engine';
+import { getTenantFilter, getCurrentTenantId } from '../../common/tenant/tenant.context';
 
 @Injectable()
 export class HealthService {
@@ -19,19 +20,21 @@ export class HealthService {
   ) {}
 
   async getHistory(projectId: string): Promise<ProjectHealthSnapshotEntity[]> {
+    const tf = getTenantFilter();
     return this.snapshotRepo.find({
-      where: { projectId },
+      where: { projectId, ...tf },
       order: { snapshotDate: 'DESC' },
     });
   }
 
   async triggerCalculation(projectId: string): Promise<ProjectHealthSnapshotEntity> {
-    const project = await this.projectRepo.findOne({ where: { id: projectId } });
+    const tf = getTenantFilter();
+    const project = await this.projectRepo.findOne({ where: { id: projectId, ...tf } });
     if (!project) {
       throw new NotFoundException(`Project ${projectId} not found`);
     }
 
-    const tasks = await this.taskRepo.find({ where: { projectId } });
+    const tasks = await this.taskRepo.find({ where: { projectId, ...tf } });
     const result = this.ragEngine.calculate(project, tasks);
 
     const snapshot = this.snapshotRepo.create({
@@ -39,6 +42,7 @@ export class HealthService {
       snapshotDate: new Date().toISOString().split('T')[0],
       ...result,
       autoCalculated: true,
+      tenantId: getCurrentTenantId(),
     });
 
     return this.snapshotRepo.save(snapshot);
@@ -61,6 +65,9 @@ export class HealthService {
       throw new ForbiddenException('Override reason must be at least 20 characters');
     }
 
+    const project = await this.projectRepo.findOne({ where: { id: projectId, ...getTenantFilter() } });
+    if (!project) throw new NotFoundException(`Project ${projectId} not found`);
+
     const snapshot = this.snapshotRepo.create({
       projectId,
       snapshotDate: new Date().toISOString().split('T')[0],
@@ -70,6 +77,7 @@ export class HealthService {
       autoCalculated: false,
       overrideReason,
       overrideBy,
+      tenantId: getCurrentTenantId(),
     });
 
     return this.snapshotRepo.save(snapshot);

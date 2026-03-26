@@ -24,4 +24,8 @@ export class SkillEntity {
 
   @CreateDateColumn()
   createdAt!: Date;
+
+  @Index()
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  tenantId!: string | null;
 }

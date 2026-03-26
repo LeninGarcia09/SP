@@ -68,4 +68,8 @@ export class ProjectEntity {
 
   @DeleteDateColumn()
   deletedAt!: Date | null;
+
+  @Index()
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  tenantId!: string | null;
 }

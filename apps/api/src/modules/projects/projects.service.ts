@@ -9,6 +9,7 @@ import { CreateProjectDto, UpdateProjectDto } from './dto/project.dto';
 import { AddProjectMemberDto, UpdateProjectMemberDto } from './dto/project-member.dto';
 import { CreateProjectNoteDto, UpdateProjectNoteDto } from './dto/project-note.dto';
 import { PaginationDto, PaginatedResult } from '../../common/dto/pagination.dto';
+import { getTenantFilter, getCurrentTenantId } from '../../common/tenant/tenant.context';
 import type { ProjectHoursSummary } from '@telnub/shared';
 
 @Injectable()
@@ -27,13 +28,14 @@ export class ProjectsService {
   async findAll(query: PaginationDto): Promise<PaginatedResult<ProjectEntity>> {
     const { page, limit, sortBy, order, search } = query;
     const skip = (page - 1) * limit;
+    const tf = getTenantFilter();
 
     const where = search
       ? [
-          { name: ILike(`%${search}%`) },
-          { code: ILike(`%${search}%`) },
+          { name: ILike(`%${search}%`), ...tf },
+          { code: ILike(`%${search}%`), ...tf },
         ]
-      : undefined;
+      : Object.keys(tf).length > 0 ? [tf] : undefined;
 
     const [data, total] = await this.projectRepo.findAndCount({
       where,
@@ -49,7 +51,8 @@ export class ProjectsService {
   }
 
   async findById(id: string): Promise<ProjectEntity> {
-    const project = await this.projectRepo.findOneBy({ id });
+    const tf = getTenantFilter();
+    const project = await this.projectRepo.findOneBy({ id, ...tf });
     if (!project) throw new NotFoundException(`Project ${id} not found`);
     return project;
   }
@@ -60,7 +63,7 @@ export class ProjectsService {
     const count = await this.projectRepo.count({ withDeleted: true });
     const code = `PROJ-${year}-${String(count + 1).padStart(3, '0')}`;
     const projectLeadId = dto.projectLeadId ?? createdBy;
-    const entity = this.projectRepo.create({ ...dto, code, createdBy, projectLeadId });
+    const entity = this.projectRepo.create({ ...dto, code, createdBy, projectLeadId, tenantId: getCurrentTenantId() });
     return this.projectRepo.save(entity);
   }
 
@@ -76,16 +79,18 @@ export class ProjectsService {
   }
 
   async findDeleted(): Promise<ProjectEntity[]> {
+    const tf = getTenantFilter();
     return this.projectRepo.find({
       withDeleted: true,
-      where: { deletedAt: Not(IsNull()) },
+      where: { deletedAt: Not(IsNull()), ...tf },
       order: { deletedAt: 'DESC' },
     });
   }
 
   async restore(id: string): Promise<ProjectEntity> {
+    const tf = getTenantFilter();
     const project = await this.projectRepo.findOne({
-      where: { id },
+      where: { id, ...tf },
       withDeleted: true,
     });
     if (!project || !project.deletedAt) {
@@ -97,27 +102,30 @@ export class ProjectsService {
   // ─── Members ───
 
   async findMembers(projectId: string): Promise<ProjectMemberEntity[]> {
-    await this.findById(projectId); // ensure project exists
-    return this.memberRepo.find({ where: { projectId }, order: { joinedAt: 'DESC' } });
+    await this.findById(projectId); // ensure project exists + tenant check
+    const tf = getTenantFilter();
+    return this.memberRepo.find({ where: { projectId, ...tf }, order: { joinedAt: 'DESC' } });
   }
 
   async addMember(projectId: string, dto: AddProjectMemberDto): Promise<ProjectMemberEntity> {
     await this.findById(projectId);
-    const existing = await this.memberRepo.findOneBy({ projectId, userId: dto.userId });
+    const existing = await this.memberRepo.findOneBy({ projectId, userId: dto.userId, ...getTenantFilter() });
     if (existing) throw new ConflictException('User is already a member of this project');
-    const entity = this.memberRepo.create({ projectId, ...dto });
+    const entity = this.memberRepo.create({ projectId, ...dto, tenantId: getCurrentTenantId() });
     return this.memberRepo.save(entity);
   }
 
   async updateMemberRole(memberId: string, dto: UpdateProjectMemberDto): Promise<ProjectMemberEntity> {
-    const member = await this.memberRepo.findOneBy({ id: memberId });
+    const tf = getTenantFilter();
+    const member = await this.memberRepo.findOneBy({ id: memberId, ...tf });
     if (!member) throw new NotFoundException(`Member ${memberId} not found`);
     member.role = dto.role;
     return this.memberRepo.save(member);
   }
 
   async removeMember(memberId: string): Promise<void> {
-    const member = await this.memberRepo.findOneBy({ id: memberId });
+    const tf = getTenantFilter();
+    const member = await this.memberRepo.findOneBy({ id: memberId, ...tf });
     if (!member) throw new NotFoundException(`Member ${memberId} not found`);
     await this.memberRepo.remove(member);
   }
@@ -126,27 +134,30 @@ export class ProjectsService {
 
   async findNotes(projectId: string): Promise<ProjectNoteEntity[]> {
     await this.findById(projectId);
+    const tf = getTenantFilter();
     return this.noteRepo.find({
-      where: { projectId },
+      where: { projectId, ...tf },
       order: { isPinned: 'DESC', createdAt: 'DESC' },
     });
   }
 
   async createNote(projectId: string, dto: CreateProjectNoteDto, authorId: string): Promise<ProjectNoteEntity> {
     await this.findById(projectId);
-    const entity = this.noteRepo.create({ projectId, authorId, ...dto });
+    const entity = this.noteRepo.create({ projectId, authorId, ...dto, tenantId: getCurrentTenantId() });
     return this.noteRepo.save(entity);
   }
 
   async updateNote(noteId: string, dto: UpdateProjectNoteDto): Promise<ProjectNoteEntity> {
-    const note = await this.noteRepo.findOneBy({ id: noteId });
+    const tf = getTenantFilter();
+    const note = await this.noteRepo.findOneBy({ id: noteId, ...tf });
     if (!note) throw new NotFoundException(`Note ${noteId} not found`);
     Object.assign(note, dto);
     return this.noteRepo.save(note);
   }
 
   async deleteNote(noteId: string): Promise<void> {
-    const note = await this.noteRepo.findOneBy({ id: noteId });
+    const tf = getTenantFilter();
+    const note = await this.noteRepo.findOneBy({ id: noteId, ...tf });
     if (!note) throw new NotFoundException(`Note ${noteId} not found`);
     await this.noteRepo.remove(note);
   }
@@ -155,7 +166,7 @@ export class ProjectsService {
 
   async getHoursSummary(projectId: string): Promise<ProjectHoursSummary> {
     const project = await this.findById(projectId);
-    const tasks = await this.taskRepo.find({ where: { projectId } });
+    const tasks = await this.taskRepo.find({ where: { projectId, ...getTenantFilter() } });
 
     let totalEstimatedHours = 0;
     let totalActualHours = 0;

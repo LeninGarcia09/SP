@@ -4,6 +4,7 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { PersonEntity } from './person.entity';
 import { ProjectEntity } from '../projects/project.entity';
@@ -41,4 +42,8 @@ export class ProjectAssignmentEntity {
 
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
+
+  @Index()
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  tenantId: string | null;
 }

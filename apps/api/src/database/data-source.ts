@@ -18,6 +18,8 @@ import { SkillEntity } from '../modules/skills/skill.entity';
 import { PersonSkillEntity } from '../modules/skills/person-skill.entity';
 import { ProgramEntity } from '../modules/programs/program.entity';
 import { OpportunityEntity } from '../modules/opportunities/opportunity.entity';
+import { DeliverableEntity } from '../modules/deliverables/deliverable.entity';
+import { CostEntryEntity } from '../modules/costs/cost-entry.entity';
 
 dotenv.config();
 
@@ -42,6 +44,8 @@ export const AppDataSource = new DataSource({
     PersonSkillEntity,
     ProgramEntity,
     OpportunityEntity,
+    DeliverableEntity,
+    CostEntryEntity,
   ],
   migrations: [path.join(__dirname, 'migrations', '*{.ts,.js}')],
   synchronize: process.env.TYPEORM_SYNC === 'true',

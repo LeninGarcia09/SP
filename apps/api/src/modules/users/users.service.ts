@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ILike, Repository } from 'typeorm';
 import { UserEntity } from './user.entity';
 import { PaginationDto, PaginatedResult } from '../../common/dto/pagination.dto';
+import { getTenantFilter } from '../../common/tenant/tenant.context';
 import { UserRole } from '@telnub/shared';
 
 @Injectable()
@@ -15,13 +16,14 @@ export class UsersService {
   async findAll(query: PaginationDto): Promise<PaginatedResult<UserEntity>> {
     const { page, limit, sortBy, order, search } = query;
     const skip = (page - 1) * limit;
+    const tf = getTenantFilter();
 
     const where = search
       ? [
-          { displayName: ILike(`%${search}%`) },
-          { email: ILike(`%${search}%`) },
+          { displayName: ILike(`%${search}%`), ...tf },
+          { email: ILike(`%${search}%`), ...tf },
         ]
-      : undefined;
+      : Object.keys(tf).length > 0 ? [tf] : undefined;
 
     const [data, total] = await this.userRepo.findAndCount({
       where,

@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { ProjectEntity } from '../projects/project.entity';
 
@@ -43,4 +44,8 @@ export class ProjectHealthSnapshotEntity {
 
   @CreateDateColumn()
   createdAt: Date;
+
+  @Index()
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  tenantId: string | null;
 }

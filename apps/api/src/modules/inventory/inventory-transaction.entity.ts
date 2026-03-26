@@ -4,6 +4,7 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { InventoryItemEntity } from './inventory-item.entity';
 
@@ -47,4 +48,8 @@ export class InventoryTransactionEntity {
   transactionDate: Date;
 
   // NO updatedAt — append-only table
+
+  @Index()
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  tenantId: string | null;
 }

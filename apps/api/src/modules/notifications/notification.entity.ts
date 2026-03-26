@@ -3,6 +3,7 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  Index,
 } from 'typeorm';
 import { NotificationType } from '@telnub/shared';
 
@@ -34,4 +35,8 @@ export class NotificationEntity {
 
   @CreateDateColumn()
   createdAt!: Date;
+
+  @Index()
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  tenantId!: string | null;
 }

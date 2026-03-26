@@ -5,6 +5,7 @@ import { OpportunityEntity } from './opportunity.entity';
 import { ProjectEntity } from '../projects/project.entity';
 import { CreateOpportunityDto, UpdateOpportunityDto, ConvertOpportunityDto } from './dto/opportunity.dto';
 import { PaginationDto, PaginatedResult } from '../../common/dto/pagination.dto';
+import { getTenantFilter, getCurrentTenantId } from '../../common/tenant/tenant.context';
 import { OpportunityStatus } from '@telnub/shared';
 
 @Injectable()
@@ -19,14 +20,15 @@ export class OpportunitiesService {
   async findAll(query: PaginationDto): Promise<PaginatedResult<OpportunityEntity>> {
     const { page, limit, sortBy, order, search } = query;
     const skip = (page - 1) * limit;
+    const tf = getTenantFilter();
 
     const where = search
       ? [
-          { name: ILike(`%${search}%`) },
-          { code: ILike(`%${search}%`) },
-          { clientName: ILike(`%${search}%`) },
+          { name: ILike(`%${search}%`), ...tf },
+          { code: ILike(`%${search}%`), ...tf },
+          { clientName: ILike(`%${search}%`), ...tf },
         ]
-      : undefined;
+      : Object.keys(tf).length > 0 ? [tf] : undefined;
 
     const [data, total] = await this.opportunityRepo.findAndCount({
       where,
@@ -42,7 +44,8 @@ export class OpportunitiesService {
   }
 
   async findById(id: string): Promise<OpportunityEntity> {
-    const opp = await this.opportunityRepo.findOneBy({ id });
+    const tf = getTenantFilter();
+    const opp = await this.opportunityRepo.findOneBy({ id, ...tf });
     if (!opp) throw new NotFoundException(`Opportunity ${id} not found`);
     return opp;
   }
@@ -51,7 +54,7 @@ export class OpportunitiesService {
     const year = new Date().getFullYear();
     const count = await this.opportunityRepo.count();
     const code = `OPP-${year}-${String(count + 1).padStart(3, '0')}`;
-    const entity = this.opportunityRepo.create({ ...dto, code, ownerId });
+    const entity = this.opportunityRepo.create({ ...dto, code, ownerId, tenantId: getCurrentTenantId() });
     return this.opportunityRepo.save(entity);
   }
 
@@ -94,6 +97,7 @@ export class OpportunitiesService {
       programId: dto.programId ?? null,
       createdBy,
       metadata: { convertedFromOpportunity: opp.code },
+      tenantId: getCurrentTenantId(),
     });
     const savedProject = await this.projectRepo.save(project);
 

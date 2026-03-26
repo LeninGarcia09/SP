@@ -4,6 +4,7 @@ import { ILike, IsNull, Not, Repository } from 'typeorm';
 import { ProgramEntity } from './program.entity';
 import { CreateProgramDto, UpdateProgramDto } from './dto/program.dto';
 import { PaginationDto, PaginatedResult } from '../../common/dto/pagination.dto';
+import { getTenantFilter, getCurrentTenantId } from '../../common/tenant/tenant.context';
 
 @Injectable()
 export class ProgramsService {
@@ -15,13 +16,14 @@ export class ProgramsService {
   async findAll(query: PaginationDto): Promise<PaginatedResult<ProgramEntity>> {
     const { page, limit, sortBy, order, search } = query;
     const skip = (page - 1) * limit;
+    const tf = getTenantFilter();
 
     const where = search
       ? [
-          { name: ILike(`%${search}%`) },
-          { code: ILike(`%${search}%`) },
+          { name: ILike(`%${search}%`), ...tf },
+          { code: ILike(`%${search}%`), ...tf },
         ]
-      : undefined;
+      : Object.keys(tf).length > 0 ? [tf] : undefined;
 
     const [data, total] = await this.programRepo.findAndCount({
       where,
@@ -37,8 +39,9 @@ export class ProgramsService {
   }
 
   async findById(id: string): Promise<ProgramEntity & { totalBudget: number; totalActualCost: number }> {
+    const tf = getTenantFilter();
     const program = await this.programRepo.findOne({
-      where: { id },
+      where: { id, ...tf },
       relations: ['projects'],
     });
     if (!program) throw new NotFoundException(`Program ${id} not found`);
@@ -54,7 +57,7 @@ export class ProgramsService {
     const year = new Date().getFullYear();
     const count = await this.programRepo.count();
     const code = `PROG-${year}-${String(count + 1).padStart(3, '0')}`;
-    const entity = this.programRepo.create({ ...dto, code, createdBy, managerId: dto.managerId ?? createdBy });
+    const entity = this.programRepo.create({ ...dto, code, createdBy, managerId: dto.managerId ?? createdBy, tenantId: getCurrentTenantId() });
     return this.programRepo.save(entity);
   }
 
@@ -70,16 +73,18 @@ export class ProgramsService {
   }
 
   async findDeleted(): Promise<ProgramEntity[]> {
+    const tf = getTenantFilter();
     return this.programRepo.find({
       withDeleted: true,
-      where: { deletedAt: Not(IsNull()) },
+      where: { deletedAt: Not(IsNull()), ...tf },
       order: { deletedAt: 'DESC' },
     });
   }
 
   async restore(id: string): Promise<ProgramEntity> {
+    const tf = getTenantFilter();
     const program = await this.programRepo.findOne({
-      where: { id },
+      where: { id, ...tf },
       withDeleted: true,
     });
     if (!program || !program.deletedAt) {

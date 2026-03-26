@@ -3,6 +3,7 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  Index,
 } from 'typeorm';
 import { ProjectMemberRole } from '@telnub/shared';
 
@@ -22,4 +23,8 @@ export class ProjectMemberEntity {
 
   @CreateDateColumn()
   joinedAt!: Date;
+
+  @Index()
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  tenantId!: string | null;
 }

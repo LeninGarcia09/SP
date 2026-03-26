@@ -70,4 +70,8 @@ export class CostEntryEntity {
 
   @UpdateDateColumn()
   updatedAt!: Date;
+
+  @Index()
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  tenantId!: string | null;
 }

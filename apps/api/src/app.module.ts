@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { CacheModule } from '@nestjs/cache-manager';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import KeyvRedis from '@keyv/redis';
 import Keyv from 'keyv';
 import * as path from 'path';
@@ -22,6 +23,7 @@ import { DeliverablesModule } from './modules/deliverables/deliverables.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { envValidationSchema } from './config/env.validation';
 import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
+import { TenantInterceptor } from './common/tenant/tenant.interceptor';
 import { SystemController } from './common/system.controller';
 
 @Module({
@@ -77,6 +79,9 @@ import { SystemController } from './common/system.controller';
     AdminModule,
   ],
   controllers: [SystemController],
+  providers: [
+    { provide: APP_INTERCEPTOR, useClass: TenantInterceptor },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

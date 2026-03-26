@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { ProjectEntity } from '../projects/project.entity';
 import { DeliverableEntity } from '../deliverables/deliverable.entity';
@@ -77,4 +78,8 @@ export class TaskEntity {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Index()
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  tenantId: string | null;
 }

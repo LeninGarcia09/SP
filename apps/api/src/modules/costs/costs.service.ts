@@ -12,6 +12,7 @@ import {
   RejectCostEntryDto,
 } from './dto/cost-entry.dto';
 import { CostEntryStatus, NotificationType, TaskStatus } from '@telnub/shared';
+import { getTenantFilter, getCurrentTenantId } from '../../common/tenant/tenant.context';
 import type { CostSummary, CostForecast, BurnChartData, TaskCostBreakdown } from '@telnub/shared';
 
 @Injectable()
@@ -27,14 +28,16 @@ export class CostsService {
   ) {}
 
   async findByProject(projectId: string): Promise<CostEntryEntity[]> {
+    const tf = getTenantFilter();
     return this.costRepo.find({
-      where: { projectId },
+      where: { projectId, ...tf },
       order: { date: 'DESC', createdAt: 'DESC' },
     });
   }
 
   async findById(id: string): Promise<CostEntryEntity> {
-    const entry = await this.costRepo.findOneBy({ id });
+    const tf = getTenantFilter();
+    const entry = await this.costRepo.findOneBy({ id, ...tf });
     if (!entry) throw new NotFoundException(`Cost entry ${id} not found`);
     return entry;
   }
@@ -44,7 +47,8 @@ export class CostsService {
     dto: CreateCostEntryDto,
     submittedById: string,
   ): Promise<CostEntryEntity> {
-    const project = await this.projectRepo.findOneBy({ id: projectId });
+    const tf = getTenantFilter();
+    const project = await this.projectRepo.findOneBy({ id: projectId, ...tf });
     if (!project) throw new NotFoundException(`Project ${projectId} not found`);
 
     const entry = this.costRepo.create({
@@ -52,6 +56,7 @@ export class CostsService {
       projectId,
       submittedById,
       status: CostEntryStatus.DRAFT,
+      tenantId: getCurrentTenantId(),
     });
     const saved = await this.costRepo.save(entry);
     await this.recalculateProjectCost(projectId);
@@ -88,7 +93,7 @@ export class CostsService {
     const saved = await this.costRepo.save(entry);
 
     // Notify project lead
-    const project = await this.projectRepo.findOneBy({ id: entry.projectId });
+    const project = await this.projectRepo.findOneBy({ id: entry.projectId, ...getTenantFilter() });
     if (project) {
       await this.notificationsService.create({
         userId: project.projectLeadId,
@@ -157,7 +162,8 @@ export class CostsService {
 
   async transfer(id: string, dto: TransferCostEntryDto): Promise<CostEntryEntity> {
     const entry = await this.findById(id);
-    const targetProject = await this.projectRepo.findOneBy({ id: dto.targetProjectId });
+    const tf = getTenantFilter();
+    const targetProject = await this.projectRepo.findOneBy({ id: dto.targetProjectId, ...tf });
     if (!targetProject) throw new NotFoundException(`Target project ${dto.targetProjectId} not found`);
 
     const sourceProjectId = entry.projectId;
@@ -177,17 +183,18 @@ export class CostsService {
   }
 
   async getCostSummary(projectId: string): Promise<CostSummary> {
-    const project = await this.projectRepo.findOneBy({ id: projectId });
+    const tf = getTenantFilter();
+    const project = await this.projectRepo.findOneBy({ id: projectId, ...tf });
     if (!project) throw new NotFoundException(`Project ${projectId} not found`);
 
     const entries = await this.costRepo.find({
-      where: { projectId, status: CostEntryStatus.APPROVED },
+      where: { projectId, status: CostEntryStatus.APPROVED, ...tf },
     });
 
     const totalCostEntries = entries.reduce((sum, e) => sum + Number(e.amount), 0);
 
     // Calculate labor cost (per-task rate with project fallback)
-    const tasks = await this.taskRepo.find({ where: { projectId } });
+    const tasks = await this.taskRepo.find({ where: { projectId, ...tf } });
     const laborCost = tasks.reduce((sum, t) => {
       const rate = Number(t.costRate ?? project.costRate ?? 0);
       return sum + Number(t.actualHours || 0) * rate;
@@ -236,10 +243,11 @@ export class CostsService {
   }
 
   async getCostForecast(projectId: string): Promise<CostForecast> {
-    const project = await this.projectRepo.findOneBy({ id: projectId });
+    const tf = getTenantFilter();
+    const project = await this.projectRepo.findOneBy({ id: projectId, ...tf });
     if (!project) throw new NotFoundException(`Project ${projectId} not found`);
 
-    const tasks = await this.taskRepo.find({ where: { projectId } });
+    const tasks = await this.taskRepo.find({ where: { projectId, ...tf } });
 
     const totalEstimated = tasks.reduce((sum, t) => sum + Number(t.estimatedHours || 0), 0);
     const totalActual = tasks.reduce((sum, t) => sum + Number(t.actualHours || 0), 0);
@@ -259,12 +267,16 @@ export class CostsService {
       : costRate;
 
     // Non-labor cost from approved cost entries
-    const result = await this.costRepo
+    const costQb = this.costRepo
       .createQueryBuilder('ce')
       .select('COALESCE(SUM(ce.amount), 0)', 'total')
       .where('ce.projectId = :projectId', { projectId })
-      .andWhere('ce.status = :status', { status: CostEntryStatus.APPROVED })
-      .getRawOne();
+      .andWhere('ce.status = :status', { status: CostEntryStatus.APPROVED });
+    const forecastTenantId = getCurrentTenantId();
+    if (forecastTenantId) {
+      costQb.andWhere('ce.tenantId = :tenantId', { tenantId: forecastTenantId });
+    }
+    const result = await costQb.getRawOne();
     const nonLaborCost = Number(result?.total || 0);
 
     const actualCost = laborCost + nonLaborCost;
@@ -296,10 +308,11 @@ export class CostsService {
   }
 
   async getBurnData(projectId: string, metric: 'hours' | 'cost'): Promise<BurnChartData> {
-    const project = await this.projectRepo.findOneBy({ id: projectId });
+    const tf = getTenantFilter();
+    const project = await this.projectRepo.findOneBy({ id: projectId, ...tf });
     if (!project) throw new NotFoundException(`Project ${projectId} not found`);
 
-    const tasks = await this.taskRepo.find({ where: { projectId } });
+    const tasks = await this.taskRepo.find({ where: { projectId, ...tf } });
 
     const totalEstimated = tasks.reduce((sum, t) => sum + Number(t.estimatedHours || 0), 0);
     const costRate = Number(project.costRate || 0);
@@ -376,12 +389,13 @@ export class CostsService {
 
   /** Per-task cost breakdown for an entire project */
   async getTaskCostBreakdowns(projectId: string): Promise<TaskCostBreakdown[]> {
-    const project = await this.projectRepo.findOneBy({ id: projectId });
+    const tf = getTenantFilter();
+    const project = await this.projectRepo.findOneBy({ id: projectId, ...tf });
     if (!project) throw new NotFoundException(`Project ${projectId} not found`);
 
     const projectCostRate = Number(project.costRate || 0);
     const tasks = await this.taskRepo.find({
-      where: { projectId },
+      where: { projectId, ...tf },
       order: { createdAt: 'ASC' },
     });
 
@@ -415,18 +429,23 @@ export class CostsService {
   }
 
   private async recalculateProjectCost(projectId: string): Promise<void> {
-    const result = await this.costRepo
+    const recalcQb = this.costRepo
       .createQueryBuilder('ce')
       .select('COALESCE(SUM(ce.amount), 0)', 'total')
       .where('ce.projectId = :projectId', { projectId })
-      .andWhere('ce.status = :status', { status: CostEntryStatus.APPROVED })
-      .getRawOne();
+      .andWhere('ce.status = :status', { status: CostEntryStatus.APPROVED });
+    const recalcTenantId = getCurrentTenantId();
+    if (recalcTenantId) {
+      recalcQb.andWhere('ce.tenantId = :tenantId', { tenantId: recalcTenantId });
+    }
+    const result = await recalcQb.getRawOne();
 
     const nonLaborCost = Number(result?.total || 0);
 
     // Get labor cost
-    const tasks = await this.taskRepo.find({ where: { projectId } });
-    const project = await this.projectRepo.findOneBy({ id: projectId });
+    const tf = getTenantFilter();
+    const tasks = await this.taskRepo.find({ where: { projectId, ...tf } });
+    const project = await this.projectRepo.findOneBy({ id: projectId, ...tf });
     if (!project) return;
 
     const totalHours = tasks.reduce((sum, t) => sum + Number(t.actualHours || 0), 0);
@@ -440,7 +459,7 @@ export class CostsService {
   }
 
   private async checkBudgetThreshold(projectId: string): Promise<void> {
-    const project = await this.projectRepo.findOneBy({ id: projectId });
+    const project = await this.projectRepo.findOneBy({ id: projectId, ...getTenantFilter() });
     if (!project || Number(project.budget) === 0) return;
 
     const budget = Number(project.budget);
