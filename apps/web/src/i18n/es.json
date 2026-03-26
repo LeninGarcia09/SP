@@ -112,7 +112,8 @@
     "stageValue": "${{value}}",
     "recentProjects": "Proyectos Recientes",
     "viewAll": "Ver Todo",
-    "error": "Error al cargar datos del panel. ¿Está ejecutándose la API?"
+    "error": "Error al cargar datos del panel. ¿Está ejecutándose la API?",
+    "partialError": "Algunos datos no se pudieron cargar. Mostrando información disponible."
   },
   "projects": {
     "title": "Proyectos",

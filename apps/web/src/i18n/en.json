@@ -112,7 +112,8 @@
     "stageValue": "${{value}}",
     "recentProjects": "Recent Projects",
     "viewAll": "View All",
-    "error": "Failed to load dashboard data. Is the API running?"
+    "error": "Failed to load dashboard data. Is the API running?",
+    "partialError": "Some data could not be loaded. Showing available information."
   },
   "projects": {
     "title": "Projects",

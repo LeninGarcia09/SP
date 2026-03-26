@@ -111,7 +111,8 @@ export function DashboardPage() {
   const opportunities = useOpportunities({ limit: 200 });
 
   const isLoading = projects.isLoading || personnel.isLoading || opportunities.isLoading;
-  const hasError = projects.isError || personnel.isError || opportunities.isError;
+  const allFailed = projects.isError && personnel.isError && opportunities.isError;
+  const partialError = !allFailed && (projects.isError || personnel.isError || opportunities.isError);
 
   // ─── Computed Metrics ───
   const metrics = useMemo(() => {
@@ -212,9 +213,15 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {hasError && (
+      {allFailed && (
         <div className="rounded-lg border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
           {t('dashboard.error')}
+        </div>
+      )}
+
+      {partialError && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
+          {t('dashboard.partialError', 'Some data could not be loaded. Showing available information.')}
         </div>
       )}
 
