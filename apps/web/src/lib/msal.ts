@@ -9,8 +9,8 @@ export const isMsalEnabled = Boolean(clientId);
 const msalConfig: Configuration = {
   auth: {
     clientId: clientId || 'not-configured',
-    // Multi-tenant + personal accounts: use 'common' authority
-    authority: 'https://login.microsoftonline.com/common',
+    // Multi-tenant: accept any Azure AD org tenant
+    authority: 'https://login.microsoftonline.com/organizations',
     redirectUri,
     postLogoutRedirectUri: redirectUri,
   },
@@ -29,6 +29,6 @@ export const msalInstance = new PublicClientApplication(msalConfig);
 
 /**
  * Scopes requested when acquiring tokens for the backend API.
- * Uses the raw client ID as audience (required for personal account support).
+ * Uses the api:// identifier URI so the token audience matches the backend expectation.
  */
-export const apiScopes = clientId ? [`${clientId}/.default`] : [];
+export const apiScopes = clientId ? [`api://${clientId}/.default`] : [];
