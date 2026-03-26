@@ -12,6 +12,7 @@ interface AzureAdUser {
   oid: string;
   email: string;
   displayName: string;
+  role?: string;
   roles: string[];
   tenantId: string | null;
   isAzureAd: true;

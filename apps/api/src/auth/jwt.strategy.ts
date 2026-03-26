@@ -2,7 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy, StrategyOptionsWithoutRequest } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import * as jwksRsa from 'jwks-rsa';
+import { UserEntity } from '../modules/users/user.entity';
 
 interface JwtPayload {
   sub: string;
@@ -33,7 +36,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   private readonly allowedTenantIds: string[];
   private readonly logger = new Logger('JwtStrategy');
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    @InjectRepository(UserEntity)
+    private readonly userRepo: Repository<UserEntity>,
+  ) {
     const clientId = configService.get<string>('AZURE_AD_CLIENT_ID');
     const useAzureAd = Boolean(clientId);
 
@@ -77,7 +84,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
   }
 
-  validate(payload: JwtPayload) {
+  async validate(payload: JwtPayload) {
     if (this.isAzureAd) {
       const tid = payload.tid ?? this.extractTidFromIssuer(payload.iss);
 
@@ -89,12 +96,24 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         }
       }
 
+      // Look up the user's role from the database (set during /auth/me provisioning)
+      const oid = payload.oid ?? payload.sub;
+      let role: string | undefined;
+      const dbUser = await this.userRepo.findOne({
+        where: { azureAdOid: oid },
+        select: ['role'],
+      });
+      if (dbUser) {
+        role = dbUser.role;
+      }
+
       return {
         sub: payload.sub,
-        id: payload.oid ?? payload.sub,
-        oid: payload.oid ?? payload.sub,
+        id: oid,
+        oid,
         email: payload.preferred_username ?? payload.email ?? '',
         displayName: payload.name ?? payload.preferred_username ?? '',
+        role,
         roles: payload.roles ?? [],
         tenantId: tid ?? null,
         isAzureAd: true,
