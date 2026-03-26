@@ -57,8 +57,8 @@ export class SystemController {
       return { error: 'Invalid JWT format' };
     }
     try {
-      const header = JSON.parse(Buffer.from(parts[0], 'base64url').toString());
-      const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
+      const header = JSON.parse(Buffer.from(parts[0]!, 'base64url').toString());
+      const payload = JSON.parse(Buffer.from(parts[1]!, 'base64url').toString());
       return {
         header,
         claims: {
