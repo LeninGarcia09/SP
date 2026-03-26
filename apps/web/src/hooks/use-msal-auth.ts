@@ -8,7 +8,7 @@ import { api } from '../lib/axios';
 /**
  * Hook that handles the MSAL login flow:
  * 1. Wait for MSAL to initialise and process any redirect response.
- * 2. If not logged in, trigger a redirect login with basic scopes.
+ * 2. If not logged in, redirect to login with login + API scopes (consent in one step).
  * 3. Once authenticated, acquire an API token silently and sync user via backend.
  */
 export function useMsalAuth() {
@@ -41,9 +41,8 @@ export function useMsalAuth() {
     didRun.current = true;
 
     if (!isAuthenticated || accounts.length === 0) {
-      // Not logged in — redirect to Microsoft login with basic scopes only.
-      // API scopes are acquired separately via acquireTokenSilent after login.
-      instance.loginRedirect({ scopes: loginScopes }).catch((err) => {
+      // Not logged in — redirect with both login + API scopes so consent happens once.
+      instance.loginRedirect({ scopes: [...loginScopes, ...apiScopes] }).catch((err) => {
         console.error('MSAL loginRedirect failed:', err);
         setError(String(err));
         setReady(true);
@@ -59,13 +58,11 @@ export function useMsalAuth() {
       .then(() => setReady(true))
       .catch(async (err) => {
         if (err instanceof InteractionRequiredAuthError) {
-          // API scope needs consent — use popup to avoid another full redirect
+          // Consent expired or revoked — redirect (not popup, avoids blockers)
           try {
-            const response = await instance.acquireTokenPopup({ scopes: apiScopes, account });
-            await syncUser(response.accessToken);
-            setReady(true);
+            await instance.acquireTokenRedirect({ scopes: apiScopes, account });
           } catch (e) {
-            console.error('MSAL consent popup failed:', e);
+            console.error('MSAL consent redirect failed:', e);
             setError(`API access consent failed: ${e}`);
             setReady(true);
           }
