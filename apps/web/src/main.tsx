@@ -37,12 +37,28 @@ function DevRoot() {
 
 /** Production root — uses MSAL / Azure AD */
 function MsalRoot() {
-  const { ready } = useMsalAuth();
+  const { ready, error } = useMsalAuth();
   const { t } = useTranslation();
   if (!ready) {
     return (
       <div className="flex h-screen items-center justify-center text-muted-foreground">
         {t('auth.authenticating')}
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="max-w-md text-center space-y-4">
+          <p className="text-destructive font-medium">{t('auth.error', 'Authentication Error')}</p>
+          <p className="text-sm text-muted-foreground">{error}</p>
+          <button
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm"
+            onClick={() => { sessionStorage.clear(); window.location.reload(); }}
+          >
+            {t('auth.retry', 'Try Again')}
+          </button>
+        </div>
       </div>
     );
   }
