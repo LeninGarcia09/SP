@@ -22,13 +22,27 @@ export function useMsalAuth() {
 
   const syncUser = useCallback(
     async (accessToken: string) => {
-      const res = await api.get('/auth/me', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      const user = res.data?.data;
-      if (user) {
-        setAuth(user, accessToken);
-        setMode('msal');
+      try {
+        const res = await api.get('/auth/me', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        const user = res.data?.data;
+        if (user) {
+          setAuth(user, accessToken);
+          setMode('msal');
+        }
+      } catch (err) {
+        // On 401, call debug endpoint to see token claims
+        try {
+          const debug = await api.get('/system/debug-token', {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          console.error('Token debug info:', debug.data);
+          throw new Error(`401 from /auth/me. Token aud=${debug.data?.claims?.aud}, expected=${debug.data?.expectedAudience}, tid=${debug.data?.claims?.tid}, scp=${debug.data?.claims?.scp}`);
+        } catch (debugErr) {
+          if (debugErr instanceof Error && debugErr.message.startsWith('401')) throw debugErr;
+          throw err;
+        }
       }
     },
     [setAuth, setMode],
