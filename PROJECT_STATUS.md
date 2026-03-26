@@ -1,7 +1,7 @@
 # BizOps Platform — Project Status & Context
 
 > **Purpose:** Quick-reference for AI agents resuming work on this project.
-> **Last updated:** 2026-03-23
+> **Last updated:** 2025-06-23
 > **Full spec:** See `CLAUDE.md` in this same directory for complete data model, RBAC, API conventions.
 
 ---
@@ -124,6 +124,14 @@
 - [ ] Leave/absence tracking entity + API
 - [ ] Approval queue page
 - [ ] Capacity planning leave integration
+
+#### Wave 5 — UI/UX Enhancement ✅
+- [x] Dashboard overhaul: 6 KPI cards with trend indicators, Recharts donut (project status distribution), budget vs actual bar chart, opportunity pipeline funnel, recent projects table with progress bars
+- [x] Projects list: status filter tabs (All/Active/Planning/On Hold/Completed/Cancelled), table/cards view toggle (persisted in localStorage), enhanced table with budget progress bars + colored status dots, card view with budget bars
+- [x] Programs list: portfolio summary cards (total/active/budget/actual with progress bars), status filter tabs, enhanced table with budget utilization column
+- [x] New UI components: Tabs (context-based), Progress bar (with custom indicator colors)
+- [x] Full i18n for all new dashboard/projects/programs keys (EN + ES)
+- [x] UI/UX Enhancement Plan document (`docs/UI_UX_ENHANCEMENT_PLAN.md`)
 
 ---
 
