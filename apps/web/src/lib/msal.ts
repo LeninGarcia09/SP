@@ -52,7 +52,7 @@ export async function initializeMsal(): Promise<void> {
     // No redirect response — check for cached accounts
     const accounts = msalInstance.getAllAccounts();
     if (accounts.length > 0) {
-      msalInstance.setActiveAccount(accounts[0]);
+      msalInstance.setActiveAccount(accounts[0] ?? null);
     }
   }
 
