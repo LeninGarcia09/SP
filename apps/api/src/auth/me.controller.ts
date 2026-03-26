@@ -34,6 +34,7 @@ type AuthenticatedUser = AzureAdUser | DevUser;
 @Controller('auth')
 export class MeController {
   private readonly allowedDomains: string[];
+  private readonly tenantDefaultRoles: Map<string, UserRole>;
 
   constructor(
     @InjectRepository(UserEntity)
@@ -45,6 +46,17 @@ export class MeController {
       .split(',')
       .map((d) => d.trim().toLowerCase())
       .filter(Boolean);
+
+    // Parse TENANT_DEFAULT_ROLES: "tenantId:ROLE,tenantId:ROLE"
+    const roleValues = new Set(Object.values(UserRole) as string[]);
+    this.tenantDefaultRoles = new Map();
+    const tenantRolesRaw = this.config.get<string>('TENANT_DEFAULT_ROLES') ?? '';
+    for (const entry of tenantRolesRaw.split(',').map((e) => e.trim()).filter(Boolean)) {
+      const [tid, role] = entry.split(':').map((s) => s.trim());
+      if (tid && role && roleValues.has(role)) {
+        this.tenantDefaultRoles.set(tid.toLowerCase(), role as UserRole);
+      }
+    }
   }
 
   @Get('me')
@@ -89,7 +101,9 @@ export class MeController {
       where: { azureAdOid: payload.oid },
     });
 
-    const role = this.mapAzureAdRoles(payload.roles);
+    const role = this.mapAzureAdRoles(payload.roles)
+      ?? this.tenantDefaultRole(payload.tenantId)
+      ?? UserRole.TEAM_MEMBER;
 
     if (!user) {
       // Also check by email in case user was manually pre-created
@@ -146,14 +160,22 @@ export class MeController {
    * create roles matching the UserRole enum values:
    * ADMIN, OPERATIONS_DIRECTOR, DEPARTMENT_MANAGER, etc.
    */
-  private mapAzureAdRoles(roles: string[]): UserRole {
+  private mapAzureAdRoles(roles: string[]): UserRole | null {
     const roleValues = Object.values(UserRole) as string[];
     for (const r of roles) {
       if (roleValues.includes(r)) {
         return r as UserRole;
       }
     }
-    return UserRole.TEAM_MEMBER;
+    return null;
+  }
+
+  /**
+   * Returns the default role for a tenant, or null if not configured.
+   */
+  private tenantDefaultRole(tenantId: string | null): UserRole | null {
+    if (!tenantId) return null;
+    return this.tenantDefaultRoles.get(tenantId.toLowerCase()) ?? null;
   }
 
   /**
