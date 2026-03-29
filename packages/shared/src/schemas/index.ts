@@ -16,6 +16,12 @@ import {
   ProgramStatus,
   OpportunityStatus,
   OpportunityStage,
+  AccountType,
+  AccountTier,
+  ContactChannel,
+  ContactType,
+  ContactInfluence,
+  ForecastCategory,
 } from '../types/index.js';
 
 // ─── Project Schemas ───
@@ -277,3 +283,93 @@ export const convertOpportunitySchema = z.object({
 });
 
 export type ConvertOpportunityDto = z.infer<typeof convertOpportunitySchema>;
+
+// ─── Sales / CRM Module (Wave 1) ───
+
+export const createAccountSchema = z.object({
+  name: z.string().min(1).max(200),
+  legalName: z.string().max(200).nullable().optional(),
+  industry: z.string().max(100).nullable().optional(),
+  website: z.string().max(500).nullable().optional(),
+  phone: z.string().max(50).nullable().optional(),
+  email: z.string().email().nullable().optional(),
+  addressLine1: z.string().max(200).nullable().optional(),
+  addressLine2: z.string().max(200).nullable().optional(),
+  city: z.string().max(100).nullable().optional(),
+  state: z.string().max(100).nullable().optional(),
+  country: z.string().max(100).nullable().optional(),
+  postalCode: z.string().max(20).nullable().optional(),
+  type: z.nativeEnum(AccountType).default(AccountType.PROSPECT),
+  tier: z.nativeEnum(AccountTier).nullable().optional(),
+  annualRevenue: z.number().nonnegative().nullable().optional(),
+  employeeCount: z.number().int().nonnegative().nullable().optional(),
+  ownerId: z.string().uuid().optional(),
+  parentAccountId: z.string().uuid().nullable().optional(),
+  source: z.string().max(100).nullable().optional(),
+  tags: z.array(z.string()).default([]),
+  metadata: z.record(z.unknown()).default({}),
+});
+
+export const updateAccountSchema = createAccountSchema.partial();
+
+export type CreateAccountInput = z.infer<typeof createAccountSchema>;
+export type UpdateAccountInput = z.infer<typeof updateAccountSchema>;
+
+export const createContactSchema = z.object({
+  firstName: z.string().min(1).max(100),
+  lastName: z.string().min(1).max(100),
+  email: z.string().email().nullable().optional(),
+  phone: z.string().max(50).nullable().optional(),
+  mobilePhone: z.string().max(50).nullable().optional(),
+  jobTitle: z.string().max(200).nullable().optional(),
+  department: z.string().max(100).nullable().optional(),
+  accountId: z.string().uuid(),
+  reportsToId: z.string().uuid().nullable().optional(),
+  preferredChannel: z.nativeEnum(ContactChannel).default(ContactChannel.EMAIL),
+  timezone: z.string().max(50).nullable().optional(),
+  language: z.string().max(10).default('en'),
+  type: z.nativeEnum(ContactType).default(ContactType.OTHER),
+  influence: z.nativeEnum(ContactInfluence).nullable().optional(),
+  linkedinUrl: z.string().max(500).nullable().optional(),
+  notes: z.string().nullable().optional(),
+  tags: z.array(z.string()).default([]),
+  metadata: z.record(z.unknown()).default({}),
+});
+
+export const updateContactSchema = createContactSchema.partial();
+
+export type CreateContactInput = z.infer<typeof createContactSchema>;
+export type UpdateContactInput = z.infer<typeof updateContactSchema>;
+
+export const createPipelineSchema = z.object({
+  name: z.string().min(1).max(100),
+  description: z.string().nullable().optional(),
+  isDefault: z.boolean().default(false),
+});
+
+export const updatePipelineSchema = createPipelineSchema.partial().extend({
+  isActive: z.boolean().optional(),
+});
+
+export type CreatePipelineInput = z.infer<typeof createPipelineSchema>;
+export type UpdatePipelineInput = z.infer<typeof updatePipelineSchema>;
+
+export const createPipelineStageSchema = z.object({
+  name: z.string().min(1).max(100),
+  description: z.string().nullable().optional(),
+  sortOrder: z.number().int().min(0),
+  defaultProbability: z.number().int().min(0).max(100),
+  forecastCategory: z.nativeEnum(ForecastCategory).default(ForecastCategory.PIPELINE),
+  isClosed: z.boolean().default(false),
+  isWon: z.boolean().default(false),
+  requiredFields: z.array(z.string()).default([]),
+  checklist: z.array(z.record(z.unknown())).default([]),
+  daysExpected: z.number().int().min(0).nullable().optional(),
+  autoActions: z.array(z.record(z.unknown())).default([]),
+  color: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/).nullable().optional(),
+});
+
+export const updatePipelineStageSchema = createPipelineStageSchema.partial();
+
+export type CreatePipelineStageInput = z.infer<typeof createPipelineStageSchema>;
+export type UpdatePipelineStageInput = z.infer<typeof updatePipelineStageSchema>;

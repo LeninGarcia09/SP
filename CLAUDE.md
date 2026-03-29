@@ -8,7 +8,8 @@
 **Product:** Business Operations Platform (internal tool)
 **Stack:** React + TypeScript (frontend) · NestJS + TypeScript (backend) · PostgreSQL · Azure
 **Repo layout:** Monorepo — `apps/web`, `apps/api`, `packages/shared` (npm workspaces)
-**Phase:** Phase 1 of 4 (see §8 for scope)
+**Phase:** Core platform complete; Sales/CRM module expansion in progress (see §8 for scope)
+**Multi-tenant:** Yes — Azure AD multi-org with tenant-scoped data isolation
 **Solo developer** — full-stack ownership of frontend, backend, and infrastructure.
 
 ---
@@ -65,19 +66,18 @@ bizops-platform/
 │   │   │   ├── assets/
 │   │   │   ├── components/
 │   │   │   │   ├── ui/             # shadcn/ui base components
-│   │   │   │   └── shared/         # Reusable business components
-│   │   │   ├── features/           # Feature-sliced modules
-│   │   │   │   ├── auth/
-│   │   │   │   ├── projects/
-│   │   │   │   ├── tasks/
-│   │   │   │   ├── health-dashboard/
-│   │   │   │   ├── personnel/
-│   │   │   │   └── inventory/
-│   │   │   ├── hooks/              # Shared custom hooks
+│   │   │   │   ├── shared/         # Reusable business components
+│   │   │   │   ├── projects/       # Project-specific components
+│   │   │   │   ├── programs/       # Program components
+│   │   │   │   ├── tasks/          # Task components
+│   │   │   │   ├── personnel/      # Personnel components
+│   │   │   │   ├── inventory/      # Inventory components
+│   │   │   │   └── opportunities/  # Opportunity components
+│   │   │   ├── hooks/              # React Query hooks (one per module)
+│   │   │   ├── i18n/               # Internationalization (EN + ES)
 │   │   │   ├── lib/                # Axios instance, MSAL config, utils
 │   │   │   ├── pages/              # Route-level page components
 │   │   │   ├── store/              # Zustand stores
-│   │   │   ├── types/              # Frontend-only TypeScript types
 │   │   │   └── main.tsx
 │   │   ├── public/
 │   │   ├── index.html
@@ -86,17 +86,24 @@ bizops-platform/
 │   │
 │   └── api/                        # NestJS backend
 │       ├── src/
-│       │   ├── auth/               # Azure AD + JWT strategy
-│       │   ├── common/             # Guards, interceptors, decorators, pipes
+│       │   ├── auth/               # Azure AD + JWT strategy (multi-tenant)
+│       │   ├── common/             # Guards, interceptors, decorators, middleware
 │       │   ├── config/             # ConfigModule setup, env validation
 │       │   ├── database/           # TypeORM config, migrations
 │       │   ├── modules/
 │       │   │   ├── users/
 │       │   │   ├── projects/
 │       │   │   ├── tasks/
+│       │   │   ├── programs/
+│       │   │   ├── opportunities/  # Basic CRUD (being expanded — see §4b)
 │       │   │   ├── health/         # RAG engine
 │       │   │   ├── personnel/
-│       │   │   └── inventory/
+│       │   │   ├── skills/
+│       │   │   ├── inventory/
+│       │   │   ├── costs/          # Cost entries + forecasting
+│       │   │   ├── deliverables/
+│       │   │   ├── notifications/
+│       │   │   └── admin/          # Microsoft Graph, tenant management
 │       │   └── main.ts
 │       ├── test/
 │       ├── migrations/
@@ -110,35 +117,43 @@ bizops-platform/
 │       └── package.json
 │
 ├── infrastructure/
-│   ├── bicep/                      # Azure Bicep IaC templates
+│   ├── bicep/                      # Azure Bicep IaC templates (8 modules)
 │   │   ├── main.bicep
 │   │   ├── modules/
 │   │   └── parameters/
-│   └── scripts/                    # Setup & deployment scripts
+│   ├── scripts/                    # Setup & deployment scripts
+│   └── DEPLOYMENT.md               # Full deployment guide
 │
 ├── docs/
-│   ├── architecture/
-│   ├── api/
-│   └── decisions/                  # ADRs (Architecture Decision Records)
+│   ├── SALES_OPPORTUNITIES_MODULE_ENHANCEMENT.md  # Sales module spec (~3500 lines)
+│   ├── ENHANCEMENT_PLAN_HOURS_COST_RESOURCES.md   # Hours/Cost/Resource plan
+│   └── UI_UX_ENHANCEMENT_PLAN.md                  # Dashboard & UI modernization
+│
+├── scripts/
+│   └── seed.ts                     # Database seeding
 │
 ├── .github/
 │   └── workflows/                  # CI/CD (GitHub Actions)
 │
 ├── docker-compose.yml              # Local dev: Postgres + Redis
 ├── CLAUDE.md                       # ← You are here
-└── README.md
+├── PROJECT_STATUS.md               # Phase completion tracker
+└── package.json                    # Root workspace config
 ```
 
 ---
 
-## 4. Data Model — Phase 1 Entities
+## 4. Data Model — Core Entities
 
-### Users & Access
+> **Note:** For the full Sales/CRM entity specifications, see `docs/SALES_OPPORTUNITIES_MODULE_ENHANCEMENT.md`.
+
+### 4a. Users & Access
 ```typescript
 // User (synced from Azure AD)
 User {
   id: uuid PK
   azureAdOid: string UNIQUE       // Azure AD Object ID
+  tenantId: string                // Azure AD Tenant ID (multi-tenant isolation)
   email: string UNIQUE
   displayName: string
   role: UserRole                  // enum — see §5
@@ -155,20 +170,22 @@ Department {
 }
 ```
 
-### Projects & Tasks
+### 4b. Projects & Tasks
 ```typescript
 Project {
   id: uuid PK
+  tenantId: string                // Multi-tenant isolation
   code: string UNIQUE             // e.g. "PROJ-2024-001"
   name: string
   description: text
   status: ProjectStatus           // PLANNING | ACTIVE | ON_HOLD | COMPLETED | CANCELLED
   startDate, endDate: date
   budget: decimal(15,2)
-  programId: uuid FK nullable     // Phase 2: Program entity
+  costRate: decimal(10,2)         // Labor cost per hour
+  programId: uuid FK → Program nullable
   projectLeadId: uuid FK → User
   createdBy: uuid FK → User
-  metadata: jsonb default {}      // Custom/dynamic fields per project (JSONB — indexed with GIN)
+  metadata: jsonb default {}      // Custom/dynamic fields (JSONB — indexed with GIN)
   createdAt, updatedAt: timestamp
 }
 
@@ -187,26 +204,38 @@ Task {
   createdAt, updatedAt: timestamp
 }
 
-ProjectMember {
+Program {
   id: uuid PK
-  projectId: uuid FK → Project
-  userId: uuid FK → User
-  role: ProjectMemberRole         // LEAD | MEMBER | OBSERVER
-  joinedAt: timestamp
-}
-
-ProjectNote {
-  id: uuid PK
-  projectId: uuid FK → Project
-  authorId: uuid FK → User
-  content: text                   // Free-form note/comment
-  metadata: jsonb default {}      // Optional structured data (tags, linked tasks, etc.)
-  isPinned: boolean default false
+  tenantId: string
+  code: string UNIQUE
+  name: string
+  description: text
+  status: ProgramStatus
+  startDate, endDate: date
+  budget: decimal(15,2)
+  managerId: uuid FK → User
   createdAt, updatedAt: timestamp
 }
 ```
 
-### Health Dashboard
+### 4c. Cost Management
+```typescript
+CostEntry {
+  id: uuid PK
+  tenantId: string
+  projectId: uuid FK → Project
+  category: CostCategory          // LABOR | MATERIALS | EQUIPMENT | SUBCONTRACTOR | TRAVEL | OTHER
+  description: string
+  amount: decimal(15,2)
+  date: date
+  status: CostStatus              // DRAFT | SUBMITTED | APPROVED | REJECTED
+  submittedById: uuid FK → User
+  approvedById: uuid FK → User nullable
+  createdAt, updatedAt: timestamp
+}
+```
+
+### 4d. Health Dashboard
 ```typescript
 ProjectHealthSnapshot {
   id: uuid PK
@@ -225,10 +254,11 @@ ProjectHealthSnapshot {
 // Calculation triggers: task status change, budget update, snapshot schedule (daily at 02:00)
 ```
 
-### Personnel
+### 4e. Personnel & Assignments
 ```typescript
 Person {
   id: uuid PK
+  tenantId: string
   userId: uuid FK → User nullable   // null = external contractor not in AD
   employeeId: string UNIQUE nullable
   firstName, lastName: string
@@ -237,7 +267,7 @@ Person {
   departmentId: uuid FK → Department
   assignmentStatus: AssignmentStatus  // ON_PROJECT | ON_OPPORTUNITY | ON_OPERATIONS | ON_BENCH
   startDate: date
-  skills: string[]                   // Phase 2: separate Skills table
+  skills: string[]                   // Also linked via Skills module
   availabilityNotes: text nullable
   createdAt, updatedAt: timestamp
 }
@@ -253,10 +283,11 @@ ProjectAssignment {
 }
 ```
 
-### Inventory
+### 4f. Inventory
 ```typescript
 InventoryItem {
   id: uuid PK
+  tenantId: string
   sku: string UNIQUE
   name: string
   description: text nullable
@@ -286,6 +317,200 @@ InventoryTransaction {
 }
 ```
 
+### 4g. Sales & CRM Module (In Progress — 7 Waves)
+
+> **Full spec:** `docs/SALES_OPPORTUNITIES_MODULE_ENHANCEMENT.md`
+
+The Sales module transforms the basic Opportunities CRUD into a full B2B CRM platform. Key entities:
+
+```typescript
+// Wave 1 — Foundation
+Account {
+  id: uuid PK
+  tenantId: string
+  name: string
+  industry: string nullable
+  website: string nullable
+  type: AccountType               // PROSPECT | CUSTOMER | PARTNER | VENDOR | COMPETITOR | OTHER
+  status: AccountStatus           // ACTIVE | INACTIVE | CHURNED
+  annualRevenue: decimal nullable
+  employeeCount: int nullable
+  address, city, state, country: string nullable
+  ownerId: uuid FK → User
+  parentAccountId: uuid FK → Account nullable  // Account hierarchy
+  createdAt, updatedAt: timestamp
+}
+
+Contact {
+  id: uuid PK
+  tenantId: string
+  accountId: uuid FK → Account
+  firstName, lastName: string
+  email: string
+  phone: string nullable
+  jobTitle: string nullable
+  department: string nullable
+  isPrimary: boolean default false
+  doNotContact: boolean default false
+  ownerId: uuid FK → User
+  createdAt, updatedAt: timestamp
+}
+
+SalesPipeline {
+  id: uuid PK
+  tenantId: string
+  name: string                    // e.g. "Enterprise Pipeline", "SMB Pipeline"
+  isDefault: boolean
+  isActive: boolean
+  stages: PipelineStage[]         // Ordered stages with win probability
+}
+
+PipelineStage {
+  id: uuid PK
+  pipelineId: uuid FK → SalesPipeline
+  name: string                    // e.g. "Qualification", "Proposal", "Negotiation"
+  displayOrder: int
+  winProbability: int             // 0-100
+  stageCategory: StageCategory    // OPEN | WON | LOST
+}
+
+// Wave 2 — Enhanced Opportunity
+Opportunity {
+  // Enhanced from existing — adds pipeline, account, contacts, line items
+  id: uuid PK
+  tenantId: string
+  accountId: uuid FK → Account
+  pipelineId: uuid FK → SalesPipeline
+  currentStageId: uuid FK → PipelineStage
+  primaryContactId: uuid FK → Contact nullable
+  name, description: string
+  amount: decimal(15,2)           // Weighted pipeline value
+  probability: int                // Current win probability
+  expectedCloseDate: date
+  actualCloseDate: date nullable
+  lostReason: string nullable
+  ownerId: uuid FK → User
+  source: LeadSource              // INBOUND | OUTBOUND | REFERRAL | PARTNER | EVENT | OTHER
+  createdAt, updatedAt: timestamp
+}
+
+OpportunityStakeholder {
+  id: uuid PK
+  opportunityId: uuid FK → Opportunity
+  contactId: uuid FK → Contact
+  role: StakeholderRole           // DECISION_MAKER | CHAMPION | INFLUENCER | EVALUATOR | BLOCKER | END_USER
+  influence: InfluenceLevel       // HIGH | MEDIUM | LOW
+  sentiment: Sentiment            // STRONG_POSITIVE | POSITIVE | NEUTRAL | NEGATIVE | UNKNOWN
+}
+
+Product {
+  id: uuid PK
+  tenantId: string
+  name, sku: string
+  description: text nullable
+  category: string
+  unitPrice: decimal(15,2)
+  currency: string default 'USD'
+  isActive: boolean
+}
+
+OpportunityLineItem {
+  id: uuid PK
+  opportunityId: uuid FK → Opportunity
+  productId: uuid FK → Product
+  quantity: decimal
+  unitPrice, discount: decimal
+  totalPrice: decimal             // computed
+}
+
+// Wave 3 — Activities & Timeline
+Activity {
+  id: uuid PK
+  tenantId: string
+  type: ActivityType              // CALL | EMAIL | MEETING | NOTE | TASK
+  subject: string
+  description: text nullable
+  status: ActivityStatus          // PLANNED | COMPLETED | CANCELLED
+  dueDate: datetime nullable
+  completedDate: datetime nullable
+  duration: int nullable          // minutes
+  outcome: string nullable
+  ownerId: uuid FK → User
+  // Polymorphic — linked to account, contact, opportunity, or lead
+  accountId: uuid FK nullable
+  contactId: uuid FK nullable
+  opportunityId: uuid FK nullable
+  leadId: uuid FK nullable
+  createdAt, updatedAt: timestamp
+}
+
+// Wave 4 — Leads & Conversion
+Lead {
+  id: uuid PK
+  tenantId: string
+  firstName, lastName: string
+  email: string
+  company: string nullable
+  jobTitle: string nullable
+  source: LeadSource
+  status: LeadStatus              // NEW | CONTACTED | QUALIFIED | UNQUALIFIED | CONVERTED
+  score: int default 0            // Lead scoring
+  ownerId: uuid FK → User
+  convertedAccountId: uuid FK nullable
+  convertedContactId: uuid FK nullable
+  convertedOpportunityId: uuid FK nullable
+  convertedAt: datetime nullable
+  createdAt, updatedAt: timestamp
+}
+
+// Wave 5 — Quoting
+Quote {
+  id: uuid PK
+  tenantId: string
+  opportunityId: uuid FK → Opportunity
+  quoteNumber: string UNIQUE
+  status: QuoteStatus             // DRAFT | SENT | ACCEPTED | REJECTED | EXPIRED
+  validUntil: date
+  subtotal, discount, tax, total: decimal(15,2)
+  terms: text nullable
+  preparedById: uuid FK → User
+  lineItems: QuoteLineItem[]
+  createdAt, updatedAt: timestamp
+}
+
+// Wave 7 — Sales Automation
+WorkflowRule {
+  id: uuid PK
+  tenantId: string
+  name: string
+  entityType: string              // 'opportunity' | 'lead' | 'account' | 'contact'
+  triggerEvent: string            // 'create' | 'update' | 'stage_change' | 'field_change'
+  conditions: jsonb               // Rule conditions
+  actions: jsonb                  // Actions to execute
+  isActive: boolean
+  executionOrder: int
+}
+
+Sequence {
+  id: uuid PK
+  tenantId: string
+  name: string
+  description: text nullable
+  status: SequenceStatus          // DRAFT | ACTIVE | PAUSED | ARCHIVED
+  steps: SequenceStep[]           // Ordered steps with delays/conditions
+}
+
+AssignmentRule {
+  id: uuid PK
+  tenantId: string
+  name: string
+  entityType: string
+  criteria: jsonb                 // Matching criteria
+  assignmentMethod: string        // ROUND_ROBIN | LOAD_BALANCED | SPECIFIC_USER
+  isActive: boolean
+}
+```
+
 ---
 
 ## 5. RBAC — Roles & Permissions
@@ -300,10 +525,13 @@ enum UserRole {
   PROJECT_PERSONNEL   // Own tasks only
   INVENTORY_MANAGER   // All inventory/assets
   HR_ADMIN            // HR records + salary (RESTRICTED scope)
+  ADMIN               // Azure AD tenant management, Graph API
+  OPERATIONS_DIRECTOR // Cross-functional visibility
+  SALES_EXECUTIVE     // Sales pipeline, opportunities, accounts
 }
 ```
 
-**Permission matrix (Phase 1):**
+**Permission matrix — Core Platform:**
 
 | Resource | GLOBAL_LEAD | BIZ_OPS_MGR | RESOURCE_MGR | PROGRAM_MGR | PROJECT_LEAD | PERSONNEL | INVENTORY_MGR |
 |---|---|---|---|---|---|---|---|
@@ -314,8 +542,24 @@ enum UserRole {
 | Assignments | CRUD | CRUD | RU (dept) | R | - | - | - |
 | Inventory | CRUD | R | R | R | R | R | CRUD |
 | User mgmt | CRUD | R | - | - | - | - | - |
+| Cost entries | CRUD | CRUD | R | R (assigned) | CRUD (own) | R (own) | - |
 
-Guards: `@Roles(...roles)` decorator on every controller endpoint. `RolesGuard` checks `request.user.role`.
+**Permission matrix — Sales/CRM Module:**
+
+| Resource | GLOBAL_LEAD | BIZ_OPS_MGR | SALES_EXECUTIVE | PROJECT_LEAD | PERSONNEL |
+|---|---|---|---|---|---|
+| Accounts | CRUD | CRUD | CRUD (own) | R | R |
+| Contacts | CRUD | CRUD | CRUD (own accts) | R | - |
+| Opportunities | CRUD | CRUD | CRUD (own) | R | - |
+| Leads | CRUD | CRUD | CRUD (own) | - | - |
+| Quotes | CRUD | CRUD | CRUD (own opps) | R | - |
+| Activities | CRUD | CRUD | CRUD (own) | R (own) | R (own) |
+| Pipelines/Stages | CRUD | CRUD | R | R | - |
+| Products | CRUD | CRUD | R | R | - |
+| Workflow Rules | CRUD | CRUD | R | - | - |
+| Assignment Rules | CRUD | CRUD | - | - | - |
+
+Guards: `@Roles(...roles)` decorator on every controller endpoint. `RolesGuard` checks `request.user.role`. Multi-tenant: `TenantGuard` ensures data isolation via `tenantId` on all queries.
 
 ---
 
@@ -327,6 +571,7 @@ Guards: `@Roles(...roles)` decorator on every controller endpoint. `RolesGuard` 
 
 ### Route structure
 ```
+# Core Platform
 GET    /api/v1/projects                    List (paginated)
 POST   /api/v1/projects                    Create
 GET    /api/v1/projects/:id                Get one
@@ -336,6 +581,26 @@ DELETE /api/v1/projects/:id                Soft delete
 GET    /api/v1/projects/:id/tasks          Nested resource
 GET    /api/v1/projects/:id/health         RAG snapshot history
 POST   /api/v1/projects/:id/health/trigger Manual RAG recalculation
+GET    /api/v1/projects/:id/hours-summary  Hours rollup
+GET    /api/v1/projects/:id/cost-forecast  EAC/ETC/VAC/CPI
+GET    /api/v1/projects/:id/burn-data      Burn-down chart data
+
+# Sales/CRM Module (planned — 7 waves)
+GET    /api/v1/accounts                    Accounts list
+POST   /api/v1/accounts                    Create account
+GET    /api/v1/accounts/:id/contacts       Contacts for account
+POST   /api/v1/contacts                    Create contact
+GET    /api/v1/pipelines                   Sales pipelines
+POST   /api/v1/pipelines                   Create pipeline
+GET    /api/v1/opportunities               Opportunities list
+POST   /api/v1/opportunities               Create opportunity
+PATCH  /api/v1/opportunities/:id/stage     Move to pipeline stage
+GET    /api/v1/opportunities/:id/activities Activity timeline
+POST   /api/v1/leads                       Create lead
+POST   /api/v1/leads/:id/convert           Convert lead → account + contact + opportunity
+GET    /api/v1/quotes                      Quotes list
+POST   /api/v1/quotes                      Create quote
+POST   /api/v1/quotes/:id/send             Send quote
 ```
 
 ### Response envelope
@@ -402,31 +667,56 @@ VITE_AZURE_AD_REDIRECT_URI=http://localhost:5173
 
 ---
 
-## 8. Phase 1 Scope — What's IN and OUT
+## 8. Completed & Current Scope
 
-### ✅ IN SCOPE (Phase 1 — 6 weeks)
-1. Azure AD authentication + RBAC (all 8 roles)
-2. User management (sync from Azure AD)
-3. Project CRUD + project membership
-4. Task management (create, assign, status, priority, subtasks)
-5. Project Health Dashboard — RAG engine with Schedule + Budget sub-RAGs
-6. Personnel Registry (people records, assignment status)
-7. Resource Assignment Board (basic — assign person to project)
-8. Inventory Registry — SKU catalog, check-in/out, Excel import
-9. Basic notifications (in-app only)
+### ✅ COMPLETED — Core Platform
+1. Azure AD multi-tenant authentication + RBAC (11 roles, 3 tenants)
+2. Multi-tenant data isolation (17 entities, `tenantId` on all queries)
+3. Microsoft Graph integration (User.Read.All, Organization.Read.All, tenant management)
+4. User management (sync from Azure AD via Graph)
+5. Project CRUD + project membership + Gantt chart
+6. Task management (create, assign, status, priority, subtasks, hours tracking)
+7. Project Health Dashboard — RAG engine with Schedule + Budget sub-RAGs
+8. Personnel Registry (people records, assignment status, skills-based matching)
+9. Resource Assignment Board
+10. Inventory Registry — SKU catalog, check-in/out
+11. Programs module (multi-project portfolio management)
+12. Opportunities module (basic CRUD — being enhanced)
+13. Cost Management — full cost entries + submit/approve/reject + forecasting (EAC/ETC/VAC/CPI)
+14. Hours tracking + burn-down charts + task timers
+15. Basic notifications (in-app)
+16. Full i18n (Spanish/English)
+17. Dashboard: 6 KPI cards, Recharts charts, opportunity funnel, project tables
+18. Azure deployment — API (Container Apps) + Frontend (Static Web Apps)
+19. CI/CD (GitHub Actions — 4 workflows)
+20. Production hardening (rate limiting, App Insights, Redis cache, health probes)
 
-### ❌ OUT OF SCOPE (Phase 2+)
-- Gantt chart / timeline view
+### 🔨 IN PROGRESS — Sales/CRM Module Enhancement (7 Waves)
+
+> **Full spec:** `docs/SALES_OPPORTUNITIES_MODULE_ENHANCEMENT.md`
+
+Transforms the basic Opportunities module into a full B2B CRM platform. Best-of features from Salesforce, HubSpot, Dynamics 365, Pipedrive, Close, and Freshsales.
+
+| Wave | Focus | Status |
+|---|---|---|
+| 1 | Accounts, Contacts, Pipeline Configuration | Not started |
+| 2 | Enhanced Opportunity, Stakeholders, Line Items, Kanban Board | Not started |
+| 3 | Activities & Timeline, Deal Health, Reminders (20 items) | Not started |
+| 4 | Leads & Conversion | Not started |
+| 5 | Quoting | Not started |
+| 6 | Forecasting & Analytics | Not started |
+| 7 | Sales Automation Engine (22 items) | Not started |
+
+### ❌ OUT OF SCOPE
+- Commission tracking / revenue recognition (tracked at project/program level)
 - Opportunity-to-Project Conversion Wizard
-- SharePoint / Microsoft Graph integration
-- Microsoft Purview sensitivity labels
+- SharePoint / Microsoft Purview integration
 - WhatsApp AI agent
 - AI Project Intelligence features
 - Mobile QR code check-in/out
-- Capacity planning (90-day view)
 - Vehicle management module
 - DocuSign integration
-- Multi-language (Spanish)
+- Time entry approval workflow + leave tracking (planned separately)
 
 ---
 
@@ -566,7 +856,17 @@ When helping with this codebase, always:
 - `InventoryTransaction` is append-only — never generate UPDATE or DELETE on that table
 - Use TypeORM migrations for schema changes — never `synchronize: true` in production
 - All secrets go through Azure Key Vault in production (local `.env` only for dev)
-- Phase 1 scope only — don't implement Phase 2+ features proactively
+- All new entities MUST include `tenantId` for multi-tenant isolation
+- Refer to `docs/SALES_OPPORTUNITIES_MODULE_ENHANCEMENT.md` for full Sales module specs
+
+When building Sales/CRM module:
+- Follow the wave order (1→7) — each wave builds on the previous
+- Build order per wave: shared types → API entity/migration → service/controller → hooks → UI (§9)
+- All sales entities are tenant-scoped (`tenantId` on every query)
+- Opportunity entity is being enhanced, not replaced — migrate existing data
+- Activities are polymorphic (link to account, contact, opportunity, or lead)
+- Pipeline stages have ordered `displayOrder` — use `@AfterLoad` or query ORDER BY
+- Lead conversion is a transactional operation (creates account + contact + opportunity atomically)
 
 When writing migrations:
 - Name format: `{timestamp}-{description}.ts` (TypeORM generates the timestamp)

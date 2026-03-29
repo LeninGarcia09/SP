@@ -25,7 +25,7 @@ export function ResourceFinder({ open, onOpenChange, onAssign }: ResourceFinderP
   const [skillSearch, setSkillSearch] = useState('');
   const [minAllocation, setMinAllocation] = useState<number>(20);
 
-  const skillsQuery = useSkills({ limit: 200 });
+  const skillsQuery = useSkills({ limit: 100 });
   const matchQuery = useResourceMatches(selectedSkills, minAllocation);
 
   const allSkills = skillsQuery.data?.data ?? [];

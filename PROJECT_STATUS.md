@@ -1,8 +1,9 @@
 # BizOps Platform — Project Status & Context
 
 > **Purpose:** Quick-reference for AI agents resuming work on this project.
-> **Last updated:** 2025-06-23
+> **Last updated:** 2025-07-25
 > **Full spec:** See `CLAUDE.md` in this same directory for complete data model, RBAC, API conventions.
+> **Sales module spec:** See `docs/SALES_OPPORTUNITIES_MODULE_ENHANCEMENT.md` (~3500 lines)
 
 ---
 
@@ -132,6 +133,79 @@
 - [x] New UI components: Tabs (context-based), Progress bar (with custom indicator colors)
 - [x] Full i18n for all new dashboard/projects/programs keys (EN + ES)
 - [x] UI/UX Enhancement Plan document (`docs/UI_UX_ENHANCEMENT_PLAN.md`)
+- [x] Dashboard resilient error handling: `allFailed` shows full error, `partialError` shows amber warning, renders available data gracefully
+
+### Phase 6 — Azure AD Multi-Tenant & Graph ✅
+- [x] Azure AD multi-tenant authentication (8+ iterations, multi-org app registration)
+- [x] Multi-tenant data isolation (17 entities, 12 services, `tenantId` on all queries)
+- [x] Microsoft Graph integration (client secret, `User.Read.All` + `Organization.Read.All`)
+- [x] Graph multi-tenant: tenant selector on Admin page, cross-tenant user enumeration
+- [x] 3 tenants configured: VS Enterprise (`bad76ac5`), sitec.solutions (`bd208e59`), garsal.org (`5814ad12`)
+- [x] RBAC expanded to 11 roles (added ADMIN, OPERATIONS_DIRECTOR, SALES_EXECUTIVE)
+
+### Phase 7 — Full Azure Deployment ✅
+- [x] API deployed to Azure Container Apps (`api-bizops-dev`, image via `az acr build --platform linux/amd64`)
+- [x] Frontend deployed to Azure Static Web Apps (`swa-bizops-dev`)
+- [x] Health check confirmed: database=ok, cache=ok
+- [x] API URL: `https://api-bizops-dev.graysand-3ab24a81.eastus.azurecontainerapps.io`
+- [x] Frontend URL: `https://yellow-moss-027665410.1.azurestaticapps.net`
+
+### Sales/CRM Module Enhancement — 7 Waves (Not Started)
+
+> **Full spec:** `docs/SALES_OPPORTUNITIES_MODULE_ENHANCEMENT.md`
+> Transforms basic Opportunities CRUD into a full B2B CRM platform.
+> Best-of: Salesforce, HubSpot, Dynamics 365, Pipedrive, Close, Freshsales.
+
+#### Wave 1 — Foundation (Not Started)
+- [ ] Account entity + migration + CRUD service/controller
+- [ ] Contact entity + migration + CRUD service/controller
+- [ ] SalesPipeline + PipelineStage entities + configuration UI
+- [ ] Shared types + Zod schemas for Account, Contact, Pipeline
+- [ ] Frontend: Account list/detail pages, Contact management
+- [ ] Frontend: Pipeline configuration page
+
+#### Wave 2 — Enhanced Opportunity (Not Started)
+- [ ] Opportunity entity enhancement (add accountId, pipelineId, stageId, line items)
+- [ ] OpportunityStakeholder entity (role, influence, sentiment mapping)
+- [ ] Product + OpportunityLineItem entities
+- [ ] Pipeline Kanban board (drag-drop stage changes)
+- [ ] Opportunity detail page overhaul (stakeholder map, line items table)
+- [ ] Migration: existing opportunities → new schema
+
+#### Wave 3 — Activities & Timeline (Not Started — 20 items)
+- [ ] Activity entity (polymorphic: call, email, meeting, note, task)
+- [ ] Activity CRUD + timeline endpoints
+- [ ] Activity templates + sequences
+- [ ] Reminders + due date notifications
+- [ ] Deal Health scoring
+- [ ] Frontend: Activity timeline UI, log activity dialogs
+- [ ] Frontend: Reminder management
+
+#### Wave 4 — Leads & Conversion (Not Started)
+- [ ] Lead entity + scoring
+- [ ] Lead CRUD + status workflow
+- [ ] Lead conversion (transactional: lead → account + contact + opportunity)
+- [ ] Frontend: Lead list, detail, conversion wizard
+
+#### Wave 5 — Quoting (Not Started)
+- [ ] Quote + QuoteLineItem entities
+- [ ] Quote CRUD + versioning + status workflow
+- [ ] Quote PDF generation
+- [ ] Frontend: Quote builder, preview, send
+
+#### Wave 6 — Forecasting & Analytics (Not Started)
+- [ ] Pipeline analytics (conversion rates, velocity, stage duration)
+- [ ] Revenue forecasting (weighted pipeline, historical trends)
+- [ ] Sales dashboard with KPIs
+- [ ] Frontend: Analytics pages, forecast charts
+
+#### Wave 7 — Sales Automation Engine (Not Started — 22 items)
+- [ ] Event bus architecture (4-layer: triggers → conditions → actions → logging)
+- [ ] WorkflowRule entity + CRUD + execution engine
+- [ ] AssignmentRule entity (round-robin, load-balanced, criteria-based)
+- [ ] Sequence entity + enrollment + step execution
+- [ ] 8 cron jobs (stale deals, follow-up reminders, sequence steps, etc.)
+- [ ] Frontend: Workflow rule builder, sequence editor, assignment config
 
 ---
 
@@ -179,14 +253,19 @@ docker build -f apps/api/Dockerfile -t bizops-api:local .
 | File | Purpose |
 |---|---|
 | `CLAUDE.md` | **Full project spec** — data model, RBAC, API design, RAG engine |
+| `PROJECT_STATUS.md` | Phase completion tracker (this file) |
+| `docs/SALES_OPPORTUNITIES_MODULE_ENHANCEMENT.md` | Sales/CRM module spec (~3500 lines, 7 waves) |
+| `docs/ENHANCEMENT_PLAN_HOURS_COST_RESOURCES.md` | Hours/Cost/Resource management plan |
+| `docs/UI_UX_ENHANCEMENT_PLAN.md` | Dashboard & UI modernization plan |
 | `docker-compose.yml` | Postgres 16 + Redis 7 (local dev) |
 | `packages/shared/src/types/` | Shared TypeScript interfaces |
 | `packages/shared/src/schemas/` | Shared Zod validation schemas |
 | `apps/api/src/database/data-source.ts` | TypeORM CLI DataSource |
-| `apps/api/src/modules/` | NestJS modules (users, projects, tasks, health, personnel, inventory) |
+| `apps/api/src/modules/` | NestJS modules (13 feature modules) |
 | `apps/web/src/lib/api/index.ts` | Typed API client |
-| `apps/web/src/hooks/` | React Query hook files |
+| `apps/web/src/hooks/` | React Query hook files (one per module) |
 | `apps/web/src/pages/` | Page components |
+| `infrastructure/DEPLOYMENT.md` | Azure deployment guide |
 
 ---
 
@@ -204,8 +283,11 @@ docker build -f apps/api/Dockerfile -t bizops-api:local .
 
 ## Important Notes
 
-- `docker-compose` (V1 CLI) doesn't exist — must use `docker compose` (V2) or full path
-- `docker-compose.yml` has obsolete `version` attribute (warning only, not breaking)
+- `docker compose` (V2 syntax) — not `docker-compose`
 - Shared package uses CommonJS output — Vite handles CJS via pre-bundling
-- Force push was used to overwrite unrelated legacy content on remote
-- All services are stubs — they return empty/mock data until DB is connected
+- All services are multi-tenant isolated — `tenantId` on all entities and queries
+- ARM64 dev machine (Windows ARM) — always use `az acr build --platform linux/amd64` for Docker builds (never local `docker build` for deployment)
+- Azure resources in `rg-bizops-dev2` (eastus), subscription `c885843e-7631-4f4e-9f1a-5d1a49d3d2a1`
+- ACR: `acrbizops5zqydpn5lftdy.azurecr.io`
+- `InventoryTransaction` is append-only — never UPDATE or DELETE
+- Sales module enhancement plan is ~3500 lines — read `docs/SALES_OPPORTUNITIES_MODULE_ENHANCEMENT.md` for full spec

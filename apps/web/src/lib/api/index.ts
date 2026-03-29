@@ -29,6 +29,10 @@ import type {
   TenantUser,
   AppRoleAssignment,
   AppRoleDefinition,
+  Account,
+  Contact,
+  SalesPipeline,
+  PipelineStage,
 } from '@telnub/shared';
 
 // ─── Query Params ───
@@ -565,4 +569,101 @@ export async function syncUsers(userIds: string[], tenantId?: string) {
 export async function fetchCrmUsers() {
   const { data } = await api.get<ApiResponse<User[]>>('/admin/crm-users');
   return data;
+}
+
+// ─── Accounts ───
+
+export async function fetchAccounts(params?: PaginationParams) {
+  const { data } = await api.get<{ data: Account[]; meta: PaginationMeta }>('/accounts', { params });
+  return data;
+}
+
+export async function fetchAccount(id: string) {
+  const { data } = await api.get<ApiResponse<Account>>(`/accounts/${id}`);
+  return data;
+}
+
+export async function createAccount(body: Record<string, unknown>) {
+  const { data } = await api.post<ApiResponse<Account>>('/accounts', body);
+  return data;
+}
+
+export async function updateAccount(id: string, body: Record<string, unknown>) {
+  const { data } = await api.patch<ApiResponse<Account>>(`/accounts/${id}`, body);
+  return data;
+}
+
+export async function deleteAccount(id: string) {
+  await api.delete(`/accounts/${id}`);
+}
+
+// ─── Contacts ───
+
+export async function fetchContacts(params?: PaginationParams) {
+  const { data } = await api.get<{ data: Contact[]; meta: PaginationMeta }>('/contacts', { params });
+  return data;
+}
+
+export async function fetchContact(id: string) {
+  const { data } = await api.get<ApiResponse<Contact>>(`/contacts/${id}`);
+  return data;
+}
+
+export async function createContact(body: Record<string, unknown>) {
+  const { data } = await api.post<ApiResponse<Contact>>('/contacts', body);
+  return data;
+}
+
+export async function updateContact(id: string, body: Record<string, unknown>) {
+  const { data } = await api.patch<ApiResponse<Contact>>(`/contacts/${id}`, body);
+  return data;
+}
+
+export async function deleteContact(id: string) {
+  await api.delete(`/contacts/${id}`);
+}
+
+// ─── Pipelines ───
+
+export async function fetchPipelines(params?: PaginationParams) {
+  const { data } = await api.get<{ data: SalesPipeline[]; meta: PaginationMeta }>('/pipelines', { params });
+  return data;
+}
+
+export async function fetchPipeline(id: string) {
+  const { data } = await api.get<ApiResponse<SalesPipeline>>(`/pipelines/${id}`);
+  return data;
+}
+
+export async function createPipeline(body: Record<string, unknown>) {
+  const { data } = await api.post<ApiResponse<SalesPipeline>>('/pipelines', body);
+  return data;
+}
+
+export async function updatePipeline(id: string, body: Record<string, unknown>) {
+  const { data } = await api.patch<ApiResponse<SalesPipeline>>(`/pipelines/${id}`, body);
+  return data;
+}
+
+export async function deletePipeline(id: string) {
+  await api.delete(`/pipelines/${id}`);
+}
+
+export async function fetchPipelineStages(pipelineId: string) {
+  const { data } = await api.get<ApiResponse<PipelineStage[]>>(`/pipelines/${pipelineId}/stages`);
+  return data;
+}
+
+export async function createPipelineStage(pipelineId: string, body: Record<string, unknown>) {
+  const { data } = await api.post<ApiResponse<PipelineStage>>(`/pipelines/${pipelineId}/stages`, body);
+  return data;
+}
+
+export async function updatePipelineStage(stageId: string, body: Record<string, unknown>) {
+  const { data } = await api.patch<ApiResponse<PipelineStage>>(`/pipelines/stages/${stageId}`, body);
+  return data;
+}
+
+export async function deletePipelineStage(stageId: string) {
+  await api.delete(`/pipelines/stages/${stageId}`);
 }

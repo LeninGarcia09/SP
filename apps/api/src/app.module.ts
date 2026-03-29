@@ -21,6 +21,9 @@ import { OpportunitiesModule } from './modules/opportunities/opportunities.modul
 import { CostsModule } from './modules/costs/costs.module';
 import { DeliverablesModule } from './modules/deliverables/deliverables.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { AccountsModule } from './modules/accounts/accounts.module';
+import { ContactsModule } from './modules/contacts/contacts.module';
+import { PipelinesModule } from './modules/pipelines/pipelines.module';
 import { envValidationSchema } from './config/env.validation';
 import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
 import { TenantInterceptor } from './common/tenant/tenant.interceptor';
@@ -77,6 +80,9 @@ import { SystemController } from './common/system.controller';
     CostsModule,
     DeliverablesModule,
     AdminModule,
+    AccountsModule,
+    ContactsModule,
+    PipelinesModule,
   ],
   controllers: [SystemController],
   providers: [

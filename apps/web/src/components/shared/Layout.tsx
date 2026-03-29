@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, FolderKanban, Users, Package, Shield, ShieldCheck, Bell, Check, X, Layers, Target, Lightbulb, CalendarRange, Globe, ChevronDown, Briefcase, LogOut, User, Menu, Trash2 } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, Users, Package, Shield, ShieldCheck, Bell, Check, X, Layers, Target, Lightbulb, CalendarRange, Globe, ChevronDown, Briefcase, LogOut, User, Menu, Trash2, Building2, UserCircle, GitBranch } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNotifications, useUnreadCount, useMarkNotificationRead, useMarkAllRead } from '../../hooks/use-notifications';
 import { Button } from '../ui/button';
@@ -45,9 +45,12 @@ const navStructure: NavEntry[] = [
   {
     labelKey: 'nav.groupSales',
     icon: Briefcase,
-    prefixes: ['/opportunities'],
+    prefixes: ['/opportunities', '/accounts', '/contacts', '/pipelines'],
     items: [
       { to: '/opportunities', key: 'nav.opportunities', icon: Target, permission: 'nav.opportunities' },
+      { to: '/accounts', key: 'nav.accounts', icon: Building2, permission: 'nav.accounts' },
+      { to: '/contacts', key: 'nav.contacts', icon: UserCircle, permission: 'nav.contacts' },
+      { to: '/pipelines', key: 'nav.pipelines', icon: GitBranch, permission: 'nav.pipelines' },
     ],
   },
   {

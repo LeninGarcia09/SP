@@ -631,3 +631,149 @@ export interface ResourceMatch {
 export interface ResourceMatchResult {
   matches: ResourceMatch[];
 }
+
+// ─── Sales / CRM Module (Wave 1) ───
+
+export enum AccountType {
+  PROSPECT = 'PROSPECT',
+  CUSTOMER = 'CUSTOMER',
+  PARTNER = 'PARTNER',
+  COMPETITOR = 'COMPETITOR',
+  VENDOR = 'VENDOR',
+  OTHER = 'OTHER',
+}
+
+export enum AccountTier {
+  ENTERPRISE = 'ENTERPRISE',
+  MID_MARKET = 'MID_MARKET',
+  SMB = 'SMB',
+  STARTUP = 'STARTUP',
+}
+
+export interface Account {
+  id: string;
+  tenantId: string | null;
+  code: string;
+  name: string;
+  legalName: string | null;
+  industry: string | null;
+  website: string | null;
+  phone: string | null;
+  email: string | null;
+  addressLine1: string | null;
+  addressLine2: string | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  postalCode: string | null;
+  type: AccountType;
+  tier: AccountTier | null;
+  annualRevenue: number | null;
+  employeeCount: number | null;
+  ownerId: string;
+  parentAccountId: string | null;
+  source: string | null;
+  tags: string[];
+  metadata: Record<string, unknown>;
+  isActive: boolean;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export enum ContactChannel {
+  EMAIL = 'EMAIL',
+  PHONE = 'PHONE',
+  IN_PERSON = 'IN_PERSON',
+  VIDEO = 'VIDEO',
+}
+
+export enum ContactType {
+  PRIMARY = 'PRIMARY',
+  BILLING = 'BILLING',
+  TECHNICAL = 'TECHNICAL',
+  EXECUTIVE = 'EXECUTIVE',
+  OTHER = 'OTHER',
+}
+
+export enum ContactInfluence {
+  DECISION_MAKER = 'DECISION_MAKER',
+  INFLUENCER = 'INFLUENCER',
+  CHAMPION = 'CHAMPION',
+  BLOCKER = 'BLOCKER',
+  END_USER = 'END_USER',
+  EVALUATOR = 'EVALUATOR',
+  ECONOMIC_BUYER = 'ECONOMIC_BUYER',
+}
+
+export interface Contact {
+  id: string;
+  tenantId: string | null;
+  code: string;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  phone: string | null;
+  mobilePhone: string | null;
+  jobTitle: string | null;
+  department: string | null;
+  accountId: string;
+  reportsToId: string | null;
+  preferredChannel: ContactChannel;
+  timezone: string | null;
+  language: string;
+  type: ContactType;
+  influence: ContactInfluence | null;
+  lastContactedAt: string | null;
+  lastActivityAt: string | null;
+  linkedinUrl: string | null;
+  notes: string | null;
+  tags: string[];
+  metadata: Record<string, unknown>;
+  isActive: boolean;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export enum ForecastCategory {
+  PIPELINE = 'PIPELINE',
+  BEST_CASE = 'BEST_CASE',
+  COMMIT = 'COMMIT',
+  OMITTED = 'OMITTED',
+}
+
+export interface SalesPipeline {
+  id: string;
+  tenantId: string | null;
+  name: string;
+  description: string | null;
+  isDefault: boolean;
+  isActive: boolean;
+  sortOrder: number;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  stages?: PipelineStage[];
+}
+
+export interface PipelineStage {
+  id: string;
+  tenantId: string | null;
+  pipelineId: string;
+  name: string;
+  description: string | null;
+  sortOrder: number;
+  defaultProbability: number;
+  forecastCategory: ForecastCategory;
+  isClosed: boolean;
+  isWon: boolean;
+  requiredFields: string[];
+  checklist: Record<string, unknown>[];
+  daysExpected: number | null;
+  autoActions: Record<string, unknown>[];
+  color: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}

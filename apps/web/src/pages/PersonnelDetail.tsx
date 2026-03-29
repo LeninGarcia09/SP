@@ -32,7 +32,7 @@ export function PersonnelDetailPage() {
   const person = usePerson(id!);
   const assignments = useAssignmentsByPerson(id!);
   const personSkills = usePersonSkills(id!);
-  const skillsCatalog = useSkills({ limit: 200 });
+  const skillsCatalog = useSkills({ limit: 100 });
   const createAssignment = useCreateAssignment();
   const assignSkill = useAssignPersonSkill();
   const updatePersonSkill = useUpdatePersonSkill();

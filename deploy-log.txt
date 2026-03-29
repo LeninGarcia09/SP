@@ -1,0 +1,4 @@
+{
+  "id": "c894c977-5e26-4a4c-b544-5e83895dc8b4",
+  "name": "TrIP Responsible AI"
+}

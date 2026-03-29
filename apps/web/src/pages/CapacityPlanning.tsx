@@ -62,9 +62,9 @@ interface PersonRow {
 export function CapacityPlanningPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { data: personnelData, isLoading: loadingPersonnel } = usePersonnel({ limit: 500 });
+  const { data: personnelData, isLoading: loadingPersonnel } = usePersonnel({ limit: 100 });
   const { data: assignmentsData, isLoading: loadingAssignments } = useAllActiveAssignments();
-  const { data: projectsData } = useProjects({ limit: 500 });
+  const { data: projectsData } = useProjects({ limit: 100 });
 
   const today = startOfDay(new Date());
   const rangeEnd = addDays(today, DAYS);

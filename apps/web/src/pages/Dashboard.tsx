@@ -106,9 +106,9 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const authUser = useAuthStore((s) => s.user);
-  const projects = useProjects({ limit: 200 });
-  const personnel = usePersonnel({ limit: 200 });
-  const opportunities = useOpportunities({ limit: 200 });
+  const projects = useProjects({ limit: 100 });
+  const personnel = usePersonnel({ limit: 100 });
+  const opportunities = useOpportunities({ limit: 100 });
 
   const isLoading = projects.isLoading || personnel.isLoading || opportunities.isLoading;
   const allFailed = projects.isError && personnel.isError && opportunities.isError;
@@ -215,7 +215,7 @@ export function DashboardPage() {
 
       {allFailed && (
         <div className="rounded-lg border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
-          {t('dashboard.error')}
+          <p className="font-medium">{t('dashboard.error')}</p>
         </div>
       )}
 

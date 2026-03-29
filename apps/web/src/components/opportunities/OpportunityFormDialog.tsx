@@ -52,7 +52,7 @@ export function OpportunityFormDialog({ open, onOpenChange, opportunity }: Oppor
   const { t } = useTranslation();
   const createMutation = useCreateOpportunity();
   const updateMutation = useUpdateOpportunity();
-  const usersQuery = useUsers({ limit: 200 });
+  const usersQuery = useUsers({ limit: 100 });
   const users = usersQuery.data?.data ?? [];
 
   const form = useForm<OpportunityFormValues>({

@@ -117,7 +117,7 @@ export function GanttChartPage() {
   const [zoom, setZoom] = useState<ZoomLevel>('months');
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | ''>('');
 
-  const { data, isLoading } = useProjects({ limit: 500, search: search || undefined });
+  const { data, isLoading } = useProjects({ limit: 100, search: search || undefined });
 
   const projects = useMemo(() => {
     const list = data?.data ?? [];

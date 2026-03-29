@@ -2,11 +2,24 @@
 # BizOps Platform — Deployment Guide
 # ─────────────────────────────────────────────────────────────
 
+## Current Deployment
+
+| Component | Resource | URL |
+|---|---|---|
+| API | Azure Container Apps (`api-bizops-dev`) | `https://api-bizops-dev.graysand-3ab24a81.eastus.azurecontainerapps.io` |
+| Frontend | Azure Static Web Apps (`swa-bizops-dev`) | `https://yellow-moss-027665410.1.azurestaticapps.net` |
+| Database | PostgreSQL Flexible Server (`pg-flex-bizops-dev`) | Burstable B1ms, PG 16, 32GB |
+| Cache | Azure Cache for Redis | |
+| Registry | ACR (`acrbizops5zqydpn5lftdy`) | `acrbizops5zqydpn5lftdy.azurecr.io` |
+| Resource Group | `rg-bizops-dev2` | East US |
+
 ## Prerequisites
 
 1. Azure subscription with Contributor access
 2. Azure CLI installed and authenticated (`az login`)
 3. GitHub repository with Actions enabled
+
+> **ARM64 Note:** Dev machine is Windows ARM64. **Never use local `docker build`** for deployment images — they produce ARM64 binaries that fail on Azure (AMD64). Always use `az acr build --platform linux/amd64` to build directly on ACR.
 
 ## GitHub Actions Secrets Required
 
@@ -101,6 +114,37 @@ docker run --rm \
   -p 3000:3000 \
   bizops-api:local
 ```
+
+## Manual Deployment Commands (PowerShell)
+
+Use these for deploying outside of GitHub Actions:
+
+```powershell
+# API — Build on ACR (always use --platform linux/amd64)
+az acr build --registry acrbizops5zqydpn5lftdy `
+  --image bizops-api:<tag> --image bizops-api:latest `
+  --file apps/api/Dockerfile --platform linux/amd64 .
+
+# API — Deploy to Container App
+az containerapp update --name api-bizops-dev `
+  --resource-group rg-bizops-dev2 `
+  --image acrbizops5zqydpn5lftdy.azurecr.io/bizops-api:<tag>
+
+# Frontend — Build
+cd apps/web; npm run build
+
+# Frontend — Deploy to Static Web App
+$token = (az staticwebapp secrets list --name swa-bizops-dev `
+  --resource-group rg-bizops-dev2 --query "properties.apiKey" -o tsv)
+npx @azure/static-web-apps-cli deploy dist --deployment-token $token --env production
+
+# Health Check
+Invoke-RestMethod -Uri "https://api-bizops-dev.graysand-3ab24a81.eastus.azurecontainerapps.io/api/v1/system/health"
+```
+
+## Sales/CRM Module — Infrastructure Notes
+
+The Sales/CRM module (7 waves) uses the **same infrastructure stack** — no additional Azure resources needed. All new entities (Account, Contact, Lead, Pipeline, Product, Quote, Activity, etc.) are stored in the existing PostgreSQL Flexible Server. New TypeORM migrations will create the required tables.
 
 ## Architecture
 

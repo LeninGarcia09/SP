@@ -101,7 +101,7 @@ export function ProjectDetailPage() {
   const hoursSummary = useProjectHoursSummary(id!);
   const usersQuery = useUsers({ limit: 100 });
   const personnelQuery = usePersonnel({ limit: 100 });
-  const allProjectsQuery = useProjects({ limit: 200 });
+  const allProjectsQuery = useProjects({ limit: 100 });
 
   // Cost hooks
   const costEntries = useCostEntries(id!);

@@ -52,6 +52,24 @@ const PERMISSION_MAP: Record<string, UserRole[]> = {
   'opportunities.delete': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR],
   'opportunities.read': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.SALES_EXECUTIVE],
 
+  // Accounts
+  'accounts.create': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.SALES_EXECUTIVE],
+  'accounts.update': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.SALES_EXECUTIVE],
+  'accounts.delete': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR],
+  'accounts.read': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.SALES_EXECUTIVE],
+
+  // Contacts
+  'contacts.create': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.SALES_EXECUTIVE],
+  'contacts.update': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.SALES_EXECUTIVE],
+  'contacts.delete': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR],
+  'contacts.read': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.SALES_EXECUTIVE],
+
+  // Pipelines
+  'pipelines.create': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR],
+  'pipelines.update': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR],
+  'pipelines.delete': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR],
+  'pipelines.read': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.SALES_EXECUTIVE],
+
   // Skills
   'skills.create': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.HR_MANAGER],
   'skills.update': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.HR_MANAGER],
@@ -71,6 +89,9 @@ const PERMISSION_MAP: Record<string, UserRole[]> = {
   'nav.programs': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.DEPARTMENT_MANAGER, UserRole.PROGRAM_MANAGER, UserRole.PROJECT_MANAGER, UserRole.TEAM_MEMBER, UserRole.SALES_EXECUTIVE],
   'nav.projects': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.DEPARTMENT_MANAGER, UserRole.PROGRAM_MANAGER, UserRole.PROJECT_MANAGER, UserRole.TEAM_MEMBER, UserRole.INVENTORY_MANAGER, UserRole.SALES_EXECUTIVE],
   'nav.opportunities': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.SALES_EXECUTIVE],
+  'nav.accounts': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.SALES_EXECUTIVE],
+  'nav.contacts': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.SALES_EXECUTIVE],
+  'nav.pipelines': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR],
   'nav.personnel': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.DEPARTMENT_MANAGER, UserRole.PROGRAM_MANAGER, UserRole.PROJECT_MANAGER, UserRole.TEAM_MEMBER],
   'nav.skills': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.HR_MANAGER, UserRole.DEPARTMENT_MANAGER],
   'nav.capacity': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.DEPARTMENT_MANAGER],

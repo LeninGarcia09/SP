@@ -53,8 +53,8 @@ export function ConvertOpportunityDialog({
 }: ConvertOpportunityDialogProps) {
   const convertMutation = useConvertOpportunity();
   const { t } = useTranslation();
-  const usersQuery = useUsers({ limit: 200 });
-  const programsQuery = usePrograms({ limit: 200 });
+  const usersQuery = useUsers({ limit: 100 });
+  const programsQuery = usePrograms({ limit: 100 });
   const users = usersQuery.data?.data ?? [];
   const programs = programsQuery.data?.data ?? [];
 

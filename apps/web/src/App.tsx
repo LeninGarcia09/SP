@@ -12,6 +12,11 @@ import { ProgramsPage } from './pages/Programs';
 import { ProgramDetailPage } from './pages/ProgramDetail';
 import { OpportunitiesPage } from './pages/Opportunities';
 import { OpportunityDetailPage } from './pages/OpportunityDetail';
+import { AccountsPage } from './pages/Accounts';
+import { AccountDetailPage } from './pages/AccountDetail';
+import { ContactsPage } from './pages/Contacts';
+import { ContactDetailPage } from './pages/ContactDetail';
+import { PipelinesPage } from './pages/Pipelines';
 import { SkillsPage } from './pages/Skills';
 import { CapacityPlanningPage } from './pages/CapacityPlanning';
 import { TrashPage } from './pages/Trash';
@@ -29,6 +34,11 @@ export function App() {
         <Route path="/projects/:id" element={<ProjectDetailPage />} />
         <Route path="/opportunities" element={<OpportunitiesPage />} />
         <Route path="/opportunities/:id" element={<OpportunityDetailPage />} />
+        <Route path="/accounts" element={<AccountsPage />} />
+        <Route path="/accounts/:id" element={<AccountDetailPage />} />
+        <Route path="/contacts" element={<ContactsPage />} />
+        <Route path="/contacts/:id" element={<ContactDetailPage />} />
+        <Route path="/pipelines" element={<PipelinesPage />} />
         <Route path="/personnel" element={<PersonnelPage />} />
         <Route path="/personnel/:id" element={<PersonnelDetailPage />} />
         <Route path="/skills" element={<SkillsPage />} />
