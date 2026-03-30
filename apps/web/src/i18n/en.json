@@ -12,6 +12,8 @@
     "accounts": "Accounts",
     "contacts": "Contacts",
     "pipelines": "Pipelines",
+    "products": "Products",
+    "vendors": "Vendors",
     "personnel": "Personnel",
     "skills": "Skills",
     "ganttChart": "Gantt Chart",
@@ -901,5 +903,54 @@
     "colorLabel": "Color",
     "createBtn": "Add Stage",
     "saveBtn": "Save Changes"
+  },
+  "products": {
+    "title": "Products",
+    "new": "New Product",
+    "search": "Search products…",
+    "error": "Failed to load products.",
+    "empty": "No products found.",
+    "category": "Category",
+    "vendor": "Vendor",
+    "family": "Family",
+    "unitPrice": "Unit Price",
+    "currency": "Currency",
+    "unit": "Unit",
+    "recurring": "Recurring",
+    "interval": "Billing Interval",
+    "minQuantity": "Min Quantity",
+    "maxDiscount": "Max Discount (%)",
+    "selectVendor": "Select a vendor"
+  },
+  "productForm": {
+    "newTitle": "New Product",
+    "editTitle": "Edit Product",
+    "newDesc": "Fill in the details to create a new product.",
+    "editDesc": "Update the product details below."
+  },
+  "vendors": {
+    "title": "Vendors",
+    "new": "New Vendor",
+    "search": "Search vendors…",
+    "error": "Failed to load vendors.",
+    "empty": "No vendors found.",
+    "legalName": "Legal Name",
+    "contactPerson": "Contact Person",
+    "email": "Email",
+    "phone": "Phone",
+    "website": "Website",
+    "country": "Country",
+    "address": "Address",
+    "addressLine1": "Address",
+    "city": "City",
+    "state": "State / Province",
+    "postalCode": "Postal Code",
+    "notes": "Notes"
+  },
+  "vendorForm": {
+    "newTitle": "New Vendor",
+    "editTitle": "Edit Vendor",
+    "newDesc": "Fill in the details to register a new vendor.",
+    "editDesc": "Update the vendor details below."
   }
 }

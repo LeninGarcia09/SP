@@ -5,8 +5,11 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { ProductCategory, RecurringInterval } from '@telnub/shared';
+import { VendorEntity } from '../vendors/vendor.entity';
 
 @Entity('products')
 export class ProductEntity {
@@ -32,6 +35,14 @@ export class ProductEntity {
 
   @Column({ type: 'varchar', length: 100, nullable: true })
   family!: string | null;
+
+  @Index()
+  @Column({ type: 'uuid', nullable: true })
+  vendorId!: string | null;
+
+  @ManyToOne(() => VendorEntity, { eager: true, nullable: true })
+  @JoinColumn({ name: 'vendorId' })
+  vendor!: VendorEntity | null;
 
   @Column({ type: 'decimal', precision: 15, scale: 2, default: 0 })
   unitPrice!: number;

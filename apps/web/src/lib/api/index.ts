@@ -38,6 +38,7 @@ import type {
   OpportunityTeamMember,
   OpportunityLineItem,
   OpportunityCompetitor,
+  Vendor,
 } from '@telnub/shared';
 
 // ─── Query Params ───
@@ -547,6 +548,32 @@ export async function updateProduct(id: string, body: Record<string, unknown>) {
 
 export async function deleteProduct(id: string) {
   await api.delete(`/products/${id}`);
+}
+
+// ─── Vendors ───
+
+export async function fetchVendors(params?: PaginationParams) {
+  const { data } = await api.get<{ data: Vendor[]; meta: PaginationMeta }>('/vendors', { params });
+  return data;
+}
+
+export async function fetchVendor(id: string) {
+  const { data } = await api.get<ApiResponse<Vendor>>(`/vendors/${id}`);
+  return data;
+}
+
+export async function createVendor(body: Record<string, unknown>) {
+  const { data } = await api.post<ApiResponse<Vendor>>('/vendors', body);
+  return data;
+}
+
+export async function updateVendor(id: string, body: Record<string, unknown>) {
+  const { data } = await api.patch<ApiResponse<Vendor>>(`/vendors/${id}`, body);
+  return data;
+}
+
+export async function deleteVendor(id: string) {
+  await api.delete(`/vendors/${id}`);
 }
 
 // ─── Cost Entries ───

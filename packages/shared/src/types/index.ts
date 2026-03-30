@@ -892,6 +892,34 @@ export enum CompetitorStatus {
   WITHDRAWN = 'WITHDRAWN',
 }
 
+export enum VendorStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  SUSPENDED = 'SUSPENDED',
+}
+
+export interface Vendor {
+  id: string;
+  tenantId: string | null;
+  code: string;
+  name: string;
+  legalName: string | null;
+  website: string | null;
+  phone: string | null;
+  email: string | null;
+  contactPerson: string | null;
+  addressLine1: string | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  postalCode: string | null;
+  status: VendorStatus;
+  notes: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Product {
   id: string;
   tenantId: string | null;
@@ -900,6 +928,8 @@ export interface Product {
   description: string | null;
   category: ProductCategory;
   family: string | null;
+  vendorId: string | null;
+  vendor?: Vendor;
   unitPrice: number;
   currency: string;
   unit: string;

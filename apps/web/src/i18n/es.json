@@ -12,6 +12,8 @@
     "accounts": "Cuentas",
     "contacts": "Contactos",
     "pipelines": "Pipelines",
+    "products": "Productos",
+    "vendors": "Proveedores",
     "personnel": "Personal",
     "skills": "Habilidades",
     "ganttChart": "Diagrama Gantt",
@@ -901,5 +903,54 @@
     "colorLabel": "Color",
     "createBtn": "Agregar Etapa",
     "saveBtn": "Guardar Cambios"
+  },
+  "products": {
+    "title": "Productos",
+    "new": "Nuevo Producto",
+    "search": "Buscar productos…",
+    "error": "Error al cargar productos.",
+    "empty": "No se encontraron productos.",
+    "category": "Categoría",
+    "vendor": "Proveedor",
+    "family": "Familia",
+    "unitPrice": "Precio Unitario",
+    "currency": "Moneda",
+    "unit": "Unidad",
+    "recurring": "Recurrente",
+    "interval": "Intervalo de Facturación",
+    "minQuantity": "Cantidad Mínima",
+    "maxDiscount": "Descuento Máximo (%)",
+    "selectVendor": "Seleccione un proveedor"
+  },
+  "productForm": {
+    "newTitle": "Nuevo Producto",
+    "editTitle": "Editar Producto",
+    "newDesc": "Complete los datos para crear un nuevo producto.",
+    "editDesc": "Actualice los datos del producto."
+  },
+  "vendors": {
+    "title": "Proveedores",
+    "new": "Nuevo Proveedor",
+    "search": "Buscar proveedores…",
+    "error": "Error al cargar proveedores.",
+    "empty": "No se encontraron proveedores.",
+    "legalName": "Razón Social",
+    "contactPerson": "Persona de Contacto",
+    "email": "Correo Electrónico",
+    "phone": "Teléfono",
+    "website": "Sitio Web",
+    "country": "País",
+    "address": "Dirección",
+    "addressLine1": "Dirección",
+    "city": "Ciudad",
+    "state": "Estado / Provincia",
+    "postalCode": "Código Postal",
+    "notes": "Notas"
+  },
+  "vendorForm": {
+    "newTitle": "Nuevo Proveedor",
+    "editTitle": "Editar Proveedor",
+    "newDesc": "Complete los datos para registrar un nuevo proveedor.",
+    "editDesc": "Actualice los datos del proveedor."
   }
 }

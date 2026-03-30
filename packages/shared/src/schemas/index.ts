@@ -32,6 +32,7 @@ import {
   RecurringInterval,
   ThreatLevel,
   CompetitorStatus,
+  VendorStatus,
 } from '../types/index.js';
 
 // ─── Project Schemas ───
@@ -392,6 +393,7 @@ export const createProductSchema = z.object({
   description: z.string().nullable().optional(),
   category: z.nativeEnum(ProductCategory).default(ProductCategory.SERVICE),
   family: z.string().max(100).nullable().optional(),
+  vendorId: z.string().uuid().nullable().optional(),
   unitPrice: z.number().nonnegative().default(0),
   currency: z.string().max(3).default('USD'),
   unit: z.string().max(50).default('unit'),
@@ -499,3 +501,25 @@ export const changeStageSchema = z.object({
 });
 
 export type ChangeStageInput = z.infer<typeof changeStageSchema>;
+
+// Vendor
+export const createVendorSchema = z.object({
+  name: z.string().min(1).max(200),
+  legalName: z.string().max(200).nullable().optional(),
+  website: z.string().max(500).nullable().optional(),
+  phone: z.string().max(50).nullable().optional(),
+  email: z.string().email().max(200).nullable().optional(),
+  contactPerson: z.string().max(200).nullable().optional(),
+  addressLine1: z.string().max(200).nullable().optional(),
+  city: z.string().max(100).nullable().optional(),
+  state: z.string().max(100).nullable().optional(),
+  country: z.string().max(100).nullable().optional(),
+  postalCode: z.string().max(20).nullable().optional(),
+  status: z.nativeEnum(VendorStatus).default(VendorStatus.ACTIVE),
+  notes: z.string().max(2000).nullable().optional(),
+});
+
+export const updateVendorSchema = createVendorSchema.partial();
+
+export type CreateVendorInput = z.infer<typeof createVendorSchema>;
+export type UpdateVendorInput = z.infer<typeof updateVendorSchema>;

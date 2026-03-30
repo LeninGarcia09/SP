@@ -8,6 +8,7 @@ import {
   IsNumber,
   IsBoolean,
   IsObject,
+  IsUUID,
   Min,
   Max,
 } from 'class-validator';
@@ -35,6 +36,11 @@ export class CreateProductDto {
   @MaxLength(100)
   @IsOptional()
   family?: string;
+
+  @ApiPropertyOptional({ description: 'Vendor/supplier UUID' })
+  @IsUUID()
+  @IsOptional()
+  vendorId?: string;
 
   @ApiPropertyOptional({ default: 0, minimum: 0 })
   @IsNumber()
@@ -106,6 +112,11 @@ export class UpdateProductDto {
   @MaxLength(100)
   @IsOptional()
   family?: string;
+
+  @ApiPropertyOptional({ description: 'Vendor/supplier UUID' })
+  @IsUUID()
+  @IsOptional()
+  vendorId?: string | null;
 
   @ApiPropertyOptional({ minimum: 0 })
   @IsNumber()

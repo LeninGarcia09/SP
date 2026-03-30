@@ -70,6 +70,18 @@ const PERMISSION_MAP: Record<string, UserRole[]> = {
   'pipelines.delete': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR],
   'pipelines.read': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.SALES_EXECUTIVE],
 
+  // Products
+  'products.create': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR],
+  'products.update': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR],
+  'products.delete': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR],
+  'products.read': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.SALES_EXECUTIVE],
+
+  // Vendors
+  'vendors.create': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR],
+  'vendors.update': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR],
+  'vendors.delete': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR],
+  'vendors.read': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.SALES_EXECUTIVE],
+
   // Skills
   'skills.create': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.HR_MANAGER],
   'skills.update': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.HR_MANAGER],
@@ -92,6 +104,8 @@ const PERMISSION_MAP: Record<string, UserRole[]> = {
   'nav.accounts': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.SALES_EXECUTIVE],
   'nav.contacts': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.SALES_EXECUTIVE],
   'nav.pipelines': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR],
+  'nav.products': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.SALES_EXECUTIVE],
+  'nav.vendors': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.SALES_EXECUTIVE],
   'nav.personnel': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.DEPARTMENT_MANAGER, UserRole.PROGRAM_MANAGER, UserRole.PROJECT_MANAGER, UserRole.TEAM_MEMBER],
   'nav.skills': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.HR_MANAGER, UserRole.DEPARTMENT_MANAGER],
   'nav.capacity': [UserRole.ADMIN, UserRole.OPERATIONS_DIRECTOR, UserRole.DEPARTMENT_MANAGER],
