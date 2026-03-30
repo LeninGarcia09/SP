@@ -79,8 +79,14 @@ export class OpportunitiesService {
 
   async create(dto: CreateOpportunityDto, ownerId: string): Promise<OpportunityEntity> {
     const year = new Date().getFullYear();
-    const count = await this.opportunityRepo.count();
-    const code = `OPP-${year}-${String(count + 1).padStart(3, '0')}`;
+    const prefix = `OPP-${year}-`;
+    const result = await this.opportunityRepo
+      .createQueryBuilder('o')
+      .select('MAX(o.code)', 'maxCode')
+      .where('o.code LIKE :prefix', { prefix: `${prefix}%` })
+      .getRawOne();
+    const lastNum = result?.maxCode ? parseInt(result.maxCode.replace(prefix, ''), 10) : 0;
+    const code = `${prefix}${String(lastNum + 1).padStart(3, '0')}`;
 
     // If stageId provided, auto-set probability + pipeline from stage
     let probability = dto.probability ?? 0;
@@ -139,8 +145,15 @@ export class OpportunitiesService {
 
     // Create the project
     const year = new Date().getFullYear();
-    const projCount = await this.projectRepo.count();
-    const projectCode = `PROJ-${year}-${String(projCount + 1).padStart(3, '0')}`;
+    const projPrefix = `PROJ-${year}-`;
+    const projResult = await this.projectRepo
+      .createQueryBuilder('p')
+      .withDeleted()
+      .select('MAX(p.code)', 'maxCode')
+      .where('p.code LIKE :prefix', { prefix: `${projPrefix}%` })
+      .getRawOne();
+    const projLastNum = projResult?.maxCode ? parseInt(projResult.maxCode.replace(projPrefix, ''), 10) : 0;
+    const projectCode = `${projPrefix}${String(projLastNum + 1).padStart(3, '0')}`;
 
     const project = this.projectRepo.create({
       code: projectCode,

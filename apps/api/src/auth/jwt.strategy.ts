@@ -96,20 +96,26 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         }
       }
 
-      // Look up the user's role from the database (set during /auth/me provisioning)
+      // Look up the user's DB UUID and role (set during /auth/me provisioning)
       const oid = payload.oid ?? payload.sub;
       let role: string | undefined;
+      let dbUserId: string | undefined;
       const dbUser = await this.userRepo.findOne({
         where: { azureAdOid: oid },
-        select: ['role'],
+        select: ['id', 'role'],
       });
       if (dbUser) {
         role = dbUser.role;
+        dbUserId = dbUser.id;
       }
 
+      // Use the database UUID as sub/id so controllers can write to UUID columns.
+      // Falls back to OID if user hasn't been provisioned yet (first /auth/me call).
+      const userId = dbUserId ?? oid;
+
       return {
-        sub: payload.sub,
-        id: oid,
+        sub: userId,
+        id: userId,
         oid,
         email: payload.preferred_username ?? payload.email ?? '',
         displayName: payload.name ?? payload.preferred_username ?? '',

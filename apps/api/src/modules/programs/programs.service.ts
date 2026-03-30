@@ -55,8 +55,15 @@ export class ProgramsService {
 
   async create(dto: CreateProgramDto, createdBy: string): Promise<ProgramEntity> {
     const year = new Date().getFullYear();
-    const count = await this.programRepo.count();
-    const code = `PROG-${year}-${String(count + 1).padStart(3, '0')}`;
+    const prefix = `PROG-${year}-`;
+    const result = await this.programRepo
+      .createQueryBuilder('p')
+      .withDeleted()
+      .select('MAX(p.code)', 'maxCode')
+      .where('p.code LIKE :prefix', { prefix: `${prefix}%` })
+      .getRawOne();
+    const lastNum = result?.maxCode ? parseInt(result.maxCode.replace(prefix, ''), 10) : 0;
+    const code = `${prefix}${String(lastNum + 1).padStart(3, '0')}`;
     const entity = this.programRepo.create({ ...dto, code, createdBy, managerId: dto.managerId ?? createdBy, tenantId: getCurrentTenantId() });
     return this.programRepo.save(entity);
   }

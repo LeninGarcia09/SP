@@ -58,10 +58,17 @@ export class ProjectsService {
   }
 
   async create(dto: CreateProjectDto, createdBy: string): Promise<ProjectEntity> {
-    // Sequential code: PROJ-YYYY-NNN (include soft-deleted to avoid code collisions)
+    // Sequential code: PROJ-YYYY-NNN (use MAX to avoid collisions after deletions)
     const year = new Date().getFullYear();
-    const count = await this.projectRepo.count({ withDeleted: true });
-    const code = `PROJ-${year}-${String(count + 1).padStart(3, '0')}`;
+    const prefix = `PROJ-${year}-`;
+    const result = await this.projectRepo
+      .createQueryBuilder('p')
+      .withDeleted()
+      .select('MAX(p.code)', 'maxCode')
+      .where('p.code LIKE :prefix', { prefix: `${prefix}%` })
+      .getRawOne();
+    const lastNum = result?.maxCode ? parseInt(result.maxCode.replace(prefix, ''), 10) : 0;
+    const code = `${prefix}${String(lastNum + 1).padStart(3, '0')}`;
     const projectLeadId = dto.projectLeadId ?? createdBy;
     const entity = this.projectRepo.create({ ...dto, code, createdBy, projectLeadId, tenantId: getCurrentTenantId() });
     return this.projectRepo.save(entity);

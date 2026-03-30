@@ -50,8 +50,14 @@ export class AccountsService {
 
   async create(dto: CreateAccountDto, createdBy: string): Promise<AccountEntity> {
     const year = new Date().getFullYear();
-    const count = await this.accountRepo.count();
-    const code = `ACC-${year}-${String(count + 1).padStart(3, '0')}`;
+    const prefix = `ACC-${year}-`;
+    const result = await this.accountRepo
+      .createQueryBuilder('a')
+      .select('MAX(a.code)', 'maxCode')
+      .where('a.code LIKE :prefix', { prefix: `${prefix}%` })
+      .getRawOne();
+    const lastNum = result?.maxCode ? parseInt(result.maxCode.replace(prefix, ''), 10) : 0;
+    const code = `${prefix}${String(lastNum + 1).padStart(3, '0')}`;
     const entity = this.accountRepo.create({
       ...dto,
       code,

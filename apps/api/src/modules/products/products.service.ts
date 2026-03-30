@@ -47,8 +47,14 @@ export class ProductsService {
   }
 
   async create(dto: CreateProductDto): Promise<ProductEntity> {
-    const count = await this.productRepo.count();
-    const code = `PROD-${String(count + 1).padStart(3, '0')}`;
+    const prefix = 'PROD-';
+    const result = await this.productRepo
+      .createQueryBuilder('p')
+      .select('MAX(p.code)', 'maxCode')
+      .where('p.code LIKE :prefix', { prefix: `${prefix}%` })
+      .getRawOne();
+    const lastNum = result?.maxCode ? parseInt(result.maxCode.replace(prefix, ''), 10) : 0;
+    const code = `${prefix}${String(lastNum + 1).padStart(3, '0')}`;
     const entity = this.productRepo.create({
       ...dto,
       code,
