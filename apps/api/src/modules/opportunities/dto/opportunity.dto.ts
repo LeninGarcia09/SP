@@ -9,10 +9,16 @@ import {
   IsUUID,
   IsDateString,
   IsObject,
+  IsArray,
   Min,
   Max,
 } from 'class-validator';
-import { OpportunityStatus, OpportunityStage } from '@telnub/shared';
+import {
+  OpportunityStatus,
+  OpportunityStage,
+  OpportunityType,
+  Priority,
+} from '@telnub/shared';
 
 export class CreateOpportunityDto {
   @ApiProperty({ maxLength: 200 })
@@ -66,6 +72,61 @@ export class CreateOpportunityDto {
   @MaxLength(200)
   @IsOptional()
   clientContact?: string;
+
+  // ─── Wave 2 fields ───
+
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsUUID()
+  @IsOptional()
+  pipelineId?: string;
+
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsUUID()
+  @IsOptional()
+  stageId?: string;
+
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsUUID()
+  @IsOptional()
+  accountId?: string;
+
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsUUID()
+  @IsOptional()
+  primaryContactId?: string;
+
+  @ApiPropertyOptional({ enum: OpportunityType })
+  @IsEnum(OpportunityType)
+  @IsOptional()
+  type?: OpportunityType;
+
+  @ApiPropertyOptional({ enum: Priority })
+  @IsEnum(Priority)
+  @IsOptional()
+  priority?: Priority;
+
+  @ApiPropertyOptional({ maxLength: 100 })
+  @IsString()
+  @MaxLength(100)
+  @IsOptional()
+  leadSource?: string;
+
+  @ApiPropertyOptional({ maxLength: 500 })
+  @IsString()
+  @MaxLength(500)
+  @IsOptional()
+  nextStep?: string;
+
+  @ApiPropertyOptional({ example: '2025-06-30' })
+  @IsDateString()
+  @IsOptional()
+  nextStepDueDate?: string;
+
+  @ApiPropertyOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  tags?: string[];
 
   @ApiPropertyOptional({ default: {} })
   @IsObject()
@@ -127,6 +188,67 @@ export class UpdateOpportunityDto {
   @IsOptional()
   clientContact?: string;
 
+  // ─── Wave 2 fields ───
+
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsUUID()
+  @IsOptional()
+  pipelineId?: string;
+
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsUUID()
+  @IsOptional()
+  stageId?: string;
+
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsUUID()
+  @IsOptional()
+  accountId?: string;
+
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsUUID()
+  @IsOptional()
+  primaryContactId?: string;
+
+  @ApiPropertyOptional({ enum: OpportunityType })
+  @IsEnum(OpportunityType)
+  @IsOptional()
+  type?: OpportunityType;
+
+  @ApiPropertyOptional({ enum: Priority })
+  @IsEnum(Priority)
+  @IsOptional()
+  priority?: Priority;
+
+  @ApiPropertyOptional({ maxLength: 100 })
+  @IsString()
+  @MaxLength(100)
+  @IsOptional()
+  leadSource?: string;
+
+  @ApiPropertyOptional({ maxLength: 500 })
+  @IsString()
+  @MaxLength(500)
+  @IsOptional()
+  nextStep?: string;
+
+  @ApiPropertyOptional({ example: '2025-06-30' })
+  @IsDateString()
+  @IsOptional()
+  nextStepDueDate?: string;
+
+  @ApiPropertyOptional({ maxLength: 500 })
+  @IsString()
+  @MaxLength(500)
+  @IsOptional()
+  lostReason?: string;
+
+  @ApiPropertyOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  tags?: string[];
+
   @ApiPropertyOptional()
   @IsObject()
   @IsOptional()
@@ -162,4 +284,28 @@ export class ConvertOpportunityDto {
   @IsUUID()
   @IsOptional()
   programId?: string;
+}
+
+export class ChangeStageDto {
+  @ApiProperty({ format: 'uuid' })
+  @IsUUID()
+  stageId!: string;
+
+  @ApiPropertyOptional({ minimum: 0, maximum: 100 })
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  @IsOptional()
+  probability?: number;
+
+  @ApiPropertyOptional({ maxLength: 500 })
+  @IsString()
+  @MaxLength(500)
+  @IsOptional()
+  lostReason?: string;
+
+  @ApiPropertyOptional({ example: '2025-06-30' })
+  @IsDateString()
+  @IsOptional()
+  actualCloseDate?: string;
 }

@@ -1,0 +1,4 @@
+=== DEPLOY STARTED 03/28/2026 18:30:03 ===
+[18:30:03] Step 1: Checking Azure subscription...
+[18:30:05] Subscription: c885843e-7631-4f4e-9f1a-5d1a49d3d2a1
+[18:30:05] Step 2: Building API image with tag: 20260328-1830

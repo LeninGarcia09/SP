@@ -24,6 +24,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { AccountsModule } from './modules/accounts/accounts.module';
 import { ContactsModule } from './modules/contacts/contacts.module';
 import { PipelinesModule } from './modules/pipelines/pipelines.module';
+import { ProductsModule } from './modules/products/products.module';
 import { envValidationSchema } from './config/env.validation';
 import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
 import { TenantInterceptor } from './common/tenant/tenant.interceptor';
@@ -83,6 +84,7 @@ import { SystemController } from './common/system.controller';
     AccountsModule,
     ContactsModule,
     PipelinesModule,
+    ProductsModule,
   ],
   controllers: [SystemController],
   providers: [

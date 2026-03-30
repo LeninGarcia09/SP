@@ -22,6 +22,16 @@ import {
   ContactType,
   ContactInfluence,
   ForecastCategory,
+  OpportunityType,
+  DealHealth,
+  StakeholderRole,
+  StakeholderInfluence,
+  StakeholderSentiment,
+  TeamMemberRole,
+  ProductCategory,
+  RecurringInterval,
+  ThreatLevel,
+  CompetitorStatus,
 } from '../types/index.js';
 
 // ─── Project Schemas ───
@@ -373,3 +383,119 @@ export const updatePipelineStageSchema = createPipelineStageSchema.partial();
 
 export type CreatePipelineStageInput = z.infer<typeof createPipelineStageSchema>;
 export type UpdatePipelineStageInput = z.infer<typeof updatePipelineStageSchema>;
+
+// ─── Sales / CRM Module (Wave 2) ───
+
+// Product
+export const createProductSchema = z.object({
+  name: z.string().min(1).max(200),
+  description: z.string().nullable().optional(),
+  category: z.nativeEnum(ProductCategory).default(ProductCategory.SERVICE),
+  family: z.string().max(100).nullable().optional(),
+  unitPrice: z.number().nonnegative().default(0),
+  currency: z.string().max(3).default('USD'),
+  unit: z.string().max(50).default('unit'),
+  isRecurring: z.boolean().default(false),
+  recurringInterval: z.nativeEnum(RecurringInterval).nullable().optional(),
+  minQuantity: z.number().int().min(1).default(1),
+  maxDiscount: z.number().min(0).max(100).default(0),
+  metadata: z.record(z.unknown()).default({}),
+});
+
+export const updateProductSchema = createProductSchema.partial();
+
+export type CreateProductInput = z.infer<typeof createProductSchema>;
+export type UpdateProductInput = z.infer<typeof updateProductSchema>;
+
+// Opportunity Stakeholder
+export const createStakeholderSchema = z.object({
+  contactId: z.string().uuid(),
+  role: z.nativeEnum(StakeholderRole).default(StakeholderRole.INFLUENCER),
+  influence: z.nativeEnum(StakeholderInfluence).default(StakeholderInfluence.MEDIUM),
+  sentiment: z.nativeEnum(StakeholderSentiment).default(StakeholderSentiment.UNKNOWN),
+  isPrimary: z.boolean().default(false),
+  notes: z.string().nullable().optional(),
+});
+
+export const updateStakeholderSchema = createStakeholderSchema.partial();
+
+export type CreateStakeholderInput = z.infer<typeof createStakeholderSchema>;
+export type UpdateStakeholderInput = z.infer<typeof updateStakeholderSchema>;
+
+// Opportunity Team Member
+export const createTeamMemberSchema = z.object({
+  userId: z.string().uuid(),
+  role: z.nativeEnum(TeamMemberRole).default(TeamMemberRole.OWNER),
+});
+
+export const updateTeamMemberSchema = createTeamMemberSchema.partial();
+
+export type CreateTeamMemberInput = z.infer<typeof createTeamMemberSchema>;
+export type UpdateTeamMemberInput = z.infer<typeof updateTeamMemberSchema>;
+
+// Opportunity Line Item
+export const createLineItemSchema = z.object({
+  productId: z.string().uuid().nullable().optional(),
+  name: z.string().min(1).max(200),
+  description: z.string().nullable().optional(),
+  quantity: z.number().positive().default(1),
+  unitPrice: z.number().nonnegative(),
+  discount: z.number().min(0).max(100).default(0),
+  serviceStartDate: z.string().date().nullable().optional(),
+  serviceEndDate: z.string().date().nullable().optional(),
+  sortOrder: z.number().int().min(0).default(0),
+});
+
+export const updateLineItemSchema = createLineItemSchema.partial();
+
+export type CreateLineItemInput = z.infer<typeof createLineItemSchema>;
+export type UpdateLineItemInput = z.infer<typeof updateLineItemSchema>;
+
+// Opportunity Competitor
+export const createCompetitorSchema = z.object({
+  competitorName: z.string().min(1).max(200),
+  competitorAccountId: z.string().uuid().nullable().optional(),
+  strengths: z.string().nullable().optional(),
+  weaknesses: z.string().nullable().optional(),
+  threatLevel: z.nativeEnum(ThreatLevel).default(ThreatLevel.MEDIUM),
+  status: z.nativeEnum(CompetitorStatus).default(CompetitorStatus.ACTIVE),
+  notes: z.string().nullable().optional(),
+});
+
+export const updateCompetitorSchema = createCompetitorSchema.partial();
+
+export type CreateCompetitorInput = z.infer<typeof createCompetitorSchema>;
+export type UpdateCompetitorInput = z.infer<typeof updateCompetitorSchema>;
+
+// Enhanced Opportunity (Wave 2 fields)
+export const updateOpportunityEnhancedSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  description: z.string().max(5000).optional(),
+  pipelineId: z.string().uuid().optional(),
+  stageId: z.string().uuid().optional(),
+  accountId: z.string().uuid().nullable().optional(),
+  primaryContactId: z.string().uuid().nullable().optional(),
+  estimatedValue: z.number().nonnegative().optional(),
+  probability: z.number().min(0).max(100).optional(),
+  expectedCloseDate: z.string().date().nullable().optional(),
+  type: z.nativeEnum(OpportunityType).optional(),
+  priority: z.nativeEnum(Priority).optional(),
+  leadSource: z.string().max(100).nullable().optional(),
+  nextStep: z.string().max(500).nullable().optional(),
+  nextStepDueDate: z.string().date().nullable().optional(),
+  lostReason: z.string().max(500).nullable().optional(),
+  tags: z.array(z.string()).optional(),
+  metadata: z.record(z.unknown()).optional(),
+});
+
+export type UpdateOpportunityEnhancedInput = z.infer<typeof updateOpportunityEnhancedSchema>;
+
+// Stage change DTO
+export const changeStageSchema = z.object({
+  stageId: z.string().uuid(),
+  probability: z.number().min(0).max(100).optional(),
+  lostReason: z.string().max(500).optional(),
+  actualCloseDate: z.string().date().optional(),
+});
+
+export type ChangeStageInput = z.infer<typeof changeStageSchema>;

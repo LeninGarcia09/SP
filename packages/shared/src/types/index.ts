@@ -480,6 +480,36 @@ export interface Opportunity {
   expectedCloseDate: string | null;
   clientName: string;
   clientContact: string | null;
+  // Wave 2 fields
+  pipelineId: string | null;
+  stageId: string | null;
+  currentStage?: PipelineStage | null;
+  accountId: string | null;
+  primaryContactId: string | null;
+  type: OpportunityType | null;
+  priority: Priority | null;
+  weightedValue: number;
+  actualCloseDate: string | null;
+  forecastCategory: ForecastCategory | null;
+  healthScore: number;
+  healthStatus: DealHealth | null;
+  nextStep: string | null;
+  nextStepDueDate: string | null;
+  lostReason: string | null;
+  leadSource: string | null;
+  sourceLeadId: string | null;
+  pushCount: number;
+  stageChangedAt: string | null;
+  daysInCurrentStage: number;
+  lastActivityAt: string | null;
+  daysSinceLastActivity: number;
+  tags: string[] | null;
+  // Relations
+  stakeholders?: OpportunityStakeholder[];
+  teamMembers?: OpportunityTeamMember[];
+  lineItems?: OpportunityLineItem[];
+  competitors?: OpportunityCompetitor[];
+  // Core
   ownerId: string;
   convertedProjectId: string | null;
   convertedAt: string | null;
@@ -740,6 +770,7 @@ export enum ForecastCategory {
   PIPELINE = 'PIPELINE',
   BEST_CASE = 'BEST_CASE',
   COMMIT = 'COMMIT',
+  CLOSED = 'CLOSED',
   OMITTED = 'OMITTED',
 }
 
@@ -776,4 +807,183 @@ export interface PipelineStage {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+// ─── Sales / CRM Module (Wave 2) ───
+
+export enum OpportunityType {
+  NEW_BUSINESS = 'NEW_BUSINESS',
+  EXISTING_BUSINESS = 'EXISTING_BUSINESS',
+  RENEWAL = 'RENEWAL',
+  EXPANSION = 'EXPANSION',
+  UPSELL = 'UPSELL',
+}
+
+export enum DealHealth {
+  HEALTHY = 'HEALTHY',
+  AT_RISK = 'AT_RISK',
+  STALLED = 'STALLED',
+  CRITICAL = 'CRITICAL',
+}
+
+export enum StakeholderRole {
+  DECISION_MAKER = 'DECISION_MAKER',
+  INFLUENCER = 'INFLUENCER',
+  CHAMPION = 'CHAMPION',
+  BLOCKER = 'BLOCKER',
+  EVALUATOR = 'EVALUATOR',
+  ECONOMIC_BUYER = 'ECONOMIC_BUYER',
+  TECHNICAL_BUYER = 'TECHNICAL_BUYER',
+  END_USER = 'END_USER',
+  LEGAL = 'LEGAL',
+  PROCUREMENT = 'PROCUREMENT',
+}
+
+export enum StakeholderInfluence {
+  HIGH = 'HIGH',
+  MEDIUM = 'MEDIUM',
+  LOW = 'LOW',
+}
+
+export enum StakeholderSentiment {
+  POSITIVE = 'POSITIVE',
+  NEUTRAL = 'NEUTRAL',
+  NEGATIVE = 'NEGATIVE',
+  UNKNOWN = 'UNKNOWN',
+}
+
+export enum TeamMemberRole {
+  OWNER = 'OWNER',
+  CO_OWNER = 'CO_OWNER',
+  SALES_ENGINEER = 'SALES_ENGINEER',
+  SOLUTION_ARCHITECT = 'SOLUTION_ARCHITECT',
+  ACCOUNT_MANAGER = 'ACCOUNT_MANAGER',
+  EXECUTIVE_SPONSOR = 'EXECUTIVE_SPONSOR',
+  SUBJECT_MATTER_EXPERT = 'SUBJECT_MATTER_EXPERT',
+}
+
+export enum ProductCategory {
+  SERVICE = 'SERVICE',
+  PRODUCT = 'PRODUCT',
+  SUBSCRIPTION = 'SUBSCRIPTION',
+  LICENSE = 'LICENSE',
+  CONSULTING = 'CONSULTING',
+  TRAINING = 'TRAINING',
+  SUPPORT = 'SUPPORT',
+  OTHER = 'OTHER',
+}
+
+export enum RecurringInterval {
+  MONTHLY = 'MONTHLY',
+  QUARTERLY = 'QUARTERLY',
+  ANNUALLY = 'ANNUALLY',
+}
+
+export enum ThreatLevel {
+  LOW = 'LOW',
+  MEDIUM = 'MEDIUM',
+  HIGH = 'HIGH',
+}
+
+export enum CompetitorStatus {
+  ACTIVE = 'ACTIVE',
+  WON_AGAINST = 'WON_AGAINST',
+  LOST_TO = 'LOST_TO',
+  WITHDRAWN = 'WITHDRAWN',
+}
+
+export interface Product {
+  id: string;
+  tenantId: string | null;
+  code: string;
+  name: string;
+  description: string | null;
+  category: ProductCategory;
+  family: string | null;
+  unitPrice: number;
+  currency: string;
+  unit: string;
+  isRecurring: boolean;
+  recurringInterval: RecurringInterval | null;
+  minQuantity: number;
+  maxDiscount: number;
+  isActive: boolean;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OpportunityStakeholder {
+  id: string;
+  opportunityId: string;
+  contactId: string;
+  role: StakeholderRole;
+  influence: StakeholderInfluence;
+  sentiment: StakeholderSentiment;
+  isPrimary: boolean;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  contact?: Contact;
+}
+
+export interface OpportunityTeamMember {
+  id: string;
+  opportunityId: string;
+  userId: string;
+  role: TeamMemberRole;
+  createdAt: string;
+  user?: User;
+}
+
+export interface OpportunityLineItem {
+  id: string;
+  opportunityId: string;
+  productId: string | null;
+  name: string;
+  description: string | null;
+  quantity: number;
+  unitPrice: number;
+  discount: number;
+  totalPrice: number;
+  serviceStartDate: string | null;
+  serviceEndDate: string | null;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+  product?: Product;
+}
+
+export interface OpportunityCompetitor {
+  id: string;
+  opportunityId: string;
+  competitorName: string;
+  competitorAccountId: string | null;
+  strengths: string | null;
+  weaknesses: string | null;
+  threatLevel: ThreatLevel;
+  status: CompetitorStatus;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DealHealthScore {
+  score: number;
+  status: DealHealth;
+  factors: {
+    recentActivity: number;
+    stakeholderCoverage: number;
+    nextStepDefined: number;
+    closeDateValid: number;
+    hasValue: number;
+    contactEngagement: number;
+  };
+  penalties: {
+    noRecentActivity: number;
+    closeDatePast: number;
+    noStakeholders: number;
+    stageRotting: number;
+    closeDatePushed: number;
+  };
 }

@@ -33,6 +33,11 @@ import type {
   Contact,
   SalesPipeline,
   PipelineStage,
+  Product,
+  OpportunityStakeholder,
+  OpportunityTeamMember,
+  OpportunityLineItem,
+  OpportunityCompetitor,
 } from '@telnub/shared';
 
 // ─── Query Params ───
@@ -425,6 +430,123 @@ export async function deleteOpportunity(id: string) {
 export async function convertOpportunity(id: string, body: Record<string, unknown>) {
   const { data } = await api.post<ApiResponse<Project>>(`/opportunities/${id}/convert`, body);
   return data;
+}
+
+// ─── Opportunity Stage Change ───
+
+export async function changeOpportunityStage(id: string, body: Record<string, unknown>) {
+  const { data } = await api.post<ApiResponse<Opportunity>>(`/opportunities/${id}/stage`, body);
+  return data;
+}
+
+// ─── Opportunity Stakeholders ───
+
+export async function fetchStakeholders(opportunityId: string) {
+  const { data } = await api.get<ApiResponse<OpportunityStakeholder[]>>(`/opportunities/${opportunityId}/stakeholders`);
+  return data;
+}
+
+export async function addStakeholder(opportunityId: string, body: Record<string, unknown>) {
+  const { data } = await api.post<ApiResponse<OpportunityStakeholder>>(`/opportunities/${opportunityId}/stakeholders`, body);
+  return data;
+}
+
+export async function updateStakeholder(stakeholderId: string, body: Record<string, unknown>) {
+  const { data } = await api.patch<ApiResponse<OpportunityStakeholder>>(`/opportunities/stakeholders/${stakeholderId}`, body);
+  return data;
+}
+
+export async function removeStakeholder(stakeholderId: string) {
+  await api.delete(`/opportunities/stakeholders/${stakeholderId}`);
+}
+
+// ─── Opportunity Team Members ───
+
+export async function fetchTeamMembers(opportunityId: string) {
+  const { data } = await api.get<ApiResponse<OpportunityTeamMember[]>>(`/opportunities/${opportunityId}/team`);
+  return data;
+}
+
+export async function addTeamMember(opportunityId: string, body: Record<string, unknown>) {
+  const { data } = await api.post<ApiResponse<OpportunityTeamMember>>(`/opportunities/${opportunityId}/team`, body);
+  return data;
+}
+
+export async function updateTeamMember(memberId: string, body: Record<string, unknown>) {
+  const { data } = await api.patch<ApiResponse<OpportunityTeamMember>>(`/opportunities/team/${memberId}`, body);
+  return data;
+}
+
+export async function removeTeamMember(memberId: string) {
+  await api.delete(`/opportunities/team/${memberId}`);
+}
+
+// ─── Opportunity Line Items ───
+
+export async function fetchLineItems(opportunityId: string) {
+  const { data } = await api.get<ApiResponse<OpportunityLineItem[]>>(`/opportunities/${opportunityId}/line-items`);
+  return data;
+}
+
+export async function addLineItem(opportunityId: string, body: Record<string, unknown>) {
+  const { data } = await api.post<ApiResponse<OpportunityLineItem>>(`/opportunities/${opportunityId}/line-items`, body);
+  return data;
+}
+
+export async function updateLineItem(itemId: string, body: Record<string, unknown>) {
+  const { data } = await api.patch<ApiResponse<OpportunityLineItem>>(`/opportunities/line-items/${itemId}`, body);
+  return data;
+}
+
+export async function removeLineItem(itemId: string) {
+  await api.delete(`/opportunities/line-items/${itemId}`);
+}
+
+// ─── Opportunity Competitors ───
+
+export async function fetchCompetitors(opportunityId: string) {
+  const { data } = await api.get<ApiResponse<OpportunityCompetitor[]>>(`/opportunities/${opportunityId}/competitors`);
+  return data;
+}
+
+export async function addCompetitor(opportunityId: string, body: Record<string, unknown>) {
+  const { data } = await api.post<ApiResponse<OpportunityCompetitor>>(`/opportunities/${opportunityId}/competitors`, body);
+  return data;
+}
+
+export async function updateCompetitor(competitorId: string, body: Record<string, unknown>) {
+  const { data } = await api.patch<ApiResponse<OpportunityCompetitor>>(`/opportunities/competitors/${competitorId}`, body);
+  return data;
+}
+
+export async function removeCompetitor(competitorId: string) {
+  await api.delete(`/opportunities/competitors/${competitorId}`);
+}
+
+// ─── Products ───
+
+export async function fetchProducts(params?: PaginationParams) {
+  const { data } = await api.get<{ data: Product[]; meta: PaginationMeta }>('/products', { params });
+  return data;
+}
+
+export async function fetchProduct(id: string) {
+  const { data } = await api.get<ApiResponse<Product>>(`/products/${id}`);
+  return data;
+}
+
+export async function createProduct(body: Record<string, unknown>) {
+  const { data } = await api.post<ApiResponse<Product>>('/products', body);
+  return data;
+}
+
+export async function updateProduct(id: string, body: Record<string, unknown>) {
+  const { data } = await api.patch<ApiResponse<Product>>(`/products/${id}`, body);
+  return data;
+}
+
+export async function deleteProduct(id: string) {
+  await api.delete(`/products/${id}`);
 }
 
 // ─── Cost Entries ───
