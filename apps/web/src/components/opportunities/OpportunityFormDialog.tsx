@@ -109,9 +109,24 @@ export function OpportunityFormDialog({ open, onOpenChange, opportunity }: Oppor
       form.reset();
       onOpenChange(false);
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message
-        ?? (err instanceof Error ? err.message : 'An unexpected error occurred');
+      // NestJS ValidationPipe returns { statusCode, message: string[], error }
+      // Custom envelope returns { error: { message } }
+      const resp = (err as { response?: { data?: Record<string, unknown> } })?.response?.data;
+      let msg: string;
+      if (resp) {
+        const nestMessages = resp.message; // string | string[]
+        if (Array.isArray(nestMessages)) {
+          msg = nestMessages.join('; ');
+        } else if (typeof nestMessages === 'string') {
+          msg = nestMessages;
+        } else if (typeof resp.error === 'object' && resp.error && 'message' in (resp.error as Record<string, unknown>)) {
+          msg = String((resp.error as Record<string, string>).message);
+        } else {
+          msg = JSON.stringify(resp);
+        }
+      } else {
+        msg = err instanceof Error ? err.message : 'An unexpected error occurred';
+      }
       setSubmitError(msg);
     }
   }
