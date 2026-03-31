@@ -1,4 +1,39 @@
-=== DEPLOY STARTED 03/28/2026 18:30:03 ===
-[18:30:03] Step 1: Checking Azure subscription...
-[18:30:05] Subscription: c885843e-7631-4f4e-9f1a-5d1a49d3d2a1
-[18:30:05] Step 2: Building API image with tag: 20260328-1830
+=== DEPLOY STARTED 03/31/2026 09:22:53 ===
+[09:22:53] Step 1: Checking Azure subscription...
+[09:22:55] Subscription: c885843e-7631-4f4e-9f1a-5d1a49d3d2a1
+[09:22:55] Step 2: Building API image with tag: 20260331-0922
+[09:25:49] ACR build exit code: 0
+[09:25:49] ACR build succeeded
+[09:25:49] Step 3: Deploying API container...
+[09:26:07] Container App update exit code: 0
+[09:26:07] API deployed successfully
+[09:26:07] Step 4: Waiting 30s for API to start...
+[09:26:37] Step 5: Checking API health...
+[09:26:37] API health: {"status":"healthy","uptime":62000.937678532,"timestamp":"2026-03-31T15:26:34.597Z","checks":{"database":"ok","cache":"ok"}}
+[09:26:37] Step 6: Building frontend...
+[09:27:27] Frontend build exit code: 0
+[09:27:27] Dist files: 
+Name                Length
+----                ------
+index-BlXqdym0.js  1663255
+index-Cr-73O8g.css   38363
+
+
+[09:27:27] Step 7: Deploying frontend to SWA...
+[09:27:31] SWA token length: 119
+[09:28:17] SWA deploy exit code: 0
+[09:28:17] Deploying to environment: production
+
+
+Found configuration file:
+  C:\Users\lesalgad\Github\Personal\SIC\apps\web\public\staticwebapp.config.json
+
+Deploying project to Azure Static Web Apps...
+- Preparing deployment. Please wait...
+Γ£ö Project deployed to https://yellow-moss-027665410.1.azurestaticapps.net ≡ƒÜÇ
+
+
+[09:28:17] Step 8: Waiting 20s then verifying SWA...
+[09:28:37] SWA status: 200
+[09:28:37] JS bundle found: /assets/index-BlXqdym0.js
+[09:28:37] === DEPLOY COMPLETE ===

@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useMsal, useIsAuthenticated } from '@azure/msal-react';
-import { InteractionRequiredAuthError, InteractionStatus } from '@azure/msal-browser';
+import { BrowserAuthError, InteractionRequiredAuthError, InteractionStatus } from '@azure/msal-browser';
 import { useAuthStore } from '../store/auth-store';
 import { apiScopes, loginScopes } from '../lib/msal';
 import { api } from '../lib/axios';
@@ -57,13 +57,19 @@ export function useMsalAuth() {
       .then((response) => syncUser(response.accessToken))
       .then(() => setReady(true))
       .catch(async (err) => {
-        if (err instanceof InteractionRequiredAuthError) {
-          // Consent expired or revoked — redirect (not popup, avoids blockers)
+        // Treat InteractionRequired AND BrowserAuthError (e.g. timed_out from
+        // blocked third-party cookies / expired session) as recoverable — fall
+        // back to an interactive redirect so the user can re-authenticate.
+        const isRecoverable =
+          err instanceof InteractionRequiredAuthError ||
+          (err instanceof BrowserAuthError && err.errorCode === 'timed_out');
+
+        if (isRecoverable) {
           try {
             await instance.acquireTokenRedirect({ scopes: apiScopes, account });
           } catch (e) {
-            console.error('MSAL consent redirect failed:', e);
-            setError(`API access consent failed: ${e}`);
+            console.error('MSAL interactive redirect failed:', e);
+            setError(`Authentication redirect failed: ${e}`);
             setReady(true);
           }
         } else {

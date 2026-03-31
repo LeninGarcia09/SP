@@ -54,7 +54,12 @@ function MsalRoot() {
           <p className="text-sm text-muted-foreground">{error}</p>
           <button
             className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm"
-            onClick={() => { sessionStorage.clear(); window.location.reload(); }}
+            onClick={() => {
+              // Clear MSAL cache (localStorage), session, and auth store
+              sessionStorage.clear();
+              localStorage.clear();
+              window.location.replace(window.location.origin);
+            }}
           >
             {t('auth.retry', 'Try Again')}
           </button>
@@ -76,8 +81,13 @@ function Root() {
   return <DevRoot />;
 }
 
-// Initialize MSAL before rendering to process any pending redirect responses
-const bootstrap = isMsalEnabled ? initializeMsal() : Promise.resolve();
+// Initialize MSAL before rendering to process any pending redirect responses.
+// If MSAL init fails (e.g. timed_out), still render the app so the error UI shows.
+const bootstrap = isMsalEnabled
+  ? initializeMsal().catch((err) => {
+      console.error('MSAL initialization failed — rendering app for error UI:', err);
+    })
+  : Promise.resolve();
 
 bootstrap.then(() => {
   ReactDOM.createRoot(document.getElementById('root')!).render(
