@@ -254,6 +254,11 @@ export class UpdateOpportunityDto {
   @IsOptional()
   tags?: string[];
 
+  @ApiPropertyOptional({ format: 'uuid', description: 'Change owner' })
+  @IsUUID()
+  @IsOptional()
+  ownerId?: string;
+
   @ApiPropertyOptional()
   @IsObject()
   @IsOptional()
