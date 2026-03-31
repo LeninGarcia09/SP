@@ -274,7 +274,7 @@ export const createOpportunitySchema = z.object({
   expectedCloseDate: z.string().date().nullable().default(null),
   clientName: z.string().min(1).max(200),
   clientContact: z.string().max(200).nullable().default(null),
-  ownerId: z.string().uuid(),
+  ownerId: z.string().uuid().optional(),
   metadata: z.record(z.unknown()).default({}),
 });
 
@@ -523,3 +523,47 @@ export const updateVendorSchema = createVendorSchema.partial();
 
 export type CreateVendorInput = z.infer<typeof createVendorSchema>;
 export type UpdateVendorInput = z.infer<typeof updateVendorSchema>;
+
+// ─── Activities ───
+
+import { ActivityType, ActivityStatus } from '../types';
+
+export const createActivitySchema = z.object({
+  type: z.nativeEnum(ActivityType),
+  subtype: z.string().max(50).nullable().optional(),
+  subject: z.string().min(1).max(500),
+  description: z.string().max(5000).nullable().optional(),
+  opportunityId: z.string().uuid().nullable().optional(),
+  accountId: z.string().uuid().nullable().optional(),
+  contactId: z.string().uuid().nullable().optional(),
+  status: z.nativeEnum(ActivityStatus).nullable().optional(),
+  priority: z.nativeEnum(Priority).nullable().optional(),
+  dueDate: z.string().datetime({ offset: true }).nullable().optional(),
+  startTime: z.string().datetime({ offset: true }).nullable().optional(),
+  endTime: z.string().datetime({ offset: true }).nullable().optional(),
+  location: z.string().max(500).nullable().optional(),
+  duration: z.number().int().min(0).nullable().optional(),
+  outcome: z.string().max(100).nullable().optional(),
+  assignedToId: z.string().uuid().nullable().optional(),
+  metadata: z.record(z.unknown()).optional(),
+});
+
+export type CreateActivityInput = z.infer<typeof createActivitySchema>;
+
+export const createActivityTemplateSchema = z.object({
+  name: z.string().min(1).max(100),
+  type: z.nativeEnum(ActivityType),
+  subjectTemplate: z.string().min(1).max(500),
+  descriptionTemplate: z.string().max(5000).nullable().optional(),
+  defaultDuration: z.number().int().min(0).nullable().optional(),
+  defaultMetadata: z.record(z.unknown()).optional(),
+  defaultDaysFromNow: z.number().int().min(0).default(1),
+  category: z.string().max(50).nullable().optional(),
+  isActive: z.boolean().default(true),
+  sortOrder: z.number().int().default(0),
+});
+
+export const updateActivityTemplateSchema = createActivityTemplateSchema.partial();
+
+export type CreateActivityTemplateInput = z.infer<typeof createActivityTemplateSchema>;
+export type UpdateActivityTemplateInput = z.infer<typeof updateActivityTemplateSchema>;

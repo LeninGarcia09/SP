@@ -136,7 +136,7 @@ export function useUpdateStakeholder() {
 export function useRemoveStakeholder() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, opportunityId }: { id: string; opportunityId: string }) =>
+    mutationFn: ({ id, opportunityId: _oppId }: { id: string; opportunityId: string }) =>
       removeStakeholder(id),
     onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: ['opportunities', variables.opportunityId, 'stakeholders'] });
@@ -180,7 +180,7 @@ export function useUpdateTeamMember() {
 export function useRemoveTeamMember() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, opportunityId }: { id: string; opportunityId: string }) =>
+    mutationFn: ({ id, opportunityId: _oppId }: { id: string; opportunityId: string }) =>
       removeTeamMember(id),
     onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: ['opportunities', variables.opportunityId, 'team'] });
@@ -225,7 +225,7 @@ export function useUpdateLineItem() {
 export function useRemoveLineItem() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, opportunityId }: { id: string; opportunityId: string }) =>
+    mutationFn: ({ id, opportunityId: _oppId }: { id: string; opportunityId: string }) =>
       removeLineItem(id),
     onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: ['opportunities', variables.opportunityId, 'line-items'] });
@@ -269,7 +269,7 @@ export function useUpdateCompetitor() {
 export function useRemoveCompetitor() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, opportunityId }: { id: string; opportunityId: string }) =>
+    mutationFn: ({ id, opportunityId: _oppId }: { id: string; opportunityId: string }) =>
       removeCompetitor(id),
     onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: ['opportunities', variables.opportunityId, 'competitors'] });

@@ -105,7 +105,7 @@ export class OpportunitiesService {
     const entity = this.opportunityRepo.create({
       ...dto,
       code,
-      ownerId,
+      ownerId: dto.ownerId ?? ownerId,
       pipelineId,
       probability,
       weightedValue,

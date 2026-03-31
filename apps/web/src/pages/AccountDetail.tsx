@@ -6,6 +6,7 @@ import { usePermissions } from '../hooks/use-permissions';
 import { AccountFormDialog } from '../components/accounts/AccountFormDialog';
 import { Button } from '../components/ui/button';
 import { ArrowLeft, Pencil, Trash2, Globe, Phone, Mail, MapPin, Building2 } from 'lucide-react';
+import { ActivityTimeline } from '../components/activities/ActivityTimeline';
 
 export function AccountDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -80,6 +81,11 @@ export function AccountDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Activities */}
+      <div className="mt-6">
+        <ActivityTimeline entityType="accounts" entityId={account.id} />
+      </div>
 
       <AccountFormDialog open={editOpen} onOpenChange={setEditOpen} account={account} />
     </div>

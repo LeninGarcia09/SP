@@ -1017,3 +1017,67 @@ export interface DealHealthScore {
     closeDatePushed: number;
   };
 }
+
+// ─── Activities & Timeline ───
+
+export enum ActivityType {
+  CALL = 'CALL',
+  EMAIL = 'EMAIL',
+  MEETING = 'MEETING',
+  NOTE = 'NOTE',
+  TASK = 'TASK',
+  STAGE_CHANGE = 'STAGE_CHANGE',
+  STATUS_CHANGE = 'STATUS_CHANGE',
+  SYSTEM = 'SYSTEM',
+}
+
+export enum ActivityStatus {
+  PLANNED = 'PLANNED',
+  IN_PROGRESS = 'IN_PROGRESS',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+}
+
+export interface Activity {
+  id: string;
+  tenantId: string | null;
+  type: ActivityType;
+  subtype: string | null;
+  subject: string;
+  description: string | null;
+  opportunityId: string | null;
+  accountId: string | null;
+  contactId: string | null;
+  status: ActivityStatus | null;
+  priority: Priority | null;
+  dueDate: string | null;
+  completedAt: string | null;
+  startTime: string | null;
+  endTime: string | null;
+  location: string | null;
+  duration: number | null;
+  outcome: string | null;
+  assignedToId: string | null;
+  isAutomated: boolean;
+  metadata: Record<string, unknown>;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface ActivityTemplate {
+  id: string;
+  tenantId: string | null;
+  name: string;
+  type: ActivityType;
+  subjectTemplate: string;
+  descriptionTemplate: string | null;
+  defaultDuration: number | null;
+  defaultMetadata: Record<string, unknown>;
+  defaultDaysFromNow: number;
+  category: string | null;
+  isActive: boolean;
+  sortOrder: number;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}

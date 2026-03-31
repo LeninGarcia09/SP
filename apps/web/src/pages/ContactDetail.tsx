@@ -6,6 +6,7 @@ import { usePermissions } from '../hooks/use-permissions';
 import { ContactFormDialog } from '../components/contacts/ContactFormDialog';
 import { Button } from '../components/ui/button';
 import { ArrowLeft, Pencil, Trash2, Mail, Phone, Briefcase, Building2, Linkedin } from 'lucide-react';
+import { ActivityTimeline } from '../components/activities/ActivityTimeline';
 
 export function ContactDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -74,6 +75,11 @@ export function ContactDetailPage() {
           <p className="text-sm whitespace-pre-wrap">{contact.notes}</p>
         </div>
       )}
+
+      {/* Activities */}
+      <div className="mt-6">
+        <ActivityTimeline entityType="contacts" entityId={contact.id} />
+      </div>
 
       <ContactFormDialog open={editOpen} onOpenChange={setEditOpen} contact={contact} />
     </div>

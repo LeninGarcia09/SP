@@ -39,6 +39,8 @@ import type {
   OpportunityLineItem,
   OpportunityCompetitor,
   Vendor,
+  Activity,
+  ActivityTemplate,
 } from '@telnub/shared';
 
 // ─── Query Params ───
@@ -815,4 +817,67 @@ export async function updatePipelineStage(stageId: string, body: Record<string, 
 
 export async function deletePipelineStage(stageId: string) {
   await api.delete(`/pipelines/stages/${stageId}`);
+}
+
+// ─── Activities ───
+
+export async function fetchActivities(params?: PaginationParams & { opportunityId?: string; accountId?: string; contactId?: string; type?: string }) {
+  const { data } = await api.get<{ data: Activity[]; meta: PaginationMeta }>('/activities', { params });
+  return data;
+}
+
+export async function fetchActivity(id: string) {
+  const { data } = await api.get<ApiResponse<Activity>>(`/activities/${id}`);
+  return data;
+}
+
+export async function createActivity(body: Record<string, unknown>) {
+  const { data } = await api.post<ApiResponse<Activity>>('/activities', body);
+  return data;
+}
+
+export async function fetchEntityActivities(entityType: 'opportunities' | 'accounts' | 'contacts', entityId: string, params?: PaginationParams) {
+  const { data } = await api.get<{ data: Activity[]; meta: PaginationMeta }>(`/${entityType}/${entityId}/activities`, { params });
+  return data;
+}
+
+export async function createEntityActivity(entityType: 'opportunities' | 'accounts' | 'contacts', entityId: string, body: Record<string, unknown>) {
+  const { data } = await api.post<ApiResponse<Activity>>(`/${entityType}/${entityId}/activities`, body);
+  return data;
+}
+
+export async function fetchUpcomingActivities() {
+  const { data } = await api.get<ApiResponse<Activity[]>>('/activities/upcoming');
+  return data;
+}
+
+export async function fetchOverdueActivities() {
+  const { data } = await api.get<ApiResponse<Activity[]>>('/activities/overdue');
+  return data;
+}
+
+// ─── Activity Templates ───
+
+export async function fetchActivityTemplates(params?: PaginationParams) {
+  const { data } = await api.get<{ data: ActivityTemplate[]; meta: PaginationMeta }>('/activity-templates', { params });
+  return data;
+}
+
+export async function fetchActivityTemplate(id: string) {
+  const { data } = await api.get<ApiResponse<ActivityTemplate>>(`/activity-templates/${id}`);
+  return data;
+}
+
+export async function createActivityTemplate(body: Record<string, unknown>) {
+  const { data } = await api.post<ApiResponse<ActivityTemplate>>('/activity-templates', body);
+  return data;
+}
+
+export async function updateActivityTemplate(id: string, body: Record<string, unknown>) {
+  const { data } = await api.patch<ApiResponse<ActivityTemplate>>(`/activity-templates/${id}`, body);
+  return data;
+}
+
+export async function deleteActivityTemplate(id: string) {
+  await api.delete(`/activity-templates/${id}`);
 }

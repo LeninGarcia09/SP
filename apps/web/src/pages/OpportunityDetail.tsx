@@ -1,20 +1,18 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Users, ShieldCheck, Package, Swords, TrendingUp, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Users, Package, Swords, TrendingUp, AlertTriangle, Activity } from 'lucide-react';
+import { ActivityTimeline } from '../components/activities/ActivityTimeline';
 import { OpportunityStatus, DealHealth } from '@telnub/shared';
 import type { OpportunityStakeholder, OpportunityLineItem, OpportunityCompetitor } from '@telnub/shared';
 import {
   useOpportunity,
   useDeleteOpportunity,
   useStakeholders,
-  useAddStakeholder,
   useRemoveStakeholder,
   useLineItems,
-  useAddLineItem,
   useRemoveLineItem,
   useCompetitors,
-  useAddCompetitor,
   useRemoveCompetitor,
 } from '../hooks/use-opportunities';
 import { OpportunityFormDialog } from '../components/opportunities/OpportunityFormDialog';
@@ -47,17 +45,15 @@ export function OpportunityDetailPage() {
   const deleteMutation = useDeleteOpportunity();
   const [editOpen, setEditOpen] = useState(false);
   const [convertOpen, setConvertOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
 
   // Sub-resource queries
   const { data: stakeholdersData } = useStakeholders(id!);
   const { data: lineItemsData } = useLineItems(id!);
   const { data: competitorsData } = useCompetitors(id!);
 
-  const addStakeholderMut = useAddStakeholder();
   const removeStakeholderMut = useRemoveStakeholder();
-  const addLineItemMut = useAddLineItem();
   const removeLineItemMut = useRemoveLineItem();
-  const addCompetitorMut = useAddCompetitor();
   const removeCompetitorMut = useRemoveCompetitor();
 
   const opportunity = data?.data;
@@ -170,7 +166,7 @@ export function OpportunityDetailPage() {
       )}
 
       {/* Tabs */}
-      <Tabs defaultValue="overview">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="overview">{t('common.overview')}</TabsTrigger>
           <TabsTrigger value="stakeholders" className="flex items-center gap-1">
@@ -181,6 +177,9 @@ export function OpportunityDetailPage() {
           </TabsTrigger>
           <TabsTrigger value="competitors" className="flex items-center gap-1">
             <Swords className="h-3.5 w-3.5" /> {t('opportunities.competitors')} ({competitors.length})
+          </TabsTrigger>
+          <TabsTrigger value="activities" className="flex items-center gap-1">
+            <Activity className="h-3.5 w-3.5" /> {t('activities.title')}
           </TabsTrigger>
         </TabsList>
 
@@ -401,6 +400,10 @@ export function OpportunityDetailPage() {
               </div>
             )}
           </div>
+        </TabsContent>
+        {/* Activities Tab */}
+        <TabsContent value="activities">
+          <ActivityTimeline entityType="opportunities" entityId={id!} />
         </TabsContent>
       </Tabs>
 

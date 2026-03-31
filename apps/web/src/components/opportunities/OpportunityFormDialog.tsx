@@ -6,6 +6,7 @@ import { OpportunityStatus, OpportunityStage } from '@telnub/shared';
 import type { Opportunity } from '@telnub/shared';
 import { useCreateOpportunity, useUpdateOpportunity } from '../../hooks/use-opportunities';
 import { useUsers } from '../../hooks/use-users';
+import { useAuthStore } from '../../store/auth-store';
 import {
   Dialog,
   DialogContent,
@@ -54,6 +55,7 @@ export function OpportunityFormDialog({ open, onOpenChange, opportunity }: Oppor
   const updateMutation = useUpdateOpportunity();
   const usersQuery = useUsers({ limit: 100 });
   const users = usersQuery.data?.data ?? [];
+  const currentUser = useAuthStore((s) => s.user);
 
   const form = useForm<OpportunityFormValues>({
     resolver: zodResolver(opportunityFormSchema),
@@ -80,7 +82,7 @@ export function OpportunityFormDialog({ open, onOpenChange, opportunity }: Oppor
           expectedCloseDate: '',
           clientName: '',
           clientContact: '',
-          ownerId: '',
+          ownerId: currentUser?.id ?? '',
         },
   });
 

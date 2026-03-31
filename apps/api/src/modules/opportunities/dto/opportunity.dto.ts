@@ -128,6 +128,11 @@ export class CreateOpportunityDto {
   @IsOptional()
   tags?: string[];
 
+  @ApiPropertyOptional({ format: 'uuid', description: 'Override owner (defaults to current user)' })
+  @IsUUID()
+  @IsOptional()
+  ownerId?: string;
+
   @ApiPropertyOptional({ default: {} })
   @IsObject()
   @IsOptional()
