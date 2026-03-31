@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -87,20 +88,29 @@ export function OpportunityFormDialog({ open, onOpenChange, opportunity }: Oppor
   });
 
   const isPending = createMutation.isPending || updateMutation.isPending;
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   async function onSubmit(values: OpportunityFormValues) {
+    setSubmitError(null);
     const payload = {
       ...values,
       expectedCloseDate: values.expectedCloseDate || null,
       clientContact: values.clientContact || null,
     };
-    if (isEdit && opportunity) {
-      await updateMutation.mutateAsync({ id: opportunity.id, ...payload });
-    } else {
-      await createMutation.mutateAsync(payload);
+    try {
+      if (isEdit && opportunity) {
+        await updateMutation.mutateAsync({ id: opportunity.id, ...payload });
+      } else {
+        await createMutation.mutateAsync(payload);
+      }
+      form.reset();
+      onOpenChange(false);
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message
+        ?? (err instanceof Error ? err.message : 'An unexpected error occurred');
+      setSubmitError(msg);
     }
-    form.reset();
-    onOpenChange(false);
   }
 
   return (
@@ -114,6 +124,11 @@ export function OpportunityFormDialog({ open, onOpenChange, opportunity }: Oppor
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          {submitError && (
+            <div className="rounded-md border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
+              {submitError}
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="name">{t('opportunityForm.nameLabel')}</Label>
             <Input id="name" {...form.register('name')} placeholder={t('opportunityForm.namePlaceholder')} />

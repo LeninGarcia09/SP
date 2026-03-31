@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { BrowserAuthError, InteractionRequiredAuthError } from '@azure/msal-browser';
 import { msalInstance, apiScopes, isMsalEnabled } from './msal';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
@@ -21,8 +22,16 @@ api.interceptors.request.use(async (config) => {
           account: accounts[0]!,
         });
         config.headers.Authorization = `Bearer ${response.accessToken}`;
-      } catch {
-        // Token refresh failed — let the response interceptor handle 401
+      } catch (err) {
+        // Recoverable errors: redirect to interactive login
+        const isRecoverable =
+          err instanceof InteractionRequiredAuthError ||
+          (err instanceof BrowserAuthError && err.errorCode === 'timed_out');
+        if (isRecoverable) {
+          await msalInstance.acquireTokenRedirect({ scopes: apiScopes, account: accounts[0]! });
+          return config; // won't execute — redirect navigates away
+        }
+        // Non-recoverable: let the request go unauthenticated; 401 handler below
       }
     }
   } else {
