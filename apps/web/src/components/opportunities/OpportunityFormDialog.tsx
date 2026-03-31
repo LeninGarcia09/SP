@@ -92,10 +92,13 @@ export function OpportunityFormDialog({ open, onOpenChange, opportunity }: Oppor
 
   async function onSubmit(values: OpportunityFormValues) {
     setSubmitError(null);
+    // Send undefined (not null) for empty optional strings so class-validator
+    // @IsOptional() skips them — null fails @IsDateString / @IsString checks.
     const payload = {
       ...values,
-      expectedCloseDate: values.expectedCloseDate || null,
-      clientContact: values.clientContact || null,
+      expectedCloseDate: values.expectedCloseDate || undefined,
+      clientContact: values.clientContact || undefined,
+      description: values.description || undefined,
     };
     try {
       if (isEdit && opportunity) {
