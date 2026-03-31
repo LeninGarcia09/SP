@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class AddActivitiesWave31774900800000 implements MigrationInterface {
-  name = '1774900800000-AddActivitiesWave3';
+  name = 'AddActivitiesWave31774900800000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Enums
