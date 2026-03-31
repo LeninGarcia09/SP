@@ -45,6 +45,10 @@ export class ActivityEntity {
   @Column({ type: 'uuid', nullable: true })
   contactId!: string | null;
 
+  @Index()
+  @Column({ type: 'uuid', nullable: true })
+  leadId!: string | null;
+
   @Column({ type: 'enum', enum: ActivityStatus, nullable: true })
   status!: ActivityStatus | null;
 

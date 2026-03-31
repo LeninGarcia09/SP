@@ -27,6 +27,7 @@ import { PipelinesModule } from './modules/pipelines/pipelines.module';
 import { ProductsModule } from './modules/products/products.module';
 import { VendorsModule } from './modules/vendors/vendors.module';
 import { ActivitiesModule } from './modules/activities/activities.module';
+import { LeadsModule } from './modules/leads/leads.module';
 import { envValidationSchema } from './config/env.validation';
 import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
 import { TenantInterceptor } from './common/tenant/tenant.interceptor';
@@ -89,6 +90,7 @@ import { SystemController } from './common/system.controller';
     ProductsModule,
     VendorsModule,
     ActivitiesModule,
+    LeadsModule,
   ],
   controllers: [SystemController],
   providers: [

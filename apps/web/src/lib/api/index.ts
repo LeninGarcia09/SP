@@ -41,6 +41,10 @@ import type {
   Vendor,
   Activity,
   ActivityTemplate,
+  Lead,
+  LeadConvertPayload,
+  LeadConvertResult,
+  LeadStats,
 } from '@telnub/shared';
 
 // ─── Query Params ───
@@ -689,6 +693,52 @@ export async function fetchAllowedTenants() {
 export async function fetchTenantUsers(tenantId?: string) {
   const params = tenantId ? { tenantId } : {};
   const { data } = await api.get<ApiResponse<TenantUser[]>>('/admin/tenant-users', { params });
+  return data;
+}
+
+// ─── Leads ───
+
+export async function fetchLeads(params?: PaginationParams & { status?: string; source?: string; rating?: string; ownerId?: string }) {
+  const { data } = await api.get<{ data: Lead[]; meta: PaginationMeta }>('/leads', { params });
+  return data;
+}
+
+export async function fetchLead(id: string) {
+  const { data } = await api.get<ApiResponse<Lead>>(`/leads/${id}`);
+  return data;
+}
+
+export async function createLead(body: Record<string, unknown>) {
+  const { data } = await api.post<ApiResponse<Lead>>('/leads', body);
+  return data;
+}
+
+export async function updateLead(id: string, body: Record<string, unknown>) {
+  const { data } = await api.patch<ApiResponse<Lead>>(`/leads/${id}`, body);
+  return data;
+}
+
+export async function deleteLead(id: string) {
+  await api.delete(`/leads/${id}`);
+}
+
+export async function convertLead(id: string, body: LeadConvertPayload) {
+  const { data } = await api.post<ApiResponse<LeadConvertResult>>(`/leads/${id}/convert`, body);
+  return data;
+}
+
+export async function qualifyLead(id: string) {
+  const { data } = await api.post<ApiResponse<Lead>>(`/leads/${id}/qualify`);
+  return data;
+}
+
+export async function disqualifyLead(id: string) {
+  const { data } = await api.post<ApiResponse<Lead>>(`/leads/${id}/disqualify`);
+  return data;
+}
+
+export async function fetchLeadStats() {
+  const { data } = await api.get<ApiResponse<LeadStats>>('/leads/stats');
   return data;
 }
 

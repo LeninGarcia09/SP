@@ -1048,6 +1048,7 @@ export interface Activity {
   opportunityId: string | null;
   accountId: string | null;
   contactId: string | null;
+  leadId: string | null;
   status: ActivityStatus | null;
   priority: Priority | null;
   dueDate: string | null;
@@ -1080,4 +1081,107 @@ export interface ActivityTemplate {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+}
+
+// ─── Sales / CRM Module (Wave 4 — Leads) ───
+
+export enum LeadStatus {
+  NEW = 'NEW',
+  CONTACTED = 'CONTACTED',
+  ENGAGED = 'ENGAGED',
+  QUALIFIED = 'QUALIFIED',
+  UNQUALIFIED = 'UNQUALIFIED',
+  CONVERTED = 'CONVERTED',
+}
+
+export enum LeadSource {
+  WEB_FORM = 'WEB_FORM',
+  REFERRAL = 'REFERRAL',
+  EVENT = 'EVENT',
+  COLD_OUTREACH = 'COLD_OUTREACH',
+  PARTNER = 'PARTNER',
+  SOCIAL = 'SOCIAL',
+  AD_CAMPAIGN = 'AD_CAMPAIGN',
+  INBOUND_CALL = 'INBOUND_CALL',
+  OTHER = 'OTHER',
+}
+
+export enum LeadRating {
+  HOT = 'HOT',
+  WARM = 'WARM',
+  COLD = 'COLD',
+}
+
+export interface Lead {
+  id: string;
+  tenantId: string | null;
+  code: string;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  phone: string | null;
+  jobTitle: string | null;
+  companyName: string;
+  industry: string | null;
+  companySize: string | null;
+  website: string | null;
+  status: LeadStatus;
+  source: LeadSource;
+  rating: LeadRating;
+  score: number;
+  ownerId: string | null;
+  assignedAt: string | null;
+  budget: number | null;
+  authority: string | null;
+  need: string | null;
+  timeline: string | null;
+  convertedAt: string | null;
+  convertedAccountId: string | null;
+  convertedContactId: string | null;
+  convertedOpportunityId: string | null;
+  convertedBy: string | null;
+  lastContactedAt: string | null;
+  nextFollowUpAt: string | null;
+  notes: string | null;
+  tags: string[];
+  metadata: Record<string, unknown>;
+  isActive: boolean;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LeadConvertPayload {
+  createAccount: boolean;
+  existingAccountId?: string;
+  accountName?: string;
+  accountIndustry?: string;
+  accountWebsite?: string;
+  accountType?: AccountType;
+  contactFirstName?: string;
+  contactLastName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  contactJobTitle?: string;
+  createOpportunity: boolean;
+  opportunityName?: string;
+  estimatedValue?: number;
+  expectedCloseDate?: string;
+  pipelineId?: string;
+}
+
+export interface LeadConvertResult {
+  lead: Lead;
+  account: Account;
+  contact: Contact;
+  opportunity?: Opportunity;
+}
+
+export interface LeadStats {
+  byStatus: Array<{ status: LeadStatus; count: number }>;
+  bySource: Array<{ source: LeadSource; count: number }>;
+  byRating: Array<{ rating: LeadRating; count: number }>;
+  total: number;
+  convertedCount: number;
+  conversionRate: number;
 }

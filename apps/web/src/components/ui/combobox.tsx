@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { X } from 'lucide-react';
+import { X, ChevronDown, Check } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from './popover';
 import { Input } from './input';
 import { cn } from '../../lib/utils';
@@ -74,25 +74,28 @@ export function Combobox({
               }
             }}
             className={cn(
+              'pr-14',
               !open && value && 'text-foreground',
-              value && !open && 'pr-8',
             )}
           />
-          {value && !open && !disabled && (
-            <button
-              type="button"
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-sm text-muted-foreground hover:text-foreground"
-              onClick={(e) => { e.stopPropagation(); handleClear(); }}
-              tabIndex={-1}
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
+          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+            {value && !open && !disabled && (
+              <button
+                type="button"
+                className="p-0.5 rounded-sm text-muted-foreground hover:text-foreground"
+                onClick={(e) => { e.stopPropagation(); handleClear(); }}
+                tabIndex={-1}
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+            <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition-transform', open && 'rotate-180')} />
+          </div>
         </div>
       </PopoverTrigger>
 
       <PopoverContent
-        className="max-h-60 overflow-y-auto p-0"
+        className="max-h-60 overflow-y-auto p-1"
         onOpenAutoFocus={(e) => {
           e.preventDefault();
           inputRef.current?.focus();
@@ -109,14 +112,19 @@ export function Combobox({
             key={o.value}
             type="button"
             className={cn(
-              'w-full px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground flex items-center justify-between border-b border-border/40 last:border-0 transition-colors',
-              o.value === value && 'bg-accent text-accent-foreground font-medium',
+              'w-full px-3 py-2 text-left text-sm rounded-sm flex items-center gap-2 transition-colors',
+              'hover:bg-accent hover:text-accent-foreground',
+              'focus:bg-accent focus:text-accent-foreground outline-none',
+              o.value === value && 'bg-accent/60 font-medium',
             )}
             onMouseDown={(e) => { e.preventDefault(); handleSelect(o.value); }}
           >
-            <span className="text-foreground">{o.label}</span>
+            <span className={cn('flex h-4 w-4 shrink-0 items-center justify-center', o.value !== value && 'invisible')}>
+              <Check className="h-3.5 w-3.5" />
+            </span>
+            <span className="flex-1 truncate">{o.label}</span>
             {o.sublabel && (
-              <span className="text-xs text-muted-foreground ml-2 truncate">
+              <span className="text-xs text-muted-foreground truncate">
                 {o.sublabel}
               </span>
             )}

@@ -526,7 +526,7 @@ export type UpdateVendorInput = z.infer<typeof updateVendorSchema>;
 
 // ─── Activities ───
 
-import { ActivityType, ActivityStatus } from '../types';
+import { ActivityType, ActivityStatus, LeadStatus, LeadSource, LeadRating } from '../types';
 
 export const createActivitySchema = z.object({
   type: z.nativeEnum(ActivityType),
@@ -536,6 +536,7 @@ export const createActivitySchema = z.object({
   opportunityId: z.string().uuid().nullable().optional(),
   accountId: z.string().uuid().nullable().optional(),
   contactId: z.string().uuid().nullable().optional(),
+  leadId: z.string().uuid().nullable().optional(),
   status: z.nativeEnum(ActivityStatus).nullable().optional(),
   priority: z.nativeEnum(Priority).nullable().optional(),
   dueDate: z.string().datetime({ offset: true }).nullable().optional(),
@@ -567,3 +568,55 @@ export const updateActivityTemplateSchema = createActivityTemplateSchema.partial
 
 export type CreateActivityTemplateInput = z.infer<typeof createActivityTemplateSchema>;
 export type UpdateActivityTemplateInput = z.infer<typeof updateActivityTemplateSchema>;
+
+// ─── Leads (Wave 4) ───
+
+export const createLeadSchema = z.object({
+  firstName: z.string().min(1).max(100),
+  lastName: z.string().min(1).max(100),
+  email: z.string().email().max(200).nullable().optional(),
+  phone: z.string().max(50).nullable().optional(),
+  jobTitle: z.string().max(200).nullable().optional(),
+  companyName: z.string().min(1).max(200),
+  industry: z.string().max(100).nullable().optional(),
+  companySize: z.string().max(50).nullable().optional(),
+  website: z.string().max(500).nullable().optional(),
+  status: z.nativeEnum(LeadStatus).default(LeadStatus.NEW),
+  source: z.nativeEnum(LeadSource).default(LeadSource.OTHER),
+  rating: z.nativeEnum(LeadRating).default(LeadRating.WARM),
+  score: z.number().int().min(0).max(100).default(0),
+  ownerId: z.string().uuid().nullable().optional(),
+  budget: z.number().nonnegative().nullable().optional(),
+  authority: z.string().max(200).nullable().optional(),
+  need: z.string().max(5000).nullable().optional(),
+  timeline: z.string().max(100).nullable().optional(),
+  nextFollowUpAt: z.string().datetime({ offset: true }).nullable().optional(),
+  notes: z.string().max(5000).nullable().optional(),
+  tags: z.array(z.string()).default([]),
+  metadata: z.record(z.unknown()).default({}),
+});
+
+export const updateLeadSchema = createLeadSchema.partial();
+
+export const convertLeadSchema = z.object({
+  createAccount: z.boolean(),
+  existingAccountId: z.string().uuid().optional(),
+  accountName: z.string().max(200).optional(),
+  accountIndustry: z.string().max(100).optional(),
+  accountWebsite: z.string().max(500).optional(),
+  accountType: z.nativeEnum(AccountType).optional(),
+  contactFirstName: z.string().max(100).optional(),
+  contactLastName: z.string().max(100).optional(),
+  contactEmail: z.string().email().max(200).optional(),
+  contactPhone: z.string().max(50).optional(),
+  contactJobTitle: z.string().max(200).optional(),
+  createOpportunity: z.boolean(),
+  opportunityName: z.string().max(200).optional(),
+  estimatedValue: z.number().nonnegative().optional(),
+  expectedCloseDate: z.string().date().optional(),
+  pipelineId: z.string().uuid().optional(),
+});
+
+export type CreateLeadInput = z.infer<typeof createLeadSchema>;
+export type UpdateLeadInput = z.infer<typeof updateLeadSchema>;
+export type ConvertLeadInput = z.infer<typeof convertLeadSchema>;
