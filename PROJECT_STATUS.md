@@ -1,250 +1,183 @@
-# BizOps Platform — Project Status & Context
+# BizOps Platform — Project Status
 
-> **Purpose:** Quick-reference for AI agents resuming work on this project.
-> **Last updated:** 2025-07-25
-> **Full spec:** See `CLAUDE.md` in this same directory for complete data model, RBAC, API conventions.
-> **Sales module spec:** See `docs/SALES_OPPORTUNITIES_MODULE_ENHANCEMENT.md` (~3500 lines)
+> **Purpose:** Quick-reference for developers and AI agents working on this project.
+> **Last updated:** 2026-04-04
+> **Repository:** https://github.com/LeninGarcia09/SP
+> **Full spec:** See `CLAUDE.md` for complete data model, RBAC, API conventions, coding standards.
+> **Sales module spec:** See `docs/SALES_OPPORTUNITIES_MODULE_ENHANCEMENT.md` (~3500 lines, 7 waves)
 
 ---
 
-## Git Status
+## For New Developers
+
+**Start here:**
+1. Read this file for overall status and what's done vs. what's next
+2. Read `CLAUDE.md` for the full technical spec (data model, RBAC, API design, coding standards)
+3. Read `CONTRIBUTING.md` for local setup and development workflow
+4. Read `infrastructure/DEPLOYMENT.md` for Azure deployment details
+
+**Ask Copilot/Claude:** _"Read CLAUDE.md, PROJECT_STATUS.md, and CONTRIBUTING.md, then tell me the current state of the project and what's next."_
+
+---
+
+## Live Deployment
+
+| Component | Resource | URL |
+|---|---|---|
+| API | Azure Container Apps (`api-bizops-dev`) | `https://api-bizops-dev.graysand-3ab24a81.eastus.azurecontainerapps.io` |
+| Frontend | Azure Static Web Apps (`swa-bizops-dev`) | `https://yellow-moss-027665410.1.azurestaticapps.net` |
+| Database | PostgreSQL Flexible Server (`pg-flex-bizops-dev`) | Burstable B1ms, PG 16, 32GB |
+| Cache | Azure Cache for Redis | Basic C0 |
+| Registry | ACR (`acrbizops5zqydpn5lftdy`) | `acrbizops5zqydpn5lftdy.azurecr.io` |
+| Key Vault | `kv-bizops5zqydpn5lftd` | Stores db-password, jwt-secret |
+| Resource Group | `rg-bizops-dev2` | East US |
+| Swagger Docs | API auto-docs | `https://api-bizops-dev.graysand-3ab24a81.eastus.azurecontainerapps.io/api/docs` |
+
+**Health check:** `GET /api/v1/system/health` → `{ database: "ok", cache: "ok" }`
+
+---
+
+## Git Info
 
 | Item | Value |
 |---|---|
 | Remote | `origin` → https://github.com/LeninGarcia09/SP.git |
 | Branch | `main` |
+| Latest commit | `082e356` (2026-04-04) |
 
 ---
 
-## Phase Completion
+## Phase Completion Summary
 
-### Phase 1 — Core Platform ✅
-- [x] Monorepo scaffold (npm workspaces: `packages/shared`, `apps/api`, `apps/web`)
-- [x] Shared TypeScript types + Zod schemas for all entities
-- [x] NestJS backend: all modules, entities, controllers, services, TypeORM, JWT auth
-- [x] React frontend: all pages, Layout, Tailwind + shadcn/ui, Zustand, React Query
-- [x] Docker Compose: Postgres 16 + Redis 7
-- [x] Full API client layer + React Query hooks
-- [x] CRUD operations, data tables, pagination, status badges
+### ✅ Core Platform (Phases 1–7) — COMPLETE
 
-### Phase 2 — Extended Features ✅
-- [x] Programs, Opportunities, Skills, Capacity Planning modules
-- [x] Gantt chart (embedded in ProjectDetail and ProgramDetail)
-- [x] Full i18n (Spanish/English) with react-i18next + language switcher
-- [x] TelNub branding, logo, favicon, "Sistema Operaciones de Negocio"
-- [x] Collapsible sidebar groups (Programs, Sales, Personnel)
-- [x] Detail pages, form dialogs, modals for all entities
+| Phase | Description | Status |
+|---|---|---|
+| 1 | Core Platform (monorepo, all modules, CRUD, Docker Compose) | ✅ |
+| 2 | Extended Features (Programs, Gantt, i18n EN/ES, TelNub branding) | ✅ |
+| 3 | Deployment Infrastructure (Dockerfile, Bicep IaC, GitHub Actions CI/CD) | ✅ |
+| 4 | Production Hardening (logging, rate limiting, App Insights, Redis, 46 tests) | ✅ |
+| 5 | CI/CD Pipeline (Service Principal, 10 GitHub Secrets, 4 workflows) | ✅ |
+| 5.5 | Deployment Hardening (Flexible Server migration, health probes, secret rotation) | ✅ |
+| 6 | Azure AD Multi-Tenant & Graph (3 tenants, 11 RBAC roles, Graph integration) | ✅ |
+| 7 | Full Azure Deployment (Container Apps + Static Web Apps + Flexible Server) | ✅ |
 
-### Phase 3 — Deployment Infrastructure ✅
-- [x] API Dockerfile (multi-stage, node:20-alpine, non-root user)
-- [x] .dockerignore
-- [x] Azure Bicep IaC templates (8 modules: ACR, PostgreSQL Flexible Server, Key Vault, Log Analytics, App Insights, Container App Env, Container App, Static Web App)
-- [x] Bicep parameter files (dev, prod) — dev-deploy.json gitignored (secrets cleared)
-- [x] GitHub Actions CI/CD (4 workflows: CI, Deploy API, Deploy Web, Deploy Infrastructure)
-- [x] Static Web App config (SPA routing, security headers)
-- [x] Vite production build (basicSsl conditional on dev only)
-- [x] Deployment guide (`infrastructure/DEPLOYMENT.md`)
-- [x] Docker build tested locally (43s, clean build)
+### ✅ Enhancement Waves — Hours, Cost & Resource Management — COMPLETE
 
-### Phase 4 — Production Hardening ✅
-- [x] Structured request logging middleware (HTTP method, URL, status, duration)
-- [x] System health check endpoint (`GET /api/v1/system/health` — DB + cache checks)
-- [x] Rate limiting via `@nestjs/throttler` (100 req/min)
-- [x] Application Insights SDK (auto-collect requests, performance, exceptions, dependencies)
-- [x] Redis caching layer (`@nestjs/cache-manager` + `@keyv/redis`, in-memory fallback)
-- [x] Auth store (Zustand) with user info, token management, logout
-- [x] Logout button + user display in header
-- [x] Unit tests: RAG engine (20 tests) + Roles guard (6 tests) — 26 total, all passing
-- [x] E2E tests: Auth, System Health, Projects CRUD, Tasks, Users, Inventory, Validation — 16 tests, all passing
-- [x] JWT strategy bug fix (`req.user.sub` not populated — added `sub` field to validate return)
-- [x] Dev-login endpoint updated to allow `test` environment (for E2E test runner)
-- [x] CI workflow updated with test step
-- [x] Environment validation updated (APPLICATIONINSIGHTS_CONNECTION_STRING, REDIS_URL)
-- [ ] Azure AD full MSAL integration (requires tenant config — deferred)
-- [ ] Production monitoring & alerting dashboards (deferred)
+| Wave | Description | Status |
+|---|---|---|
+| 1 | Hours Tracking (task hours UI, summary endpoint, labor cost calc) | ✅ |
+| 2 | Full Cost Management (CostEntry CRUD, approve/reject, budget notifications) | ✅ |
+| 3 | Analytics & Forecasting (EAC/ETC/VAC/CPI, burn charts, task timers, resource finder) | ✅ |
+| 3.5 | Deliverables & Task Cost (work packages, per-task costRate override) | ✅ |
+| 5 | UI/UX Enhancement (dashboard overhaul, KPI cards, Recharts charts, view toggles) | ✅ |
 
-### Phase 5 — CI/CD Pipeline ✅
-- [x] Azure Service Principal (`bizops-github-actions`) with Contributor role on resource group
-- [x] Key Vault Secrets Officer role for user (read secrets via `az keyvault`)
-- [x] 10 GitHub Actions secrets configured (AZURE_CREDENTIALS, ACR_*, CONTAINER_APP_NAME, SWA token, API_BASE_URL, DB_ADMIN_PASSWORD, JWT_SECRET)
-- [x] CI workflow passing — build shared + API + web, unit tests
-- [x] Deploy API workflow passing — Docker build → ACR push → Container App update
-- [x] Deploy Web workflow passing — npm build → Azure Static Web Apps deploy
-- [x] Deploy Infrastructure workflow available (Bicep validate + deploy)
-- [x] `workflow_dispatch` trigger added to CI for manual runs
-- [x] `VITE_API_BASE_URL` env var added to CI web build step
+**Wave 4 (Approvals & Leave)** — deferred, not started.
 
-### Phase 5.5 — Deployment Hardening ✅ (2026-03-23)
-- [x] Migrated PostgreSQL from Container App (EmptyDir, non-persistent) to **Flexible Server** (pg-flex-bizops-dev, Burstable B1ms, 32GB, PG 16)
-- [x] Created `bizops_dev` database on Flexible Server with UTF-8/en_US.utf8 collation
-- [x] Enabled `uuid-ossp` extension (allowlisted via `azure.extensions` param + CREATE EXTENSION)
-- [x] Added health probes to API Container App (Startup 5s/10 retries, Liveness 30s/3 retries, Readiness 10s/3 retries) on `/api/v1/system/health`
-- [x] Rotated DB password (32-char alphanumeric) — updated in Flexible Server, Key Vault, Container App, GitHub Secrets
-- [x] Rotated JWT secret (48-char) — updated in Key Vault, Container App, GitHub Secrets
-- [x] Cleared plaintext credentials from `dev-deploy.json`, added to `.gitignore`
-- [x] Updated Bicep IaC: `main.bicep` now uses `postgres.bicep` module (Flexible Server), removed PG Container App resource, added `healthProbePath` param, `DATABASE_SSL=true`, `sslmode=require`
-- [x] Deleted old `pg-bizops-dev` Container App
-- [x] Deleted unused `storage.bicep` module
-- [x] Removed temporary `AllowMyIP` firewall rule
-- [x] Verified: API healthy (database=ok, cache=ok), single revision 0000033 running
-- [x] Committed + pushed: `12b95ee` → `main`
+### ✅ Additional Phases (8–18) — COMPLETE
 
-### Enhancement Waves — Hours, Cost & Resource Management
+| Phase | Description | Status |
+|---|---|---|
+| 8 | Production Stability & E2E Testing (auto-migration, Playwright 15 tests) | ✅ |
+| 9 | Seed Data & Bug Fixes (idempotent seed for 13 modules, 5 bug fixes) | ✅ |
+| 10 | Mobile UI & Responsive Design (PWA, collapsible sidebar, responsive tables) | ✅ |
+| 11 | Enhanced Task Management (activity log, comments, status tracking) | ✅ |
+| 12 | Task Fields & Assignment UX (startDate, completedDate, searchable Combobox) | ✅ |
+| 13 | Project Detail Simplification (team members table, simplified task form) | ✅ |
+| 14 | Personnel Search Fix (include all personnel in Combobox) | ✅ |
+| 15 | Combobox Portal Rendering (createPortal to body, no dialog clipping) | ✅ |
+| 16 | API Limit Fix (200→100 pagination) | ✅ |
+| 17 | Combobox Styling Fix (solid backgrounds, theme-safe) | ✅ |
+| 18 | Combobox Click Selection Fix (Radix DismissableLayer workaround) | ✅ |
 
-#### Wave 1 — Hours Tracking Foundation ✅
-- [x] Task hours UI (estimatedHours/actualHours) in ProjectDetail task form + table
-- [x] Hours progress bar on task rows with overrun coloring
-- [x] `GET /projects/:id/hours-summary` endpoint with rollup
-- [x] Project Hours Summary card in ProjectDetail
-- [x] Hours-overrun notification (>20% over)
-- [x] Automatic labor cost from hours × project costRate
-
-#### Wave 2 — Full Cost Management Module ✅
-- [x] CostEntry entity + migration (cost_entries table with indexes)
-- [x] CostsModule: full CRUD + submit/approve/reject/transfer workflow
-- [x] Cost summary endpoint with category/month breakdowns
-- [x] Project actualCost computed from entries + labor
-- [x] Budget threshold notifications (80%, 100%)
-- [x] Frontend: cost summary cards, category breakdown, cost entries table
-- [x] Frontend: add/edit cost dialog, reject dialog, transfer dialog
-
-#### Wave 3 — Analytics & Forecasting ✅
-- [x] Cost Forecasting (EAC/ETC/VAC/CPI) — `GET /projects/:id/cost-forecast`
-- [x] Burn-Down chart — `GET /projects/:id/burn-data?metric=hours|cost`
-- [x] Skills-Based Resource Matching — `GET /personnel/match?skills=&minAllocation=`
-- [x] Start/Stop Timer — localStorage-based, per-task timer with auto-log on stop
-- [x] ActiveTimerBar in layout header (shows running timer globally)
-- [x] CostForecastCard component with EAC/ETC/VAC/CPI display + progress bar
-- [x] BurnChart component with Recharts (hours/cost toggle, ideal vs actual lines)
-- [x] ResourceFinder dialog with skill search + allocation filter
-- [x] TaskTimerButton on each task row (start/stop with elapsed display)
-- [x] i18n translations for forecast, burnChart, timer, resourceFinder (EN + ES)
-
-#### Wave 4 — Approvals & Leave (Not Started)
-- [ ] Time entry approval workflow (DRAFT → SUBMITTED → APPROVED/REJECTED)
-- [ ] Leave/absence tracking entity + API
-- [ ] Approval queue page
-- [ ] Capacity planning leave integration
-
-#### Wave 5 — UI/UX Enhancement ✅
-- [x] Dashboard overhaul: 6 KPI cards with trend indicators, Recharts donut (project status distribution), budget vs actual bar chart, opportunity pipeline funnel, recent projects table with progress bars
-- [x] Projects list: status filter tabs (All/Active/Planning/On Hold/Completed/Cancelled), table/cards view toggle (persisted in localStorage), enhanced table with budget progress bars + colored status dots, card view with budget bars
-- [x] Programs list: portfolio summary cards (total/active/budget/actual with progress bars), status filter tabs, enhanced table with budget utilization column
-- [x] New UI components: Tabs (context-based), Progress bar (with custom indicator colors)
-- [x] Full i18n for all new dashboard/projects/programs keys (EN + ES)
-- [x] UI/UX Enhancement Plan document (`docs/UI_UX_ENHANCEMENT_PLAN.md`)
-- [x] Dashboard resilient error handling: `allFailed` shows full error, `partialError` shows amber warning, renders available data gracefully
-
-### Phase 6 — Azure AD Multi-Tenant & Graph ✅
-- [x] Azure AD multi-tenant authentication (8+ iterations, multi-org app registration)
-- [x] Multi-tenant data isolation (17 entities, 12 services, `tenantId` on all queries)
-- [x] Microsoft Graph integration (client secret, `User.Read.All` + `Organization.Read.All`)
-- [x] Graph multi-tenant: tenant selector on Admin page, cross-tenant user enumeration
-- [x] 3 tenants configured: VS Enterprise (`bad76ac5`), sitec.solutions (`bd208e59`), garsal.org (`5814ad12`)
-- [x] RBAC expanded to 11 roles (added ADMIN, OPERATIONS_DIRECTOR, SALES_EXECUTIVE)
-
-### Phase 7 — Full Azure Deployment ✅
-- [x] API deployed to Azure Container Apps (`api-bizops-dev`, image via `az acr build --platform linux/amd64`)
-- [x] Frontend deployed to Azure Static Web Apps (`swa-bizops-dev`)
-- [x] Health check confirmed: database=ok, cache=ok
-- [x] API URL: `https://api-bizops-dev.graysand-3ab24a81.eastus.azurecontainerapps.io`
-- [x] Frontend URL: `https://yellow-moss-027665410.1.azurestaticapps.net`
-
-### Sales/CRM Module Enhancement — 7 Waves (Not Started)
+### Sales/CRM Module Enhancement — 4 of 7 Waves COMPLETE
 
 > **Full spec:** `docs/SALES_OPPORTUNITIES_MODULE_ENHANCEMENT.md`
 > Transforms basic Opportunities CRUD into a full B2B CRM platform.
-> Best-of: Salesforce, HubSpot, Dynamics 365, Pipedrive, Close, Freshsales.
 
-#### Wave 1 — Foundation (Not Started)
-- [ ] Account entity + migration + CRUD service/controller
-- [ ] Contact entity + migration + CRUD service/controller
-- [ ] SalesPipeline + PipelineStage entities + configuration UI
-- [ ] Shared types + Zod schemas for Account, Contact, Pipeline
-- [ ] Frontend: Account list/detail pages, Contact management
-- [ ] Frontend: Pipeline configuration page
+| Wave | Description | Status | Key Commit |
+|---|---|---|---|
+| 1 | **Foundation** — Accounts, Contacts, Pipelines | ✅ | `49a8db9` |
+| 2 | **Enhanced Opportunities** — Products, Stakeholders, Line Items, Competitors | ✅ | `7ecc305` |
+| 2.5 | **Vendors & Products Pages** — Vendor entity, product-vendor linking | ✅ | `6af936d` |
+| 3 | **Activities & Timeline** — Polymorphic activities, templates, quick-log | ✅ | (same deploy) |
+| 4 | **Leads & Conversion** — Lead entity, BANT scoring, atomic conversion wizard | ✅ | `885c96a` |
+| 5 | **Quoting** — Quote + line items, versioning, PDF generation | 🔲 Not started | — |
+| 6 | **Forecasting & Analytics** — Pipeline analytics, revenue forecasting, KPIs | 🔲 Not started | — |
+| 7 | **Sales Automation** — Workflow rules, assignment rules, sequences, cron jobs | 🔲 Not started | — |
 
-#### Wave 2 — Enhanced Opportunity (Not Started)
-- [ ] Opportunity entity enhancement (add accountId, pipelineId, stageId, line items)
-- [ ] OpportunityStakeholder entity (role, influence, sentiment mapping)
-- [ ] Product + OpportunityLineItem entities
-- [ ] Pipeline Kanban board (drag-drop stage changes)
-- [ ] Opportunity detail page overhaul (stakeholder map, line items table)
-- [ ] Migration: existing opportunities → new schema
-
-#### Wave 3 — Activities & Timeline (Not Started — 20 items)
-- [ ] Activity entity (polymorphic: call, email, meeting, note, task)
-- [ ] Activity CRUD + timeline endpoints
-- [ ] Activity templates + sequences
-- [ ] Reminders + due date notifications
-- [ ] Deal Health scoring
-- [ ] Frontend: Activity timeline UI, log activity dialogs
-- [ ] Frontend: Reminder management
-
-#### Wave 4 — Leads & Conversion (Not Started)
-- [ ] Lead entity + scoring
-- [ ] Lead CRUD + status workflow
-- [ ] Lead conversion (transactional: lead → account + contact + opportunity)
-- [ ] Frontend: Lead list, detail, conversion wizard
-
-#### Wave 5 — Quoting (Not Started)
-- [ ] Quote + QuoteLineItem entities
-- [ ] Quote CRUD + versioning + status workflow
-- [ ] Quote PDF generation
-- [ ] Frontend: Quote builder, preview, send
-
-#### Wave 6 — Forecasting & Analytics (Not Started)
-- [ ] Pipeline analytics (conversion rates, velocity, stage duration)
-- [ ] Revenue forecasting (weighted pipeline, historical trends)
-- [ ] Sales dashboard with KPIs
-- [ ] Frontend: Analytics pages, forecast charts
-
-#### Wave 7 — Sales Automation Engine (Not Started — 22 items)
-- [ ] Event bus architecture (4-layer: triggers → conditions → actions → logging)
-- [ ] WorkflowRule entity + CRUD + execution engine
-- [ ] AssignmentRule entity (round-robin, load-balanced, criteria-based)
-- [ ] Sequence entity + enrollment + step execution
-- [ ] 8 cron jobs (stale deals, follow-up reminders, sequence steps, etc.)
-- [ ] Frontend: Workflow rule builder, sequence editor, assignment config
+### ❌ Deferred Items
+- Azure AD full MSAL integration (requires tenant config)
+- Production monitoring & alerting dashboards
+- Enhancement Wave 4 — Approvals & Leave (time entry approval, leave tracking)
 
 ---
 
-## Infrastructure Files
+## What's Next — Remaining Work
 
-| File/Directory | Purpose |
-|---|---|
-| `apps/api/Dockerfile` | Multi-stage Docker build for API |
-| `.dockerignore` | Docker build exclusions |
-| `infrastructure/bicep/main.bicep` | Main Bicep orchestrator (Flexible Server, Container App w/ probes, Redis, SWA) |
-| `infrastructure/bicep/modules/` | 7 Bicep modules (ACR, PostgreSQL Flexible Server, Key Vault, Log Analytics, App Insights, Container App Env, Container App) |
-| `infrastructure/bicep/parameters/` | dev.bicepparam, prod.bicepparam (dev-deploy.json gitignored) |
-| `infrastructure/scripts/deploy-infra.sh` | CLI deployment script |
-| `infrastructure/DEPLOYMENT.md` | Full deployment guide with secrets reference |
-| `.github/workflows/ci.yml` | Build & check on every PR/push |
-| `.github/workflows/deploy-api.yml` | Build Docker → push ACR → deploy Container App |
-| `.github/workflows/deploy-web.yml` | Build Vite → deploy Static Web App |
-| `.github/workflows/deploy-infra.yml` | Validate & deploy Bicep templates |
-| `apps/web/public/staticwebapp.config.json` | SPA routing + security headers |
+### Sales/CRM Wave 5 — Quoting
+- Quote + QuoteLineItem entities + migration
+- Quote CRUD + versioning + status workflow (DRAFT → SENT → ACCEPTED/REJECTED/EXPIRED)
+- Quote PDF generation
+- Frontend: Quote builder, preview, send
+- Shared types + Zod schemas
+
+### Sales/CRM Wave 6 — Forecasting & Analytics
+- Pipeline analytics (conversion rates, velocity, stage duration)
+- Revenue forecasting (weighted pipeline, historical trends)
+- Sales dashboard with KPIs
+- Frontend: Analytics pages, forecast charts
+
+### Sales/CRM Wave 7 — Sales Automation Engine (22 items)
+- Event bus architecture (triggers → conditions → actions → logging)
+- WorkflowRule entity + CRUD + execution engine
+- AssignmentRule entity (round-robin, load-balanced, criteria-based)
+- Sequence entity + enrollment + step execution
+- 8 cron jobs (stale deals, follow-up reminders, sequence steps, etc.)
+- Frontend: Workflow rule builder, sequence editor, assignment config
 
 ---
 
-## Quick Start Commands
+## Development Build Order (per feature)
 
-```powershell
-# 1. Start Docker containers
-docker compose up -d
+Always follow this order:
+1. **Shared types + Zod schemas** (`packages/shared`)
+2. **Database entity + migration** (`apps/api`)
+3. **Service + Controller + DTOs** (`apps/api`)
+4. **API integration + React Query hooks** (`apps/web`)
+5. **UI components + pages** (`apps/web`)
 
-# 2. Backend
-cd apps/api
-npm run start:dev         # → http://localhost:3000/api/docs (Swagger)
+---
 
-# 3. Frontend
-cd apps/web
-npm run dev               # → https://localhost:5173
+## Infrastructure & CI/CD
 
-# 4. Build Docker image locally
-docker build -f apps/api/Dockerfile -t bizops-api:local .
-```
+### GitHub Actions Workflows
+
+| Workflow | File | Trigger |
+|---|---|---|
+| CI | `.github/workflows/ci.yml` | Push/PR to `main` + manual |
+| Deploy API | `.github/workflows/deploy-api.yml` | Push to `apps/api/` on `main` + manual |
+| Deploy Web | `.github/workflows/deploy-web.yml` | Push to `apps/web/` on `main` + manual |
+| Deploy Infra | `.github/workflows/deploy-infra.yml` | Manual only |
+
+### GitHub Secrets (10 configured)
+
+`AZURE_CREDENTIALS`, `AZURE_RESOURCE_GROUP`, `ACR_LOGIN_SERVER`, `ACR_USERNAME`, `ACR_PASSWORD`, `CONTAINER_APP_NAME`, `AZURE_STATIC_WEB_APPS_API_TOKEN`, `API_BASE_URL`, `DB_ADMIN_PASSWORD`, `JWT_SECRET`
+
+### Azure Resources
+
+| Resource | Name | Details |
+|---|---|---|
+| Resource Group | `rg-bizops-dev2` | East US |
+| PostgreSQL | `pg-flex-bizops-dev` | Flexible Server, Burstable B1ms, PG 16, 32GB, SSL required |
+| Container App | `api-bizops-dev` | Health probes (Startup/Liveness/Readiness), auto-migration on boot |
+| Static Web App | `swa-bizops-dev` | Central US, SPA routing configured |
+| ACR | `acrbizops5zqydpn5lftdy` | Docker images built via `az acr build --platform linux/amd64` |
+| Key Vault | `kv-bizops5zqydpn5lftd` | Stores `db-password`, `jwt-secret` |
+| App Insights | Connected | Auto-collect requests, exceptions, dependencies |
+| Redis | Azure Cache for Redis | Basic C0, used for caching layer |
+
+> **ARM64 Note:** Dev machine is Windows ARM64. **Never use local `docker build`** for deployment — always use `az acr build --platform linux/amd64` to build on ACR.
 
 ---
 
@@ -252,32 +185,74 @@ docker build -f apps/api/Dockerfile -t bizops-api:local .
 
 | File | Purpose |
 |---|---|
-| `CLAUDE.md` | **Full project spec** — data model, RBAC, API design, RAG engine |
+| `CLAUDE.md` | **Full project spec** — data model (all entities), RBAC (11 roles), API conventions, RAG engine, coding standards |
+| `CONTRIBUTING.md` | **New developer onboarding** — local setup, workflow, conventions |
 | `PROJECT_STATUS.md` | Phase completion tracker (this file) |
 | `docs/SALES_OPPORTUNITIES_MODULE_ENHANCEMENT.md` | Sales/CRM module spec (~3500 lines, 7 waves) |
 | `docs/ENHANCEMENT_PLAN_HOURS_COST_RESOURCES.md` | Hours/Cost/Resource management plan |
 | `docs/UI_UX_ENHANCEMENT_PLAN.md` | Dashboard & UI modernization plan |
+| `infrastructure/DEPLOYMENT.md` | Azure deployment guide with secrets reference |
 | `docker-compose.yml` | Postgres 16 + Redis 7 (local dev) |
 | `packages/shared/src/types/` | Shared TypeScript interfaces |
 | `packages/shared/src/schemas/` | Shared Zod validation schemas |
 | `apps/api/src/database/data-source.ts` | TypeORM CLI DataSource |
-| `apps/api/src/modules/` | NestJS modules (13 feature modules) |
-| `apps/web/src/lib/api/index.ts` | Typed API client |
+| `apps/api/src/modules/` | NestJS feature modules (20+ modules) |
+| `apps/web/src/lib/api/index.ts` | Typed API client (Axios) |
 | `apps/web/src/hooks/` | React Query hook files (one per module) |
 | `apps/web/src/pages/` | Page components |
-| `infrastructure/DEPLOYMENT.md` | Azure deployment guide |
+| `apps/web/src/components/` | Reusable components (ui/, shared/, feature-specific/) |
 
 ---
 
-## Environment
+## Test Coverage
 
-- **OS:** Windows ARM64
-- **Node:** v24.6.0 · npm 11.5.2
-- **Docker Desktop:** v29.2.1 (WSL2 backend)
-- **DB creds:** user=bizops, password=bizops_dev_password, db=bizops_dev, port=5432
-- **Redis:** port 6379, no password
-- **API:** prefix `api/v1`, CORS for localhost:5173, Swagger at `/api/docs`
-- **Frontend:** strict TypeScript, Vite dev with HTTPS (basicSsl)
+| Category | Count | Framework |
+|---|---|---|
+| API Unit Tests | 30 | Jest (RAG engine 24 + Roles guard 6) |
+| API E2E Tests | 16 | Jest (Auth, Health, Projects CRUD, Tasks, Users, Inventory, Validation) |
+| Frontend E2E Tests | 15 | Playwright (Chromium — auth, dashboard, nav, CRUD, i18n) |
+| **Total** | **61** | |
+
+---
+
+## Quick Start
+
+```powershell
+# 1. Clone and install
+git clone https://github.com/LeninGarcia09/SP.git
+cd SP
+npm install
+
+# 2. Start local services (Postgres 16 + Redis 7)
+docker compose up -d
+
+# 3. Build shared package first
+npm run build:shared
+
+# 4. Start backend (auto-runs migrations)
+cd apps/api
+cp .env.example .env      # Configure DB, Redis, JWT settings
+npm run start:dev          # → http://localhost:3000/api/docs (Swagger)
+
+# 5. Start frontend (new terminal)
+cd apps/web
+cp .env.example .env      # Set VITE_API_BASE_URL=http://localhost:3000/api/v1
+npm run dev                # → https://localhost:5173
+```
+
+---
+
+## Environment Defaults (Local Dev)
+
+| Setting | Value |
+|---|---|
+| Node.js | ≥ 22.0.0 (24.6.0 recommended) |
+| Database | `postgresql://bizops:bizops_dev_password@localhost:5432/bizops_dev` |
+| Redis | `redis://localhost:6379` |
+| API prefix | `api/v1` |
+| CORS | `localhost:5173` |
+| Swagger | `http://localhost:3000/api/docs` |
+| Frontend | `https://localhost:5173` (HTTPS via basicSsl plugin) |
 
 ---
 
