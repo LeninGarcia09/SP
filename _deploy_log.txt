@@ -1,28 +1,28 @@
-=== DEPLOY STARTED 03/31/2026 13:09:21 ===
-[13:09:21] Step 1: Checking Azure subscription...
-[13:09:23] Subscription: c885843e-7631-4f4e-9f1a-5d1a49d3d2a1
-[13:09:23] Step 2: Building API image with tag: 20260331-1309
-[13:12:02] ACR build exit code: 0
-[13:12:02] ACR build succeeded
-[13:12:02] Step 3: Deploying API container...
-[13:12:18] Container App update exit code: 0
-[13:12:18] API deployed successfully
-[13:12:18] Step 4: Waiting 30s for API to start...
-[13:12:48] Step 5: Checking API health...
-[13:12:49] API health: {"status":"healthy","uptime":23.54316745,"timestamp":"2026-03-31T19:12:45.838Z","checks":{"database":"ok","cache":"ok"}}
-[13:12:49] Step 6: Building frontend...
-[13:13:26] Frontend build exit code: 0
-[13:13:26] Dist files: 
+=== DEPLOY STARTED 03/31/2026 16:21:40 ===
+[16:21:40] Step 1: Checking Azure subscription...
+[16:21:43] Subscription: c885843e-7631-4f4e-9f1a-5d1a49d3d2a1
+[16:21:43] Step 2: Building API image with tag: 20260331-1621
+[16:24:42] ACR build exit code: 0
+[16:24:42] ACR build succeeded
+[16:24:42] Step 3: Deploying API container...
+[16:25:00] Container App update exit code: 0
+[16:25:00] API deployed successfully
+[16:25:00] Step 4: Waiting 30s for API to start...
+[16:25:30] Step 5: Checking API health...
+[16:25:30] API health: {"status":"healthy","uptime":24.570442564,"timestamp":"2026-03-31T22:25:29.994Z","checks":{"database":"ok","cache":"ok"}}
+[16:25:30] Step 6: Building frontend...
+[16:26:23] Frontend build exit code: 0
+[16:26:23] Dist files: 
 Name                Length
 ----                ------
-index-EeRUXgP-.js  1664106
-index-Cr-73O8g.css   38363
+index-UjVGVQOU.js  1704705
+index-9L1cWWzw.css   39190
 
 
-[13:13:26] Step 7: Deploying frontend to SWA...
-[13:13:31] SWA token length: 119
-[13:13:59] SWA deploy exit code: 0
-[13:13:59] Deploying to environment: production
+[16:26:23] Step 7: Deploying frontend to SWA...
+[16:26:28] SWA token length: 119
+[16:27:13] SWA deploy exit code: 0
+[16:27:13] Deploying to environment: production
 
 
 Found configuration file:
@@ -33,7 +33,7 @@ Deploying project to Azure Static Web Apps...
 Γ£ö Project deployed to https://yellow-moss-027665410.1.azurestaticapps.net ≡ƒÜÇ
 
 
-[13:13:59] Step 8: Waiting 20s then verifying SWA...
-[13:14:20] SWA status: 200
-[13:14:20] JS bundle found: /assets/index-EeRUXgP-.js
-[13:14:20] === DEPLOY COMPLETE ===
+[16:27:13] Step 8: Waiting 20s then verifying SWA...
+[16:27:33] SWA status: 200
+[16:27:33] JS bundle found: /assets/index-UjVGVQOU.js
+[16:27:33] === DEPLOY COMPLETE ===

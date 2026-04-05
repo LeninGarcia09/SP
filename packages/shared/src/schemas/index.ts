@@ -33,6 +33,7 @@ import {
   ThreatLevel,
   CompetitorStatus,
   VendorStatus,
+  QuoteStatus,
 } from '../types/index.js';
 
 // ─── Project Schemas ───
@@ -620,3 +621,49 @@ export const convertLeadSchema = z.object({
 export type CreateLeadInput = z.infer<typeof createLeadSchema>;
 export type UpdateLeadInput = z.infer<typeof updateLeadSchema>;
 export type ConvertLeadInput = z.infer<typeof convertLeadSchema>;
+
+// ─── Quotes (Wave 5) ───
+
+export const createQuoteLineItemSchema = z.object({
+  productId: z.string().uuid().nullable().optional(),
+  name: z.string().min(1).max(200),
+  description: z.string().max(5000).nullable().optional(),
+  quantity: z.number().positive().default(1),
+  unitPrice: z.number().nonnegative(),
+  discount: z.number().min(0).max(100).default(0),
+  serviceStartDate: z.string().date().nullable().optional(),
+  serviceEndDate: z.string().date().nullable().optional(),
+  sortOrder: z.number().int().nonnegative().default(0),
+});
+
+export const updateQuoteLineItemSchema = createQuoteLineItemSchema.partial();
+
+export const createQuoteSchema = z.object({
+  opportunityId: z.string().uuid(),
+  accountId: z.string().uuid().nullable().optional(),
+  contactId: z.string().uuid().nullable().optional(),
+  issueDate: z.string().date(),
+  expirationDate: z.string().date(),
+  currency: z.string().length(3).default('USD'),
+  discountAmount: z.number().nonnegative().default(0),
+  taxAmount: z.number().nonnegative().default(0),
+  terms: z.string().max(10000).nullable().optional(),
+  notes: z.string().max(10000).nullable().optional(),
+  customerNotes: z.string().max(10000).nullable().optional(),
+  lineItems: z.array(createQuoteLineItemSchema).optional(),
+});
+
+export const updateQuoteSchema = z.object({
+  contactId: z.string().uuid().nullable().optional(),
+  expirationDate: z.string().date().optional(),
+  discountAmount: z.number().nonnegative().optional(),
+  taxAmount: z.number().nonnegative().optional(),
+  terms: z.string().max(10000).nullable().optional(),
+  notes: z.string().max(10000).nullable().optional(),
+  customerNotes: z.string().max(10000).nullable().optional(),
+});
+
+export type CreateQuoteInput = z.infer<typeof createQuoteSchema>;
+export type UpdateQuoteInput = z.infer<typeof updateQuoteSchema>;
+export type CreateQuoteLineItemInput = z.infer<typeof createQuoteLineItemSchema>;
+export type UpdateQuoteLineItemInput = z.infer<typeof updateQuoteLineItemSchema>;

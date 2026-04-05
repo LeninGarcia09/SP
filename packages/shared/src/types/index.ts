@@ -1185,3 +1185,74 @@ export interface LeadStats {
   convertedCount: number;
   conversionRate: number;
 }
+
+// ─── Quotes (Wave 5) ───
+
+export enum QuoteStatus {
+  DRAFT = 'DRAFT',
+  PENDING_APPROVAL = 'PENDING_APPROVAL',
+  APPROVED = 'APPROVED',
+  SENT = 'SENT',
+  VIEWED = 'VIEWED',
+  ACCEPTED = 'ACCEPTED',
+  REJECTED = 'REJECTED',
+  EXPIRED = 'EXPIRED',
+}
+
+export interface Quote {
+  id: string;
+  tenantId: string;
+  code: string;
+  opportunityId: string;
+  accountId: string | null;
+  contactId: string | null;
+  status: QuoteStatus;
+  subtotal: number;
+  discountAmount: number;
+  taxAmount: number;
+  totalAmount: number;
+  currency: string;
+  issueDate: string;
+  expirationDate: string;
+  acceptedAt: string | null;
+  isSynced: boolean;
+  approvedBy: string | null;
+  approvedAt: string | null;
+  rejectionReason: string | null;
+  terms: string | null;
+  notes: string | null;
+  customerNotes: string | null;
+  preparedBy: string;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+  opportunity?: Opportunity;
+  account?: Account;
+  contact?: Contact;
+  lineItems?: QuoteLineItem[];
+}
+
+export interface QuoteLineItem {
+  id: string;
+  quoteId: string;
+  productId: string | null;
+  name: string;
+  description: string | null;
+  quantity: number;
+  unitPrice: number;
+  discount: number;
+  totalPrice: number;
+  serviceStartDate: string | null;
+  serviceEndDate: string | null;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+  product?: Product;
+}
+
+export interface QuoteStats {
+  byStatus: Array<{ status: QuoteStatus; count: number }>;
+  total: number;
+  totalValue: number;
+  avgValue: number;
+}
